@@ -168,6 +168,20 @@ int caption_frame_decode_preamble (caption_frame_t* frame, uint16_t cc_data)
     return 0;
 }
 
+int caption_frame_decode_midrowchange (caption_frame_t* frame, uint16_t cc_data)
+{
+    eia608_style_t sty;
+    int chn, unl;
+
+    if (eia608_parse_midrowchange (cc_data,&chn,&sty,&unl)) {
+        frame->state.sty = sty;
+        frame->state.uln = unl;
+    }
+
+    return 0;
+}
+
+
 int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
 {
     int cc;
@@ -267,7 +281,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
     }
 
     if (CAPTION_POP_ON == frame->state.mod) {
-        caption_frame_init (frame);
+        // caption_frame_init (frame);
     } else if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
         frame->str_pts = frame->end_pts = -1;
     }
@@ -297,6 +311,8 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         }
     } else if (eia608_is_preamble (cc_data)) {
         status =  caption_frame_decode_preamble (frame,cc_data);
+    } else if (eia608_is_midrowchange (cc_data)) {
+        status =  caption_frame_decode_midrowchange (frame,cc_data);
     }
 
     return status;
@@ -363,7 +379,7 @@ size_t caption_frame_dump (caption_frame_t* frame, utf8_char_t* buf)
                      frame->state.row, frame->state.col,
                      eia608_mode_map[frame->state.mod],frame->state.rup?1+frame->state.rup:0);
     total += bytes; buf += bytes;
-    bytes = sprintf (buf, "   01234567890123456789012345678901\n  %s--------------------------------%s\n",
+    bytes = sprintf (buf, "   00000000001111111111222222222233\n   01234567890123456789012345678901\n  %s--------------------------------%s\n",
                      EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT, EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT);
     total += bytes; buf += bytes;
 

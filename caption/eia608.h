@@ -67,6 +67,10 @@ static inline int eia608_is_preamble (uint16_t cc_data) { return 0x1040 == (0x70
 /*! \brief
     \param
 */
+static inline int eia608_is_midrowchange (uint16_t cc_data) { return 0x1120 == (0x7770 & cc_data); }
+/*! \brief
+    \param
+*/
 static inline int eia608_is_specialna (uint16_t cc_data) { return 0x1130 == (0x7770 & cc_data); }
 /*! \brief
     \param
@@ -102,6 +106,10 @@ typedef enum {
     \param
 */
 int eia608_parse_preamble (uint16_t cc_data, int* row, int* col, eia608_style_t* style, int* chan, int* underline);
+/*! \brief
+    \param
+*/
+int eia608_parse_midrowchange (uint16_t cc_data, int* chan, eia608_style_t* style, int* underline);
 /*! \brief
     \param
 */

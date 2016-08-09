@@ -107,11 +107,7 @@ size_t utf8_line_length (const char* data, size_t size)
 {
     size_t len = 0;
 
-    if (0 == size) {
-        size = strlen (data);
-    }
-
-    for (; len < size; ++len) {
+    for (len = 0; 0 != data[len]; ++len) {
         if ('\r' == data[len]) {
             if (len+1 < size && '\n' == data[len+1]) {
                 return len + 2; // windows
@@ -124,8 +120,6 @@ size_t utf8_line_length (const char* data, size_t size)
             } else {
                 return len + 1; // macos
             }
-        } else if (0 == data[len]) {
-            return len; // EOF
         }
     }
 

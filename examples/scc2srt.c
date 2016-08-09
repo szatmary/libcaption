@@ -19,6 +19,7 @@
 
 #define MAX_SCC_SIZE (10*1024*1024)
 #define MAX_READ_SIZE 4096
+#define MAX_CC 128
 
 size_t read_file (FILE* file, utf8_char_t* data, size_t size)
 {
@@ -33,32 +34,26 @@ size_t read_file (FILE* file, utf8_char_t* data, size_t size)
 
 srt_t* scc2srt (const char* data)
 {
-    cea708_t cea708;
     double pts;
     size_t line_size = 0;
-    int count, i;
+    int cc_idx, count, i;
     srt_t* srt = 0, *head = 0;
     caption_frame_t frame;
+    uint16_t cc_data[MAX_CC];
 
     while (0 < (line_size = utf8_line_length (data,-1))) {
         caption_frame_init (&frame);
-        pts = scc_to_708 (data,&cea708);
-        // printf ("%f| %.*s\n", pts, (int) line_size,data);
+        int cc_count = scc_to_608 (data,&pts, &cc_data, MAX_CC);
         data += line_size;
         data += utf8_line_length (data,-1); // skip empty line
 
-        count = cea708_cc_count (&cea708.user_data);
+        // fprintf (stderr,"%f, %d| %.*s\n", pts, cc_count, (int) line_size,data);
 
-        for (i = 0 ; i < count ; ++i) {
-            cea708_cc_type_t type; int valid;
-            uint16_t cc_data = cea708_cc_data (&cea708.user_data, i, &valid, &type);
-
-            if (valid && (cc_type_ntsc_cc_field_1 == type || cc_type_ntsc_cc_field_2 == type)) {
-                caption_frame_decode (&frame,cc_data,pts);
-            }
+        for (cc_idx = 0 ; cc_idx < cc_count ; ++cc_idx) {
+            // eia608_dump (cc_data[cc_idx]);
+            caption_frame_decode (&frame,cc_data[cc_idx],pts);
         }
 
-        // cea708_dump (&cea708);
         // utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
         // size_t size = caption_frame_dump (&frame, buff);
         // fprintf (stderr,"%s\n", buff);

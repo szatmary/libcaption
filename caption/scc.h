@@ -14,7 +14,8 @@
 #ifndef LIBCAPTION_SCC_H
 #define LIBCAPTION_SCC_H
 
-#include "cea708.h"
-double scc_to_708 (const char* line, cea708_t* cea708);
+#include "eia608.h"
+
+int scc_to_608 (const char* line, double* pts, uint16_t* cc, int cc_max);
 
 #endif
