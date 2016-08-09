@@ -107,6 +107,10 @@ size_t utf8_line_length (const char* data, size_t size)
 {
     size_t len = 0;
 
+    if (0 == size) {
+        size = strlen (data);
+    }
+
     for (; len < size; ++len) {
         if ('\r' == data[len]) {
             if (len+1 < size && '\n' == data[len+1]) {

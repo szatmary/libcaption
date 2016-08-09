@@ -20,6 +20,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c
 set(CAPTION_SOURCES
   src/utf8.c
   src/srt.c
+  src/scc.c
   src/sei.c
   src/cea708.c
   src/caption.c
@@ -30,6 +31,7 @@ set(CAPTION_SOURCES
 set(CAPTION_HEADERS
   caption/utf8.h
   caption/sei.h
+  caption/scc.h
   caption/cea708.h
   caption/eia608.h
   caption/caption.h
@@ -57,6 +59,11 @@ install (FILES flv+srt DESTINATION bin)
 add_executable(srt2vtt examples/srt2vtt.c)
 target_link_libraries(srt2vtt caption)
 install (FILES srt2vtt DESTINATION bin)
+
+add_executable(scc2srt examples/scc2srt.c)
+target_link_libraries(scc2srt caption)
+install (FILES srt2vtt DESTINATION bin)
+
 
 # unit-tests
 #add_executable(eia608_test unit_tests/eia608_test.c )
