@@ -43,7 +43,7 @@ srt_t* scc2srt (const char* data)
     while (0 < (line_size = utf8_line_length (data,-1))) {
         caption_frame_init (&frame);
         pts = scc_to_708 (data,&cea708);
-        printf ("%f| %.*s\n", pts, (int) line_size,data);
+        // printf ("%f| %.*s\n", pts, (int) line_size,data);
         data += line_size;
         data += utf8_line_length (data,-1); // skip empty line
 
@@ -58,10 +58,10 @@ srt_t* scc2srt (const char* data)
             }
         }
 
-        cea708_dump (&cea708);
-        utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
-        size_t size = caption_frame_dump (&frame, buff);
-        fprintf (stderr,"%s\n", buff);
+        // cea708_dump (&cea708);
+        // utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
+        // size_t size = caption_frame_dump (&frame, buff);
+        // fprintf (stderr,"%s\n", buff);
         srt = srt_from_caption_frame (&frame,srt);
 
         if (!head) {head = srt;}
