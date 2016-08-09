@@ -43,7 +43,7 @@ srt_t* scc2srt (const char* data)
 
     while (0 < (line_size = utf8_line_length (data))) {
         caption_frame_init (&frame);
-        int cc_count = scc_to_608 (data,&pts, (uint16_t*) &cc_data, MAX_CC);
+        int cc_count = scc_to_608 (data, &pts, (uint16_t*) &cc_data, MAX_CC);
         data += line_size;
         data += utf8_line_length (data); // skip empty line
 
