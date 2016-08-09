@@ -14,7 +14,7 @@ int scc_to_608 (const char* line, double* pts, uint16_t* cc, int cc_max)
     int cc_count = 0, cc_data = 0, hh = 0, mm = 0, ss = 0, ff = 0;
 
     // TODO if ';' use 29.79 fps, if ':' use 30 fls
-    if (4 == sscanf (line, "%2d:%2d:%2d;%2d", &hh, &mm, &ss, &ff)) {
+    if (4 == sscanf (line, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) {
         (*pts) = SCCTIME2MS (hh,mm,ss,ff); // scc files start at one hour for some reason
         line += 12;
 
