@@ -103,19 +103,19 @@ size_t utf8_trimmed_length (const char* data, size_t size)
 
 // returns the length in bytes of the line including the new line charcter(s)
 // auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
-size_t utf8_line_length (const char* data, size_t size)
+size_t utf8_line_length (const char* data)
 {
     size_t len = 0;
 
     for (len = 0; 0 != data[len]; ++len) {
         if ('\r' == data[len]) {
-            if (len+1 < size && '\n' == data[len+1]) {
+            if ('\n' == data[len+1]) {
                 return len + 2; // windows
             } else {
                 return len + 1; // unix
             }
         } else if ('\n' == data[len]) {
-            if (len+1 < size && '\r' == data[len+1]) {
+            if ('\r' == data[len+1]) {
                 return len + 2; // riscos
             } else {
                 return len + 1; // macos
@@ -144,14 +144,15 @@ utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size)
     return split_at;
 }
 
-int utf8_line_count (const utf8_char_t* data, utf8_size_t size)
+int utf8_line_count (const utf8_char_t* data)
 {
+    size_t len = 0;
     int count = 0;
 
-    while (size) {
-        size_t len = utf8_line_length (data,size);
-        data += len; size -= len; ++count;
-    }
+    do {
+        len = utf8_line_length (data);
+        data += len; ++count;
+    } while (0<len);
 
-    return count;
+    return count-1;
 }

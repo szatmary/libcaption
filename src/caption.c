@@ -328,7 +328,7 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
 
     for (r = 0 ; 0 < size && SCREEN_ROWS > r ; ++r) {
         const utf8_char_t* cap_data = data;
-        line_length = utf8_line_length (cap_data,size);
+        line_length = utf8_line_length (cap_data);
         trimmed_length = utf8_trimmed_length (cap_data,line_length);
         char_count = utf8_char_count (cap_data,trimmed_length);
 

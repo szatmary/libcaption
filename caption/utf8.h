@@ -68,7 +68,7 @@ size_t utf8_trimmed_length (const char* data, size_t size);
     returns the length in bytes of the line including the new line charcter(s)
     auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-size_t utf8_line_length (const char* data, size_t size);
+size_t utf8_line_length (const char* data);
 /*! \brief
     \param
 
@@ -81,7 +81,7 @@ utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size);
 
     returns number of new lins in teh string
 */
-int utf8_line_count (const utf8_char_t* data, utf8_size_t size);
+int utf8_line_count (const utf8_char_t* data);
 
 
 #endif

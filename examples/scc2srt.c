@@ -41,11 +41,11 @@ srt_t* scc2srt (const char* data)
     caption_frame_t frame;
     uint16_t cc_data[MAX_CC];
 
-    while (0 < (line_size = utf8_line_length (data,-1))) {
+    while (0 < (line_size = utf8_line_length (data))) {
         caption_frame_init (&frame);
-        int cc_count = scc_to_608 (data,&pts, &cc_data, MAX_CC);
+        int cc_count = scc_to_608 (data,&pts, (uint16_t*) &cc_data, MAX_CC);
         data += line_size;
-        data += utf8_line_length (data,-1); // skip empty line
+        data += utf8_line_length (data); // skip empty line
 
         // fprintf (stderr,"%f, %d| %.*s\n", pts, cc_count, (int) line_size,data);
 

@@ -75,7 +75,7 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
         do {
             data += line_length;
             size -= line_length;
-            line_length = utf8_line_length (data,size);
+            line_length = utf8_line_length (data);
             trimmed_length = utf8_trimmed_length (data,line_length);
             // Skip empty lines
         } while (0 < line_length && 0 == trimmed_length);
@@ -90,7 +90,7 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
         data += line_length;
         size -= line_length;
 
-        line_length = utf8_line_length (data,size);
+        line_length = utf8_line_length (data);
         // printf ("time (%d): '%.*s'\n", line_length, (int) line_length, data);
 
         {
@@ -111,7 +111,7 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
         // printf ("time: '(%f --> %f)\n",srt.srt_time, srt.end_time);
 
         do {
-            line_length = utf8_line_length (data,size);
+            line_length = utf8_line_length (data);
             trimmed_length = utf8_trimmed_length (data,line_length);
             // printf ("cap (%d): '%.*s'\n", line_length, (int) trimmed_length, data);
             data += line_length;
