@@ -86,7 +86,7 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
         return 0;
     }
 
-    for (i = 0 ; i < cea708->user_data.cc_count ; ++i) {
+    for (i = 0 ; i < (int)cea708->user_data.cc_count ; ++i) {
         cea708->user_data.cc_data[i].marker_bits = data[0]>>3;
         cea708->user_data.cc_data[i].cc_valid    = data[0]>>2;
         cea708->user_data.cc_data[i].cc_type     = data[0]>>0;
@@ -146,7 +146,7 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size)
 
     total += 2; data += 2; size -= 2;
 
-    for (i = 0 ; i < cea708->user_data.cc_count ; ++i) {
+    for (i = 0 ; i < (int)cea708->user_data.cc_count ; ++i) {
         data[0] = (cea708->user_data.cc_data[i].marker_bits<<3)
                   | (data[0] = cea708->user_data.cc_data[i].cc_valid<<2)
                   | (data[0] = cea708->user_data.cc_data[i].cc_type);
@@ -156,7 +156,7 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size)
     }
 
     data[0] = 0xFF;
-    return total + 1;
+    return (int)(total + 1);
 }
 
 cc_data_t cea708_encode_cc_data (int cc_valid, cea708_cc_type_t type, uint16_t cc_data)
@@ -169,7 +169,7 @@ void cea708_dump (cea708_t* cea708)
 {
     int i;
 
-    for (i = 0 ; i < cea708->user_data.cc_count ; ++i) {
+    for (i = 0 ; i < (int)cea708->user_data.cc_count ; ++i) {
         cea708_cc_type_t type; int valid;
         uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
 

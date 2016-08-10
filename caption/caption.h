@@ -16,6 +16,15 @@
 #include "utf8.h"
 #include "eia608.h"
 
+// ssize_t is POSIX and does not exist on Windows
+#if defined(_MSC_VER)
+#if defined(_WIN64)
+typedef signed long ssize_t;
+#else
+typedef signed int ssize_t;
+#endif
+#endif
+
 #define SCREEN_ROWS 15
 #define SCREEN_COLS 32
 

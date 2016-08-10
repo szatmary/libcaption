@@ -82,7 +82,7 @@ utf8_size_t utf8_char_count (const char* data, size_t size)
         size = strlen (data);
     }
 
-    for (i = 0 ; i < size ; i += bytes) {
+    for (i = 0 ; i < (int)size ; i += (int)bytes) {
         bytes = utf8_char_length (&data[i]);
 
         if (bytes > 0) {

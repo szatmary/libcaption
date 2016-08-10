@@ -34,7 +34,7 @@ static inline uint8_t  eia608_parity_byte (uint8_t cc_data) { return eia608_pari
 /*! \brief
     \param
 */
-static inline uint16_t eia608_parity_word (uint16_t cc_data) { return (eia608_parity_byte (cc_data>>8) <<8) | eia608_parity_byte (cc_data); }
+static inline uint16_t eia608_parity_word (uint16_t cc_data) { return (uint16_t)((eia608_parity_byte ((uint8_t)(cc_data>>8)) <<8) | eia608_parity_byte ((uint8_t)cc_data)); }
 /*! \brief
     \param
 */

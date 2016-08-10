@@ -157,7 +157,7 @@ srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev)
         for (c = 0, x = 0 ; c < SCREEN_COLS ; ++c) {
             const char* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
 
-            if (0 < (s = utf8_char_copy (data,chr))) {
+            if (0 < (s = (int)utf8_char_copy (data,chr))) {
                 ++x; data += s;
             }
         }
