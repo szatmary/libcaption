@@ -46,23 +46,23 @@ endif()
 
 add_executable(srtdump examples/srtdump.c )
 target_link_libraries(srtdump caption)
-install (FILES srtdump DESTINATION bin)
+#install (FILES srtdump DESTINATION bin)
 
 add_executable(flv2srt examples/flv2srt.c examples/flv.c)
 target_link_libraries(flv2srt caption)
-install (FILES flv2srt DESTINATION bin)
+#install (FILES flv2srt DESTINATION bin)
 
 add_executable(flv+srt examples/flv+srt.c examples/flv.c)
 target_link_libraries(flv+srt caption)
-install (FILES flv+srt DESTINATION bin)
+#install (FILES flv+srt DESTINATION bin)
 
 add_executable(srt2vtt examples/srt2vtt.c)
 target_link_libraries(srt2vtt caption)
-install (FILES srt2vtt DESTINATION bin)
+#install (FILES srt2vtt DESTINATION bin)
 
 add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
-install (FILES srt2vtt DESTINATION bin)
+#install (FILES srt2vtt DESTINATION bin)
 
 
 # unit-tests
