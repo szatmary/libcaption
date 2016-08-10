@@ -63,9 +63,9 @@ void sei_free (sei_t* sei);
 /*! \brief
     \param
 */
-static inline double sei_dts (sei_t* sei) { sei->dts; }
-static inline double sei_cts (sei_t* sei) { sei->cts; }
-static inline double sei_pts (sei_t* sei) { sei->dts + sei->cts; }
+static inline double sei_dts (sei_t* sei) { return sei->dts; }
+static inline double sei_cts (sei_t* sei) { return sei->cts; }
+static inline double sei_pts (sei_t* sei) { return sei->dts + sei->cts; }
 /*! \brief
     \param
 */
