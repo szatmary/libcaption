@@ -192,42 +192,43 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     case eia608_control_resume_direct_captioning:
         frame->state.rup = 0;
         frame->state.mod = CAPTION_PAINT_ON;
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_erase_display_memory:
+        caption_frame_clear (frame);
+
         if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
-            caption_frame_clear (frame);
-            return 2;
+            return LIBCAPTION_READY;
         } else {
-            return 1;
+            return LIBCAPTION_OK;
         }
 
     // ROLL-UP
     case eia608_control_roll_up_2:
         frame->state.rup = 1;
         frame->state.mod = CAPTION_ROLL_UP;
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_roll_up_3:
         frame->state.rup = 2;
         frame->state.mod = CAPTION_ROLL_UP;
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_roll_up_4:
         frame->state.rup = 3;
         frame->state.mod = CAPTION_ROLL_UP;
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_carriage_return:
         caption_frame_carriage_return (frame);
-        return 2;
+        return LIBCAPTION_READY;
 
     // Corrections (Is this only valid as part of paint on?)
     case eia608_control_backspace:
         // do not reverse wrap (tw 28:20)
         frame->state.col = (0 < frame->state.col) ? (frame->state.col - 1) : 0;
         eia608_cell_clear_at (frame, frame->state.row, frame->state.col);
-        return 2;
+        return LIBCAPTION_READY;
 
     case eia608_control_delete_to_end_of_row: {
         int c;
@@ -237,22 +238,22 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
         }
     }
 
-    return 2;
+    return LIBCAPTION_READY;
 
     // POP ON
     case eia608_control_resume_caption_loading:
         frame->state.rup = 0;
         frame->state.mod = CAPTION_LOADING;
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_erase_non_displayed_memory:
         caption_frame_clear (frame);
-        return 1;
+        return LIBCAPTION_OK;
 
     case eia608_control_end_of_caption:
         frame->state.rup = 0;
         frame->state.mod = CAPTION_POP_ON;
-        return 2;
+        return LIBCAPTION_READY;
 
     // cursor positioning
     case eia608_tab_offset_0:
@@ -260,7 +261,7 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     case eia608_tab_offset_2:
     case eia608_tab_offset_3:
         frame->state.col += (cmd - eia608_tab_offset_0);
-        return 1;
+        return LIBCAPTION_OK;
 
     // Unhandled
     default:
@@ -371,7 +372,7 @@ static const char* eia608_style_map[] = {
     "italics",
 };
 
-size_t caption_frame_dump (caption_frame_t* frame, utf8_char_t* buf)
+size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf)
 {
     int r, c;
     size_t bytes, total = 0;
@@ -403,6 +404,12 @@ size_t caption_frame_dump (caption_frame_t* frame, utf8_char_t* buf)
     return total;
 }
 
+void caption_frame_dump (caption_frame_t* frame)
+{
+    utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
+    size_t size = caption_frame_dump_buffer (frame, buff);
+    fprintf (stderr,"%s\n", buff);
+}
 
 size_t caption_frame_json (caption_frame_t* frame, utf8_char_t* buf)
 {
@@ -419,7 +426,7 @@ size_t caption_frame_json (caption_frame_t* frame, utf8_char_t* buf)
             if (0 != cell->data[0]) {
                 const char* data = ('"' == cell->data[0]) ?"\\\"": (const char*) &cell->data[0]; //escape quote
                 bytes = sprintf (buf, "%s\n{\"row\":%d,\"col\":%d,\"char\":\"%s\",\"style\":\"%s\"}",
-                                 (0<count?",":""),r,c,data,eia608_style_map[frame->state.sty]);
+                                 (0<count?",":""),r,c,data,eia608_style_map[cell->sty]);
                 total += bytes; buf += bytes; ++count;
             }
         }

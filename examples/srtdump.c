@@ -36,7 +36,6 @@ int main (int argc, char** argv)
 {
     srt_t* srt;
     caption_frame_t frame;
-    char frame_buf[CAPTION_FRAME_DUMP_BUF_SIZE];
 
     if (argc < 2) {
         return 0;
@@ -55,8 +54,7 @@ int main (int argc, char** argv)
     for (srt = head ; srt ; srt = srt->next) {
         caption_frame_init (&frame);
         srt_to_caption_frame (srt,&frame);
-        caption_frame_dump (&frame,frame_buf);
-        printf ("%s\n%s\n",srt_data (srt),frame_buf);
+        caption_frame_dump (&frame);
 
         // Render to se messages
         sei_t sei;

@@ -47,7 +47,9 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct  {
     double dts;
+    double cts;
     sei_message_t* head;
+    sei_message_t* tail;
 } sei_t;
 
 /*! \brief
@@ -61,7 +63,13 @@ void sei_free (sei_t* sei);
 /*! \brief
     \param
 */
-int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double pts, double dts);
+static inline double sei_dts (sei_t* sei) { sei->dts; }
+static inline double sei_cts (sei_t* sei) { sei->cts; }
+static inline double sei_pts (sei_t* sei) { sei->dts + sei->cts; }
+/*! \brief
+    \param
+*/
+int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
 /*! \brief
     \param
 */
@@ -73,13 +81,7 @@ static inline sei_message_t* sei_message_head (sei_t* sei) { return sei->head; }
 /*! \brief
     \param
 */
-/*! \brief
-    \param
-
-    Returns the first message in pts order. message MUST be freed!
-*/
-sei_message_t* sei_message_take_head (sei_t* sei);
-
+static inline sei_message_t* sei_message_tail (sei_t* sei) { return sei->tail; }
 /*! \brief
     \param
 */
@@ -91,10 +93,6 @@ sei_msgtype_t sei_message_type (sei_message_t* msg);
 /*! \brief
     \param
 */
-double sei_message_pts (sei_message_t* msg);
-/*! \brief
-    \param
-*/
 size_t sei_message_size (sei_message_t* msg);
 /*! \brief
     \param
@@ -103,13 +101,13 @@ uint8_t* sei_message_data (sei_message_t* msg);
 /*! \brief
     \param
 */
-sei_message_t* sei_message_new (sei_msgtype_t type, uint8_t* data, size_t size, double pts);
+sei_message_t* sei_message_new (sei_msgtype_t type, uint8_t* data, size_t size);
 /*! \brief
     \param
 */
 static inline sei_message_t* sei_message_copy (sei_message_t* msg)
 {
-    return sei_message_new (sei_message_type (msg), sei_message_data (msg), sei_message_size (msg), sei_message_pts (msg));
+    return sei_message_new (sei_message_type (msg), sei_message_data (msg), sei_message_size (msg));
 }
 /**
 Free message and all accoiated data. Messaged added to sei_t by using sei_append_message MUST NOT be freed
@@ -156,7 +154,7 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame);
 /*! \brief
     \param
 */
-int sei_to_caption_frame (caption_frame_t* frame, sei_t* sei);
+int sei_to_caption_frame (sei_t* sei, caption_frame_t* frame);
 /*! \brief
     \param
 */
@@ -165,7 +163,7 @@ static inline int nalu_to_caption_frame (caption_frame_t* frame, const uint8_t* 
     sei_t sei;
     sei_init (&sei);
     sei_parse_nalu (&sei, data, size, pts, dts);
-    sei_to_caption_frame (frame, &sei);
+    sei_to_caption_frame (&sei,frame);
     sei_free (&sei);
     return 1;
 }

@@ -23,11 +23,9 @@ int main (int argc, char** argv)
     sei_t sei;
     flvtag_t tag;
     srt_t* srt = 0, *head = 0;
-    sei_message_t* msg;
     int i, has_audio, has_video;
     caption_frame_t frame;
 
-    sei_init (&sei);
     flvtag_init (&tag);
     caption_frame_init (&frame);
 
@@ -38,6 +36,7 @@ int main (int argc, char** argv)
     }
 
     while (flv_read_tag (flv,&tag)) {
+        // fprintf (stderr,"got frame\n");
 
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             ssize_t  size = flvtag_payload_size (&tag);
@@ -51,35 +50,13 @@ int main (int argc, char** argv)
                 size -= nalu_size + LENGTH_SIZE;
 
                 if (6 == nalu_type) {
-                    sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_pts (&tag), flvtag_dts (&tag));
+                    sei_init (&sei);
+                    sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts (&tag), flvtag_cts (&tag));
+                    sei_to_caption_frame (&sei,&frame);
+                    caption_frame_dump (&frame);
+                    srt = srt_from_caption_frame (&frame,srt);
 
-                    while (0 != (msg = sei_message_take_head (&sei))) {
-                        cea708_t cea708;
-
-                        if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
-                            sei_decode_cea708 (msg,&cea708);
-                            int count = cea708_cc_count (&cea708.user_data);
-                            // cea708_dump (&cea708);
-
-                            for (i = 0 ; i < count ; ++i) {
-                                cea708_cc_type_t type; int valid;
-                                uint16_t cc_data = cea708_cc_data (&cea708.user_data, i, &valid, &type);
-
-                                if (valid && (cc_type_ntsc_cc_field_1 == type || cc_type_ntsc_cc_field_2 == type)) {
-                                    if (LIBCAPTION_READY == caption_frame_decode (&frame,cc_data,sei_message_pts (msg))) {
-                                        // utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
-                                        // size_t size = caption_frame_dump (&frame, buff);
-                                        // fprintf (stderr,"%s\n", buff);
-                                        srt = srt_from_caption_frame (&frame,srt);
-
-                                        if (!head) {head = srt;}
-                                    }
-                                }
-                            }
-                        }
-
-                        sei_message_free (msg);
-                    }
+                    if (!head) {head = srt;}
                 }
             }
         }

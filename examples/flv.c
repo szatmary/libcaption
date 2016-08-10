@@ -202,12 +202,15 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
     }
 
     sei_t sei;
-    size_t sei_size;
     caption_frame_t frame;
+
+    sei_init (&sei);
     caption_frame_init (&frame);
     caption_frame_from_text (&frame, text);
     sei_from_caption_frame (&sei, &frame);
+
     uint8_t* sei_data = malloc (sei_render_size (&sei));
+    size_t sei_size = sei_render (&sei, sei_data);
 
     // rewrite tag
     flvtag_t new_tag;
@@ -224,8 +227,9 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
 
         // we want to write after AUD if present
         if (0 < sei_size && 9 != nalu_type) {
+            // fprintf (stderr,"Wrote SEI %d\n\n", sei_size);
             flvtag_avcwritenal (&new_tag,sei_data,sei_size);
-            free (sei_data); sei_data = 0; sei_size = 0;
+            sei_size = 0;
         }
 
         flvtag_avcwritenal (&new_tag,nalu_data,nalu_size);
@@ -233,12 +237,18 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
 
     // On the off chance we have an empty frame,
     // We still wish to append the sei
-    if (sei_size) {
+    if (0<sei_size) {
+        // fprintf (stderr,"Wrote SEI %d\n\n", sei_size);
         flvtag_avcwritenal (&new_tag,sei_data,sei_size);
-        free (sei_data); sei_data = 0; sei_size = 0;
+        sei_size = 0;
+    }
+
+    if (sei_data) {
+        free (sei_data);
     }
 
     free (tag->data);
+    sei_free (&sei);
     tag->data = new_tag.data;
     tag->aloc = new_tag.aloc;
     return 1;
