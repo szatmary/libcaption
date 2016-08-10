@@ -72,6 +72,8 @@ int eia608_parse_midrowchange (uint16_t cc_data, int* chan, eia608_style_t* styl
         (*style) = (0x000E & cc_data) >> 1;
         (*underline) = 0x0001 & cc_data;
     }
+
+    return 1;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // control command
