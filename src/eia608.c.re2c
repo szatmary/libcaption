@@ -19,6 +19,25 @@
 int eia608_row_map[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6, 7, 8, 9};
 int eia608_reverse_row_map[] = {2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 0, 6, 7, 8, 9, 1};
 
+const char* eia608_mode_map[] = {
+    "clear",
+    "loading",
+    "popOn",
+    "paintOn",
+    "rollUp",
+};
+
+const char* eia608_style_map[] = {
+    "white",
+    "green",
+    "blue",
+    "cyan",
+    "red",
+    "yellow",
+    "magenta",
+    "italics",
+};
+
 static inline uint16_t eia608_row_pramble (int row, int chan, int x, int underline)
 {
     row = eia608_reverse_row_map[row&0x0F];

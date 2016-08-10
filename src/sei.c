@@ -351,8 +351,7 @@ int sei_to_caption_frame (sei_t* sei, caption_frame_t* frame)
     for (msg = sei_message_head (sei) ; msg ; msg = sei_message_next (msg)) {
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
             cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
-            // cea708_dump (&cea708);
-            cea708_to_caption_frame (frame, &cea708, sei->dts);
+            cea708_to_caption_frame (frame, &cea708, sei_pts (sei));
         }
     }
 

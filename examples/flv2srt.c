@@ -53,7 +53,9 @@ int main (int argc, char** argv)
                     sei_init (&sei);
                     sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts (&tag), flvtag_cts (&tag));
                     sei_to_caption_frame (&sei,&frame);
-                    caption_frame_dump (&frame);
+                    sei_free (&sei);
+
+                    // caption_frame_dump (&frame);
                     srt = srt_from_caption_frame (&frame,srt);
 
                     if (!head) {head = srt;}
@@ -64,7 +66,6 @@ int main (int argc, char** argv)
 
     srt_dump (head);
     srt_free (head);
-    sei_free (&sei);
 
     return 1;
 }

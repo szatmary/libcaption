@@ -353,25 +353,6 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-static const char* eia608_mode_map[] = {
-    "clear",
-    "loading",
-    "popOn",
-    "paintOn",
-    "rollUp",
-};
-
-static const char* eia608_style_map[] = {
-    "white",
-    "green",
-    "blue",
-    "cyan",
-    "red",
-    "yellow",
-    "magenta",
-    "italics",
-};
-
 size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf)
 {
     int r, c;

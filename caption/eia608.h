@@ -24,6 +24,8 @@
 #define EIA608_B1(B) EIA608_B2((B)+0), EIA608_B2((B)+8), EIA608_B2((B)+16), EIA608_B2((B)+24), EIA608_B2((B)+32), EIA608_B2((B)+40), EIA608_B2((B)+48), EIA608_B2((B)+56)
 
 static const uint8_t eia608_parity_table[] = { EIA608_B1 (0), EIA608_B1 (64) };
+extern const char* eia608_mode_map[];
+extern const char* eia608_style_map[];
 
 /*! \brief
     \param
