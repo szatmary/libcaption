@@ -229,7 +229,7 @@ size_t sei_render (sei_t* sei, uint8_t* data)
 
     for (msg = sei->head ; msg ; msg = sei_message_next (msg)) {
         int payloadType      = sei_message_type (msg);
-        int payloadSize      = (int)sei_message_size (msg);
+        int payloadSize      = (int) sei_message_size (msg);
         uint8_t* payloadData = sei_message_data (msg);
 
         while (255 < payloadType) {
@@ -325,7 +325,7 @@ int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, do
             size_t bytes = _copy_to_rbsp (payloadData, payloadSize, data, size);
             sei_message_append (sei, msg);
 
-            if ((int)bytes < payloadSize) {
+            if ( (int) bytes < payloadSize) {
                 goto error;
             }
 

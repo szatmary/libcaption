@@ -14,44 +14,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "srt.h"
 #include "flv.h"
 #include "sei.h"
-// #include "sei.h"
 
-#define MAX_SRT_SIZE (10*1024*1024)
-#define MAX_READ_SIZE 4096
-
-srt_t* srt_from_file (const char* path)
+void get_dudes (char* str)
 {
-    srt_t* head = 0;
-    size_t read, totl = 0;
-    FILE* file = fopen (path,"r");
-
-    if (file) {
-        char* srt_data = malloc (MAX_SRT_SIZE);
-        size_t srt_size = 0;
-        size_t size = MAX_SRT_SIZE;
-        char* data = srt_data;
-
-        while (0 < (read = fread (data,1,size,file))) {
-            totl += read; data += read; size -= read; srt_size += read;
-        }
-
-        head = srt_parse (srt_data,srt_size);
-        free (srt_data);
-    }
-
-    return head;
+    strcpy (str, "XXX(-_-)XXX XXX(-_-)XXX XXX(-_-)XXX");
+    memcpy (&str[0], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, 3);
+    memcpy (&str[8], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT, 3);
+    memcpy (&str[12], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, 3);
+    memcpy (&str[20], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT, 3);
+    memcpy (&str[24], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, 3);
+    memcpy (&str[32], ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT, 3);
 }
 
 int main (int argc, char** argv)
 {
     flvtag_t tag;
-    FILE* flv = flv_open_read (argv[1]);
-    FILE* out = flv_open_write (argv[3]);
-
+    uint32_t nextParty = 0;
     int has_audio, has_video;
+    FILE* flv = flv_open_read (argv[1]);
+    FILE* out = flv_open_write (argv[2]);
+    char partyDudes[35];
+
     flvtag_init (&tag);
 
     if (!flv_read_header (flv,&has_audio,&has_video)) {
@@ -59,28 +44,19 @@ int main (int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    srt_t* head = srt_from_file (argv[2]);
-    srt_t* srt = head;
-
-    if (! head) {
-        fprintf (stderr,"%s is not an srt file\n", argv[2]);
-        return EXIT_FAILURE;
-    }
-
     flv_write_header (out,has_audio,has_video);
 
     while (flv_read_tag (flv,&tag)) {
-        // TODO handle B freame!
-        if (srt && flvtag_timestamp (&tag) >= srt->str_pts && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-            fprintf (stderr,"%f: %s\n", srt->str_pts, srt_data (srt));
-            flvtag_addcaption (&tag, srt_data (srt));
-            srt = srt->next;
+
+        if (nextParty <= flvtag_timestamp (&tag)) {
+            get_dudes (partyDudes);
+            flvtag_addcaption (&tag, partyDudes);
+            fprintf (stderr,"%d: %s\n", flvtag_timestamp (&tag), partyDudes);
+            nextParty += 1000; // party every second
         }
 
         flv_write_tag (out,&tag);
-        // Write tag out here
     }
 
-    srt_free (head);
     return EXIT_SUCCESS;
 }

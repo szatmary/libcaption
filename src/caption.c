@@ -322,7 +322,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
 {
     int r, c, chan = 0;
-    ssize_t size = (ssize_t)strlen (data);
+    ssize_t size = (ssize_t) strlen (data);
     size_t char_count, char_length, line_length = 0, trimmed_length = 0;
     caption_frame_init (frame);
     frame->state.mod = 2; // POP-ON
@@ -340,14 +340,14 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
         }
 
         // Write the line
-        for (c = 0 ; c < (int)char_count ; ++c) {
+        for (c = 0 ; c < (int) char_count ; ++c) {
             caption_frame_write_char (frame,r,c,eia608_style_white,0,&cap_data[0]);
             char_length = utf8_char_length (cap_data);
             cap_data += char_length;
         }
 
         data += line_length;
-        size -= (ssize_t)line_length;
+        size -= (ssize_t) line_length;
     }
 
     return 0;

@@ -47,10 +47,6 @@ if(CMAKE_VERSION VERSION_EQUAL 2.8.12 OR CMAKE_VERSION VERSION_GREATER 2.8.12)
 target_include_directories(caption PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-add_executable(srtdump examples/srtdump.c )
-target_link_libraries(srtdump caption)
-#install (FILES srtdump DESTINATION bin)
-
 add_executable(flv2srt examples/flv2srt.c examples/flv.c)
 target_link_libraries(flv2srt caption)
 #install (FILES flv2srt DESTINATION bin)
@@ -59,13 +55,22 @@ add_executable(flv+srt examples/flv+srt.c examples/flv.c)
 target_link_libraries(flv+srt caption)
 #install (FILES flv+srt DESTINATION bin)
 
+add_executable(party examples/party.c examples/flv.c)
+target_link_libraries(party caption)
+#install (FILES party DESTINATION bin)
+
+add_executable(srtdump examples/srtdump.c )
+target_link_libraries(srtdump caption)
+#install (FILES srtdump DESTINATION bin)
+
 add_executable(srt2vtt examples/srt2vtt.c)
 target_link_libraries(srt2vtt caption)
 #install (FILES srt2vtt DESTINATION bin)
 
 add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
-#install (FILES srt2vtt DESTINATION bin)
+#install (FILES scc2srt DESTINATION bin)
+
 
 
 # unit-tests
