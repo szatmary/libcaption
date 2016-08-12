@@ -50,8 +50,26 @@ int main (int argc, char** argv)
     while (flv_read_tag (flv,&tag)) {
 
         if (nextParty <= flvtag_timestamp (&tag)) {
+            sei_t sei;
+            flvtag_t tag;
+            sei_message_t* msg;
+            caption_frame_t frame;
             get_dudes (partyDudes);
-            flvtag_addcaption (&tag, partyDudes);
+            sei_init (&sei);
+            flvtag_init (&tag);
+            caption_frame_init (&frame);
+            caption_frame_from_text (&frame, partyDudes);
+            sei_from_caption_frame (&sei, &frame);
+
+            for (msg = sei_message_head (&sei); msg; msg=sei_message_next (msg),++nextParty) {
+                flvtag_amfcaption (&tag,nextParty,msg);
+                flv_write_tag (out,&tag);
+            }
+
+            sei_free (&sei);
+            flvtag_free (&tag);
+
+            // flvtag_addcaption (&tag, partyDudes);
             fprintf (stderr,"%d: %s\n", flvtag_timestamp (&tag), partyDudes);
             nextParty += 1000; // party every second
         }

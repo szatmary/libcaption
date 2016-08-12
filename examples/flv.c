@@ -20,6 +20,17 @@ void flvtag_init (flvtag_t* tag)
     memset (tag,0,sizeof (flvtag_t));
 }
 
+void flvtag_free (flvtag_t* tag)
+{
+    if (tag->data)
+    {
+        free (tag->data);
+    }
+
+    flvtag_init (tag);
+}
+
+
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2)
 {
     flvtag_t* tag3;
@@ -155,11 +166,11 @@ int flvtag_updatesize (flvtag_t* tag, uint32_t size)
     return 1;
 }
 
-#define FLVTAG_AVC_PREALOC 2048
+#define FLVTAG_PREALOC 2048
 int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type)
 {
     flvtag_init (tag);
-    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+5+FLV_TAG_FOOTER_SIZE+FLVTAG_AVC_PREALOC);
+    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+5+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
     tag->data[0] = 0x09; // video
     tag->data[4] = dts>>16;
     tag->data[5] = dts>>8;
@@ -175,6 +186,112 @@ int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t
     tag->data[14] = cts>>8;
     tag->data[15] = cts>>0;
     flvtag_updatesize (tag,5);
+    return 1;
+}
+
+int flvtag_initamf (flvtag_t* tag, uint32_t dts)
+{
+    flvtag_init (tag);
+    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
+    tag->data[0] = 0x12; // script
+    tag->data[4] = dts>>16;
+    tag->data[5] = dts>>8;
+    tag->data[6] = dts>>0;
+    tag->data[7] = dts>>24;
+    tag->data[8] = 0; // StreamID
+    tag->data[9] = 0; // StreamID
+    tag->data[10] = 0; // StreamID
+    flvtag_updatesize (tag,0);
+    return 1;
+}
+
+
+/*
+if (TwitchJsonValue::TypeArray == amf.type()) {
+           if (2 <= amf.size() && "onMetaData" == amf.at (0).toString()) {
+               DEBUG ("onMetaData: %s",  amf.at (1).toString().c_str())
+           }
+
+           if (2 <= amf.size() && "onCaptionInfo" == amf.at (0).toString()) {
+               const TwitchJsonValue& captionInfo = amf.at (1);
+
+               if (TwitchJsonValue::TypeObject == captionInfo.type() && "708" == captionInfo.at ("type").toString()) {
+
+                   m_amfCaptions = true; // we have amf captions
+                   std::string data = captionInfo.at ("data").toString();
+                   codify->second->codifyCaptions (data, dts, FLV_TIME_BASE_Q, sid); // in display order, dts same as pts
+
+                   while (codify->second->size()) { forwardFrame (codify->second->take_front()); }
+               }
+           }
+
+           int base64_encode(const unsigned char *in,  unsigned long inlen,
+                                   unsigned char *out, unsigned long *outlen)
+
+*/
+
+// shamelessly taken from libtomcrypt, an public domain project
+static void base64_encode (const unsigned char* in,  unsigned long inlen, unsigned char* out, unsigned long* outlen)
+{
+    static const char* codes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    unsigned long i, len2, leven;
+    unsigned char* p;
+
+    /* valid output size ? */
+    len2 = 4 * ( (inlen + 2) / 3);
+
+    if (*outlen < len2 + 1) {
+        *outlen = len2 + 1;
+        return;
+    }
+
+    p = out;
+    leven = 3* (inlen / 3);
+
+    for (i = 0; i < leven; i += 3) {
+        *p++ = codes[ (in[0] >> 2) & 0x3F];
+        *p++ = codes[ ( ( (in[0] & 3) << 4) + (in[1] >> 4)) & 0x3F];
+        *p++ = codes[ ( ( (in[1] & 0xf) << 2) + (in[2] >> 6)) & 0x3F];
+        *p++ = codes[in[2] & 0x3F];
+        in += 3;
+    }
+
+    if (i < inlen) {
+        unsigned a = in[0];
+        unsigned b = (i+1 < inlen) ? in[1] : 0;
+
+        *p++ = codes[ (a >> 2) & 0x3F];
+        *p++ = codes[ ( ( (a & 3) << 4) + (b >> 4)) & 0x3F];
+        *p++ = (i+1 < inlen) ? codes[ ( ( (b & 0xf) << 2)) & 0x3F] : '=';
+        *p++ = '=';
+    }
+
+    /* append a NULL byte */
+    *p = '\0';
+
+    /* return ok */
+    *outlen = p - out;
+}
+
+const char onCaptionInfo[] = "\x02\x00\x0DonCaptionInfo" \
+                             "\08\x00\x00\x00\x02" \
+                             "\x00\x04type" \
+                             "\x02\x00\x02708" \
+                             "\x00\x04data" \
+                             "\x02\x00\x00";
+
+int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
+{
+    char* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo);
+    unsigned long size = ( (1+sei_message_size (msg)) *4) /3;
+    flvtag_reserve (tag, FLV_TAG_HEADER_SIZE + sizeof (onCaptionInfo) + size + 3 + FLV_TAG_FOOTER_SIZE);
+    base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
+    data[sizeof (onCaptionInfo)-2] == size >> 8;
+    data[sizeof (onCaptionInfo)-1] == size >> 0;
+    data[size-2] = '\x00';
+    data[size-1] = '\x00';
+    data[size-0] = '\x09';
+    flvtag_updatesize (tag, sizeof (onCaptionInfo) + size + 3);
     return 1;
 }
 

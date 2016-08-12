@@ -23,6 +23,7 @@ typedef struct {
 } flvtag_t;
 
 void flvtag_init (flvtag_t* tag);
+void flvtag_free (flvtag_t* tag);
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2);
 // static inline uint8_t *flvtag_data (flvtag_t* tag) { return &tag->data[0]; }
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,3 +113,4 @@ int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t
 int flvtag_avcwritenal (flvtag_t* tag, uint8_t* data, size_t size);
 int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text);
 ////////////////////////////////////////////////////////////////////////////////
+int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
