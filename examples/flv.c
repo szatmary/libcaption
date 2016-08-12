@@ -22,8 +22,7 @@ void flvtag_init (flvtag_t* tag)
 
 void flvtag_free (flvtag_t* tag)
 {
-    if (tag->data)
-    {
+    if (tag->data) {
         free (tag->data);
     }
 
@@ -171,7 +170,7 @@ int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t
 {
     flvtag_init (tag);
     flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+5+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
-    tag->data[0] = 0x09; // video
+    tag->data[0] = flvtag_type_video;
     tag->data[4] = dts>>16;
     tag->data[5] = dts>>8;
     tag->data[6] = dts>>0;
@@ -193,7 +192,7 @@ int flvtag_initamf (flvtag_t* tag, uint32_t dts)
 {
     flvtag_init (tag);
     flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
-    tag->data[0] = 0x12; // script
+    tag->data[0] = flvtag_type_scriptdata;
     tag->data[4] = dts>>16;
     tag->data[5] = dts>>8;
     tag->data[6] = dts>>0;
@@ -204,31 +203,6 @@ int flvtag_initamf (flvtag_t* tag, uint32_t dts)
     flvtag_updatesize (tag,0);
     return 1;
 }
-
-
-/*
-if (TwitchJsonValue::TypeArray == amf.type()) {
-           if (2 <= amf.size() && "onMetaData" == amf.at (0).toString()) {
-               DEBUG ("onMetaData: %s",  amf.at (1).toString().c_str())
-           }
-
-           if (2 <= amf.size() && "onCaptionInfo" == amf.at (0).toString()) {
-               const TwitchJsonValue& captionInfo = amf.at (1);
-
-               if (TwitchJsonValue::TypeObject == captionInfo.type() && "708" == captionInfo.at ("type").toString()) {
-
-                   m_amfCaptions = true; // we have amf captions
-                   std::string data = captionInfo.at ("data").toString();
-                   codify->second->codifyCaptions (data, dts, FLV_TIME_BASE_Q, sid); // in display order, dts same as pts
-
-                   while (codify->second->size()) { forwardFrame (codify->second->take_front()); }
-               }
-           }
-
-           int base64_encode(const unsigned char *in,  unsigned long inlen,
-                                   unsigned char *out, unsigned long *outlen)
-
-*/
 
 // shamelessly taken from libtomcrypt, an public domain project
 static void base64_encode (const unsigned char* in,  unsigned long inlen, unsigned char* out, unsigned long* outlen)
@@ -242,6 +216,7 @@ static void base64_encode (const unsigned char* in,  unsigned long inlen, unsign
 
     if (*outlen < len2 + 1) {
         *outlen = len2 + 1;
+        fprintf (stderr,"\n\nHERE\n\n");
         return;
     }
 
@@ -266,32 +241,35 @@ static void base64_encode (const unsigned char* in,  unsigned long inlen, unsign
         *p++ = '=';
     }
 
-    /* append a NULL byte */
-    *p = '\0';
-
     /* return ok */
     *outlen = p - out;
 }
 
-const char onCaptionInfo[] = "\x02\x00\x0DonCaptionInfo" \
-                             "\08\x00\x00\x00\x02" \
-                             "\x00\x04type" \
-                             "\x02\x00\x02708" \
-                             "\x00\x04data" \
-                             "\x02\x00\x00";
+const char onCaptionInfo[] = { 0x02,0x00,0x0D, 'o','n','C','a','p','t','i','o','n','I','n','f','o',
+                               0x08, 0x00, 0x00, 0x00, 0x02,
+                               0x00, 0x04, 't','y','p','e',
+                               0x02, 0x00, 0x03, '7','0','8',
+                               0x00, 0x04, 'd','a','t','a',
+                               0x02, 0x00,0x00
+                             };
 
 int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
 {
-    char* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo);
-    unsigned long size = ( (1+sei_message_size (msg)) *4) /3;
+    flvtag_initamf (tag,timestamp);
+    unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
     flvtag_reserve (tag, FLV_TAG_HEADER_SIZE + sizeof (onCaptionInfo) + size + 3 + FLV_TAG_FOOTER_SIZE);
+    memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
+    char* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
     base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
-    data[sizeof (onCaptionInfo)-2] == size >> 8;
-    data[sizeof (onCaptionInfo)-1] == size >> 0;
-    data[size-2] = '\x00';
-    data[size-1] = '\x00';
-    data[size-0] = '\x09';
+
+    data[-2] = size >> 8;
+    data[-1] = size >> 0;
+    // rewrite the last array element
+    data[size+0] = 0x00;
+    data[size+1] = 0x00;
+    data[size+2] = 0x09;
     flvtag_updatesize (tag, sizeof (onCaptionInfo) + size + 3);
+
     return 1;
 }
 
