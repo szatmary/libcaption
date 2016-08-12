@@ -72,7 +72,7 @@ int main (int argc, char** argv)
 
         if (nextParty <= flvtag_timestamp (&tag)) {
             get_dudes (partyDudes);
-            write_amfcaptions (out,nextParty,partyDudes);
+            // write_amfcaptions (out,nextParty,partyDudes);
             flvtag_addcaption (&tag, partyDudes);
             fprintf (stderr,"%d: %s\n",nextParty, partyDudes);
             nextParty += 1000; // party every second
