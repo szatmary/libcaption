@@ -34,6 +34,11 @@ typedef struct {
     utf8_char_t data[5];  //< 4 byte utf8 values plus null term
 }  caption_frame_cell_t;
 
+typedef struct {
+    caption_frame_cell_t cell[SCREEN_ROWS][SCREEN_COLS];
+} caption_frame_buffer_t;
+
+
 typedef struct  {
     unsigned int uln : 1; //< underline
     unsigned int sty : 3; //< style
@@ -46,7 +51,8 @@ typedef struct {
     double str_pts;
     double end_pts;
     caption_frame_state_t state;
-    caption_frame_cell_t cell[SCREEN_ROWS][SCREEN_COLS];
+    caption_frame_buffer_t front;
+    caption_frame_buffer_t back;
 } caption_frame_t;
 
 // typedef enum {
@@ -57,9 +63,6 @@ typedef struct {
 //     eia608_rollup_4 = 4,
 // } eia608_display_mode_t;
 // eia608_display_mode_t caption_frame_mode (caption_frame_t* frame);
-
-
-
 
 
 /*!
@@ -83,7 +86,6 @@ const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int
 /*! \brief
     \param
 */
-caption_frame_cell_t* frame_cell (caption_frame_t* frame, int row, int col);
 
 #define LIBCAPTION_OK 1
 #define LIBCAPTION_ERROR 0

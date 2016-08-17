@@ -385,7 +385,8 @@ void sei_encode_eia608 (sei_t* sei, cea708_t* cea708, uint16_t cc_data)
     }
 
     if (0 == cc_data) { // Finished
-        cea708_add_cc_data (cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_end_of_caption, DEFAULT_CHANNEL));
+        sei_encode_eia608 (sei,cea708,eia608_control_command (eia608_control_erase_display_memory, DEFAULT_CHANNEL));
+        sei_encode_eia608 (sei,cea708,eia608_control_command (eia608_control_end_of_caption, DEFAULT_CHANNEL));
         sei_append_708 (sei,cea708);
         return;
     }
@@ -401,10 +402,8 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
     uint16_t prev_cc_data;
 
     cea708_init (&cea708); // set up a new popon frame
-    sei_encode_eia608 (sei,&cea708,eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
-    sei_encode_eia608 (sei,&cea708,eia608_control_command (eia608_control_erase_display_memory, DEFAULT_CHANNEL));
-    sei_encode_eia608 (sei,&cea708,eia608_control_command (eia608_control_end_of_caption, DEFAULT_CHANNEL));
-    sei_encode_eia608 (sei,&cea708,eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
 
     for (r=0; r<SCREEN_ROWS; ++r) {
         // Calculate preamble
