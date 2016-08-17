@@ -17,29 +17,45 @@
 #include <stdio.h>
 #include <string.h>
 ////////////////////////////////////////////////////////////////////////////////
-void caption_frame_clear (caption_frame_t* frame)
+void caption_frame_buffer_clear (caption_frame_buffer_t* buff)
 {
-    frame->state = (caption_frame_state_t) {0,0,0,0,0,0}; // clear global state
-    memset (&frame->cell[0][0],0,sizeof (caption_frame_cell_t) *SCREEN_COLS*SCREEN_ROWS);
+    memset (buff,0,sizeof (caption_frame_buffer_t));
 }
 
 void caption_frame_init (caption_frame_t* frame)
 {
     frame->str_pts = -1;
     frame->end_pts = -1;
-    caption_frame_clear (frame);
+    frame->state = (caption_frame_state_t) {0,0,0,0,0}; // clear global state
+    caption_frame_buffer_clear (&frame->back);
+    caption_frame_buffer_clear (&frame->front);
 }
 ////////////////////////////////////////////////////////////////////////////////
 #define CAPTION_CLEAR     0
-#define CAPTION_LOADING   1
 #define CAPTION_POP_ON    2
 #define CAPTION_PAINT_ON  3
 #define CAPTION_ROLL_UP   4
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
-caption_frame_cell_t* frame_cell (caption_frame_t* frame, int row, int col)
+static caption_frame_cell_t* frame_buffer_cell (caption_frame_buffer_t* buff, int row, int col)
 {
-    return &frame->cell[row][col];
+    return &buff->cell[row][col];
+}
+
+static caption_frame_buffer_t* frame_write_buffer (caption_frame_t* frame)
+{
+    if (CAPTION_POP_ON == frame->state.mod) {
+        return &frame->back;
+    } else if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
+        return &frame->front;
+    } else {
+        return 0;
+    }
+}
+
+static caption_frame_cell_t* frame_cell (caption_frame_t* frame, int row, int col)
+{
+    return frame_buffer_cell (&frame->front,row,col);
 }
 
 static caption_frame_cell_t* frame_cell_get (caption_frame_t* frame)
@@ -47,30 +63,17 @@ static caption_frame_cell_t* frame_cell_get (caption_frame_t* frame)
     return frame_cell (frame, frame->state.row, frame->state.col);
 }
 
-static char* frame_cell_get_char (caption_frame_t* frame)
-{
-    return &frame_cell_get (frame)->data[0];
-}
-
-static void eia608_cell_clear (caption_frame_cell_t* cell)
-{
-    memset (cell,0,sizeof (caption_frame_cell_t));
-}
-
-static void eia608_cell_clear_at (caption_frame_t* frame, int row, int col)
-{
-    eia608_cell_clear (frame_cell (frame, row, col));
-}
 ////////////////////////////////////////////////////////////////////////////////
 uint16_t _eia608_from_utf8 (const char* s); // function is in eia608.c.re2c
 int caption_frame_write_char (caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c)
 {
-    // Check to see if this is a valis charcter
-    if (! _eia608_from_utf8 (c)) {
+    caption_frame_buffer_t* buff = frame_write_buffer (frame);
+
+    if (!buff || ! _eia608_from_utf8 (c)) {
         return 0;
     }
 
-    caption_frame_cell_t* cell = frame_cell (frame, row, col);
+    caption_frame_cell_t* cell = frame_buffer_cell (buff,row,col);
 
     if (utf8_char_copy (&cell->data[0],c)) {
         cell->uln = underline;
@@ -84,6 +87,18 @@ int caption_frame_write_char (caption_frame_t* frame, int row, int col, eia608_s
 const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
 {
     caption_frame_cell_t* cell = frame_cell (frame, row, col);
+
+    if (!cell) {
+        if (style) {
+            (*style) = eia608_style_white;
+        }
+
+        if (underline) {
+            (*underline) = 0;
+        }
+
+        return EIA608_CHAR_NULL;
+    }
 
     if (style) {
         (*style) = cell->sty;
@@ -100,6 +115,12 @@ const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int
 // Parsing
 void caption_frame_carriage_return (caption_frame_t* frame)
 {
+    caption_frame_buffer_t* buff = frame_write_buffer (frame);
+
+    if (!buff) {
+        return;
+    }
+
     int r = frame->state.row - (frame->state.rup-1);
 
     if (0  >= r || CAPTION_ROLL_UP != frame->state.mod) {
@@ -107,12 +128,12 @@ void caption_frame_carriage_return (caption_frame_t* frame)
     }
 
     for (; r < SCREEN_ROWS; ++r) {
-        uint8_t* dst = (uint8_t*) frame_cell (frame,r-1,0);
-        uint8_t* src = (uint8_t*) frame_cell (frame,r-0,0);
+        uint8_t* dst = (uint8_t*) frame_buffer_cell (buff,r-1,0);
+        uint8_t* src = (uint8_t*) frame_buffer_cell (buff,r-0,0);
         memcpy (dst,src,sizeof (caption_frame_cell_t) * SCREEN_COLS);
     }
 
-    memset (frame_cell (frame,SCREEN_ROWS-1,0), 0,sizeof (caption_frame_cell_t) * SCREEN_COLS);
+    memset (frame_buffer_cell (buff,SCREEN_ROWS-1,0), 0,sizeof (caption_frame_cell_t) * SCREEN_COLS);
 }
 ////////////////////////////////////////////////////////////////////////////////
 int eia608_write_char (caption_frame_t* frame, char* c)
@@ -123,16 +144,12 @@ int eia608_write_char (caption_frame_t* frame, char* c)
         return 0;
     }
 
-    caption_frame_cell_t* cell = frame_cell_get (frame);
-
-    if (0 >= utf8_char_copy (&cell->data[0],c)) {
-        return 0;
-    } else {
-        cell->sty = frame->state.sty;
-        cell->uln = frame->state.uln;
+    if (caption_frame_write_char (frame,frame->state.row,frame->state.col,frame->state.sty,frame->state.uln, c)) {
         frame->state.col += 1;
         return 1;
     }
+
+    return 0;
 }
 
 int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
@@ -181,7 +198,6 @@ int caption_frame_decode_midrowchange (caption_frame_t* frame, uint16_t cc_data)
     return 0;
 }
 
-
 int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
 {
     int cc;
@@ -195,13 +211,8 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
         return LIBCAPTION_OK;
 
     case eia608_control_erase_display_memory:
-        caption_frame_clear (frame);
-
-        if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
-            return LIBCAPTION_READY;
-        } else {
-            return LIBCAPTION_OK;
-        }
+        caption_frame_buffer_clear (&frame->front);
+        return LIBCAPTION_OK;
 
     // ROLL-UP
     case eia608_control_roll_up_2:
@@ -227,14 +238,14 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     case eia608_control_backspace:
         // do not reverse wrap (tw 28:20)
         frame->state.col = (0 < frame->state.col) ? (frame->state.col - 1) : 0;
-        eia608_cell_clear_at (frame, frame->state.row, frame->state.col);
+        caption_frame_write_char (frame,frame->state.row,frame->state.col,eia608_style_white,0,EIA608_CHAR_NULL);
         return LIBCAPTION_READY;
 
     case eia608_control_delete_to_end_of_row: {
         int c;
 
         for (c = frame->state.col ; c < SCREEN_COLS ; ++c) {
-            eia608_cell_clear_at (frame, frame->state.row, c);
+            caption_frame_write_char (frame,frame->state.row,c,eia608_style_white,0,EIA608_CHAR_NULL);
         }
     }
 
@@ -243,16 +254,15 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     // POP ON
     case eia608_control_resume_caption_loading:
         frame->state.rup = 0;
-        frame->state.mod = CAPTION_LOADING;
+        frame->state.mod = CAPTION_POP_ON;
         return LIBCAPTION_OK;
 
     case eia608_control_erase_non_displayed_memory:
-        caption_frame_clear (frame);
+        caption_frame_buffer_clear (&frame->back);
         return LIBCAPTION_OK;
 
     case eia608_control_end_of_caption:
-        frame->state.rup = 0;
-        frame->state.mod = CAPTION_POP_ON;
+        memcpy (&frame->front,&frame->back,sizeof (caption_frame_buffer_t));
         return LIBCAPTION_READY;
 
     // cursor positioning
@@ -269,7 +279,7 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     case eia608_control_alarm_on:
     case eia608_control_text_restart:
     case eia608_control_text_resume_text_display:
-        return 0;
+        return LIBCAPTION_OK;
     }
 }
 
@@ -279,12 +289,6 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 
     if (!eia608_varify (cc_data)) {
         return 0;
-    }
-
-    if (CAPTION_POP_ON == frame->state.mod) {
-        // caption_frame_init (frame);
-    } else if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
-        frame->str_pts = frame->end_pts = -1;
     }
 
     if (0 < pts) {
@@ -314,6 +318,11 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         status =  caption_frame_decode_preamble (frame,cc_data);
     } else if (eia608_is_midrowchange (cc_data)) {
         status =  caption_frame_decode_midrowchange (frame,cc_data);
+    }
+
+    if (LIBCAPTION_READY==status) {
+        frame->str_pts = pts;
+        frame->end_pts = -1;
     }
 
     return status;
