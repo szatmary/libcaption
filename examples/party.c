@@ -29,10 +29,31 @@ void get_dudes (char* str)
              EIA608_CHAR_EIGHTH_NOTE, EIA608_CHAR_EIGHTH_NOTE);
 }
 
+void write_amfcaptions (FILE* out, uint32_t timestamp, const char* text)
+{
+    sei_t sei;
+    flvtag_t tag;
+    sei_message_t* msg;
+    caption_frame_t frame;
+    sei_init (&sei);
+    flvtag_init (&tag);
+    caption_frame_init (&frame);
+    caption_frame_from_text (&frame, text);
+    sei_from_caption_frame (&sei, &frame);
+
+    for (msg = sei_message_head (&sei); msg; msg=sei_message_next (msg),++timestamp) {
+        flvtag_amfcaption (&tag,timestamp,msg);
+        flv_write_tag (out,&tag);
+    }
+
+    sei_free (&sei);
+    flvtag_free (&tag);
+}
+
 int main (int argc, char** argv)
 {
     flvtag_t tag;
-    uint32_t nextParty = 0;
+    uint32_t nextParty = 1000;
     int has_audio, has_video;
     FILE* flv = flv_open_read (argv[1]);
     FILE* out = flv_open_write (argv[2]);
@@ -51,8 +72,9 @@ int main (int argc, char** argv)
 
         if (nextParty <= flvtag_timestamp (&tag)) {
             get_dudes (partyDudes);
+            // write_amfcaptions (out,nextParty,partyDudes);
             flvtag_addcaption (&tag, partyDudes);
-            fprintf (stderr,"%d: %s\n", flvtag_timestamp (&tag), partyDudes);
+            fprintf (stderr,"%d: %s\n",nextParty, partyDudes);
             nextParty += 1000; // party every second
         }
 

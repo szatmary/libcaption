@@ -20,6 +20,16 @@ void flvtag_init (flvtag_t* tag)
     memset (tag,0,sizeof (flvtag_t));
 }
 
+void flvtag_free (flvtag_t* tag)
+{
+    if (tag->data) {
+        free (tag->data);
+    }
+
+    flvtag_init (tag);
+}
+
+
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2)
 {
     flvtag_t* tag3;
@@ -155,12 +165,12 @@ int flvtag_updatesize (flvtag_t* tag, uint32_t size)
     return 1;
 }
 
-#define FLVTAG_AVC_PREALOC 2048
+#define FLVTAG_PREALOC 2048
 int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type)
 {
     flvtag_init (tag);
-    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+5+FLV_TAG_FOOTER_SIZE+FLVTAG_AVC_PREALOC);
-    tag->data[0] = 0x09; // video
+    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+5+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
+    tag->data[0] = flvtag_type_video;
     tag->data[4] = dts>>16;
     tag->data[5] = dts>>8;
     tag->data[6] = dts>>0;
@@ -175,6 +185,91 @@ int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t
     tag->data[14] = cts>>8;
     tag->data[15] = cts>>0;
     flvtag_updatesize (tag,5);
+    return 1;
+}
+
+int flvtag_initamf (flvtag_t* tag, uint32_t dts)
+{
+    flvtag_init (tag);
+    flvtag_reserve (tag,FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE+FLVTAG_PREALOC);
+    tag->data[0] = flvtag_type_scriptdata;
+    tag->data[4] = dts>>16;
+    tag->data[5] = dts>>8;
+    tag->data[6] = dts>>0;
+    tag->data[7] = dts>>24;
+    tag->data[8] = 0; // StreamID
+    tag->data[9] = 0; // StreamID
+    tag->data[10] = 0; // StreamID
+    flvtag_updatesize (tag,0);
+    return 1;
+}
+
+// shamelessly taken from libtomcrypt, an public domain project
+static void base64_encode (const unsigned char* in,  unsigned long inlen, unsigned char* out, unsigned long* outlen)
+{
+    static const char* codes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    unsigned long i, len2, leven;
+    unsigned char* p;
+
+    /* valid output size ? */
+    len2 = 4 * ( (inlen + 2) / 3);
+
+    if (*outlen < len2 + 1) {
+        *outlen = len2 + 1;
+        fprintf (stderr,"\n\nHERE\n\n");
+        return;
+    }
+
+    p = out;
+    leven = 3* (inlen / 3);
+
+    for (i = 0; i < leven; i += 3) {
+        *p++ = codes[ (in[0] >> 2) & 0x3F];
+        *p++ = codes[ ( ( (in[0] & 3) << 4) + (in[1] >> 4)) & 0x3F];
+        *p++ = codes[ ( ( (in[1] & 0xf) << 2) + (in[2] >> 6)) & 0x3F];
+        *p++ = codes[in[2] & 0x3F];
+        in += 3;
+    }
+
+    if (i < inlen) {
+        unsigned a = in[0];
+        unsigned b = (i+1 < inlen) ? in[1] : 0;
+
+        *p++ = codes[ (a >> 2) & 0x3F];
+        *p++ = codes[ ( ( (a & 3) << 4) + (b >> 4)) & 0x3F];
+        *p++ = (i+1 < inlen) ? codes[ ( ( (b & 0xf) << 2)) & 0x3F] : '=';
+        *p++ = '=';
+    }
+
+    /* return ok */
+    *outlen = p - out;
+}
+
+const char onCaptionInfo[] = { 0x02,0x00,0x0D, 'o','n','C','a','p','t','i','o','n','I','n','f','o',
+                               0x08, 0x00, 0x00, 0x00, 0x02,
+                               0x00, 0x04, 't','y','p','e',
+                               0x02, 0x00, 0x03, '7','0','8',
+                               0x00, 0x04, 'd','a','t','a',
+                               0x02, 0x00,0x00
+                             };
+
+int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
+{
+    flvtag_initamf (tag,timestamp);
+    unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
+    flvtag_reserve (tag, FLV_TAG_HEADER_SIZE + sizeof (onCaptionInfo) + size + 3 + FLV_TAG_FOOTER_SIZE);
+    memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
+    char* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
+    base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
+
+    data[-2] = size >> 8;
+    data[-1] = size >> 0;
+    // rewrite the last array element
+    data[size+0] = 0x00;
+    data[size+1] = 0x00;
+    data[size+2] = 0x09;
+    flvtag_updatesize (tag, sizeof (onCaptionInfo) + size + 3);
+
     return 1;
 }
 
