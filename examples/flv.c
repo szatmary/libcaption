@@ -259,7 +259,7 @@ int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
     unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
     flvtag_reserve (tag, FLV_TAG_HEADER_SIZE + sizeof (onCaptionInfo) + size + 3 + FLV_TAG_FOOTER_SIZE);
     memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
-    char* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
+    uint8_t* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
     base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
 
     data[-2] = size >> 8;
