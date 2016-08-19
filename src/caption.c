@@ -268,7 +268,7 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
         return LIBCAPTION_OK;
 
     case eia608_control_end_of_caption:
-        caption_frame_end (&frame);
+        caption_frame_end (frame);
         return LIBCAPTION_READY;
 
     // cursor positioning

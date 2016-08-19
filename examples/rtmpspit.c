@@ -1,5 +1,6 @@
 #include "flv.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <librtmp/rtmp.h>
 #include <sys/select.h>
@@ -12,13 +13,13 @@ int main (int argc, const char** argv)
 
     flvtag_t tag;
     int has_audio, has_video;
-    const char* url = 0;
+    char* url = 0;
 
     if (2 >= argc) {
         fprintf (stderr,"Usage %s [input] [url]\n",argv[0]);
     }
 
-    url = argv[2];
+    url = (char*) argv[2];
     flv = flv_open_read (argv[1]);
 
     if (! flv) {
@@ -53,7 +54,7 @@ int main (int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
-        RTMP_Write (rtmp,flvtag_raw_data (&tag),flvtag_raw_size (&tag));
+        RTMP_Write (rtmp, (const char*) flvtag_raw_data (&tag),flvtag_raw_size (&tag));
 
         // Handle RTMP ping and such
         fd_set sockset; struct timeval timeout = {0,0};
