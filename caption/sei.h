@@ -12,8 +12,8 @@
 /**********************************************************************************************/
 
 
-#ifndef LIBCAPTION_sei_H
-#define LIBCAPTION_sei_H
+#ifndef LIBCAPTION_SEI_H
+#define LIBCAPTION_SEI_H
 #include "cea708.h"
 #include "caption.h"
 #include <float.h>

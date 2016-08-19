@@ -10,10 +10,16 @@
 /* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the    */
 /* License for the specific language governing permissions and limitations under the License. */
 /**********************************************************************************************/
+#ifndef LIBCAPTION_FLV_H
+#define LIBCAPTION_FLV_H
 
 #include <stdio.h>
 #include <stddef.h>
 #include <inttypes.h>
+#define FLV_HEADER_SIZE     13
+#define FLV_FOOTER_SIZE      4
+#define FLV_TAG_HEADER_SIZE 11
+#define FLV_TAG_FOOTER_SIZE  4
 ////////////////////////////////////////////////////////////////////////////////
 #include "sei.h"
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,6 +107,9 @@ FILE* flv_open_read (const char* flv);
 FILE* flv_open_write (const char* flv);
 FILE* flv_close (FILE* flv);
 ////////////////////////////////////////////////////////////////////////////////
+static inline const uint8_t* flvtag_raw_data (flvtag_t* tag) { return tag->data; }
+static inline const size_t flvtag_raw_size (flvtag_t* tag) { return flvtag_size (tag)+FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE; }
+////////////////////////////////////////////////////////////////////////////////
 int flv_read_tag (FILE* flv, flvtag_t* tag);
 int flv_write_tag (FILE* flv, flvtag_t* tag);
 int flv_read_header (FILE* flv, int* has_audio, int* has_video);
@@ -114,3 +123,4 @@ int flvtag_avcwritenal (flvtag_t* tag, uint8_t* data, size_t size);
 int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text);
 ////////////////////////////////////////////////////////////////////////////////
 int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
+#endif

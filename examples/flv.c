@@ -29,7 +29,6 @@ void flvtag_free (flvtag_t* tag)
     flvtag_init (tag);
 }
 
-
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2)
 {
     flvtag_t* tag3;
@@ -72,8 +71,6 @@ FILE* flv_close (FILE* flv)
     return 0;
 }
 
-#define FLV_HEADER_SIZE 13
-#define FLV_FOOTER_SIZE 4
 int flv_read_header (FILE* flv, int* has_audio, int* has_video)
 {
     uint8_t h[FLV_HEADER_SIZE];
@@ -97,8 +94,6 @@ int flv_write_header (FILE* flv, int has_audio, int has_video)
     return FLV_HEADER_SIZE == fwrite (&h[0],1,FLV_HEADER_SIZE,flv);
 }
 
-#define FLV_TAG_HEADER_SIZE 11
-#define FLV_TAG_FOOTER_SIZE 4
 int flv_read_tag (FILE* flv, flvtag_t* tag)
 {
     uint32_t size;
@@ -122,8 +117,8 @@ int flv_read_tag (FILE* flv, flvtag_t* tag)
 
 int flv_write_tag (FILE* flv, flvtag_t* tag)
 {
-    size_t size = flvtag_size (tag)+FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE;
-    return size == fwrite (tag->data,1,size,flv);
+    size_t size = flvtag_raw_size (tag);
+    return size == fwrite (flvtag_raw_data (tag),1,size,flv);
 }
 ////////////////////////////////////////////////////////////////////////////////
 size_t flvtag_header_size (flvtag_t* tag)
@@ -259,12 +254,12 @@ int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
     unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
     flvtag_reserve (tag, FLV_TAG_HEADER_SIZE + sizeof (onCaptionInfo) + size + 3 + FLV_TAG_FOOTER_SIZE);
     memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
-    uint8_t* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
+    uint8_t* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo);
     base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
 
     data[-2] = size >> 8;
     data[-1] = size >> 0;
-    // rewrite the last array element
+    // write the last array element
     data[size+0] = 0x00;
     data[size+1] = 0x00;
     data[size+2] = 0x09;
