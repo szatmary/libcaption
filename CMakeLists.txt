@@ -14,7 +14,8 @@ else()
 endif()
 
 # Don't need to prefix local includes with "caption/*"
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
+link_directories(/usr/local/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption /usr/local/include)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c
   COMMAND re2c -bis -o ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
@@ -71,7 +72,9 @@ add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
 #install (FILES scc2srt DESTINATION bin)
 
-
+add_executable(rtmpspit examples/rtmpspit.c examples/flv.c)
+target_link_libraries(rtmpspit rtmp caption)
+#install (FILES rtmpspit DESTINATION bin)
 
 # unit-tests
 #add_executable(eia608_test unit_tests/eia608_test.c )

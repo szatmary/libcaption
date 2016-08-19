@@ -152,6 +152,12 @@ int eia608_write_char (caption_frame_t* frame, char* c)
     return 0;
 }
 
+int caption_frame_end (caption_frame_t* frame)
+{
+    memcpy (&frame->front,&frame->back,sizeof (caption_frame_buffer_t));
+    return 1;
+}
+
 int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
 {
     int chan;
@@ -262,7 +268,7 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
         return LIBCAPTION_OK;
 
     case eia608_control_end_of_caption:
-        memcpy (&frame->front,&frame->back,sizeof (caption_frame_buffer_t));
+        caption_frame_end (&frame);
         return LIBCAPTION_READY;
 
     // cursor positioning
@@ -334,7 +340,7 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
     ssize_t size = (ssize_t) strlen (data);
     size_t char_count, char_length, line_length = 0, trimmed_length = 0;
     caption_frame_init (frame);
-    frame->state.mod = 2; // POP-ON
+    frame->state.mod = CAPTION_POP_ON;
 
     for (r = 0 ; 0 < size && SCREEN_ROWS > r ; ++r) {
         const utf8_char_t* cap_data = data;
@@ -359,6 +365,7 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
         size -= (ssize_t) line_length;
     }
 
+    caption_frame_end (frame);
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
