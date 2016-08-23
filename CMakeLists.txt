@@ -71,7 +71,10 @@ add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
 #install (FILES scc2srt DESTINATION bin)
 
-
+include_directories(/usr/local/include)
+add_executable(rtmpspit examples/rtmpspit.c  examples/flv.c)
+target_link_libraries(rtmpspit caption rtmp)
+#install (FILES rtmpspit DESTINATION bin)
 
 # unit-tests
 #add_executable(eia608_test unit_tests/eia608_test.c )

@@ -17,9 +17,11 @@
 #include "flv.h"
 #include "sei.h"
 
+#define USE_AMF 1
+
 void get_dudes (char* str)
 {
-    sprintf (str, "%s%s %s(-_-)%s %s(-_-)%s %s(-_-)%s %s%s", EIA608_CHAR_EIGHTH_NOTE, EIA608_CHAR_EIGHTH_NOTE,
+    sprintf (str, " %s%s %s(-_-)%s %s(-_-)%s %s(-_-)%s %s%s", EIA608_CHAR_EIGHTH_NOTE, EIA608_CHAR_EIGHTH_NOTE,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT,
@@ -72,10 +74,15 @@ int main (int argc, char** argv)
 
         if (nextParty <= flvtag_timestamp (&tag)) {
             get_dudes (partyDudes);
-            // write_amfcaptions (out,nextParty,partyDudes);
-            flvtag_addcaption (&tag, partyDudes);
+
+            if (USE_AMF) {
+                write_amfcaptions (out,nextParty,partyDudes);
+            } else {
+                flvtag_addcaption (&tag, partyDudes);
+            }
+
             fprintf (stderr,"%d: %s\n",nextParty, partyDudes);
-            nextParty += 1000; // party every second
+            nextParty += 250; // party all the time
         }
 
         flv_write_tag (out,&tag);

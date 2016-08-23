@@ -17,6 +17,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "sei.h"
 ////////////////////////////////////////////////////////////////////////////////
+#define FLV_TAG_HEADER_SIZE 11
+#define FLV_TAG_FOOTER_SIZE 4
+#define FLV_HEADER_SIZE 13
+#define FLV_FOOTER_SIZE 4
+////////////////////////////////////////////////////////////////////////////////
 typedef struct {
     uint8_t* data;
     size_t   aloc;
@@ -25,11 +30,6 @@ typedef struct {
 void flvtag_init (flvtag_t* tag);
 void flvtag_free (flvtag_t* tag);
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2);
-// static inline uint8_t *flvtag_data (flvtag_t* tag) { return &tag->data[0]; }
-////////////////////////////////////////////////////////////////////////////////
-size_t flvtag_header_size (flvtag_t* tag);
-size_t flvtag_payload_size (flvtag_t* tag);
-uint8_t* flvtag_payload_data (flvtag_t* tag);
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum {
     flvtag_type_audio      = 0x08,
@@ -96,6 +96,12 @@ static inline uint32_t flvtag_timestamp (flvtag_t* tag) { return (tag->data[7]<<
 static inline uint32_t flvtag_dts (flvtag_t* tag) { return flvtag_timestamp (tag); }
 static inline uint32_t flvtag_cts (flvtag_t* tag) { return (flvtag_avcpackettype_nalu!=flvtag_avcpackettype (tag)) ?0: (tag->data[13]<<16) | (tag->data[14]<<8) |tag->data[15]; }
 static inline uint32_t flvtag_pts (flvtag_t* tag) { return flvtag_dts (tag)+flvtag_dts (tag); }
+////////////////////////////////////////////////////////////////////////////////
+size_t flvtag_header_size (flvtag_t* tag);
+size_t flvtag_payload_size (flvtag_t* tag);
+uint8_t* flvtag_payload_data (flvtag_t* tag);
+inline static size_t flvtag_raw_size (flvtag_t* tag) { flvtag_size (tag)+FLV_TAG_HEADER_SIZE+FLV_TAG_FOOTER_SIZE; }
+inline static uint8_t* flvtag_raw_data (flvtag_t* tag) { return tag->data; }
 ////////////////////////////////////////////////////////////////////////////////
 FILE* flv_open_read (const char* flv);
 FILE* flv_open_write (const char* flv);
