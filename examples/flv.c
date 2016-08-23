@@ -29,7 +29,6 @@ void flvtag_free (flvtag_t* tag)
     flvtag_init (tag);
 }
 
-
 void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2)
 {
     flvtag_t* tag3;
@@ -257,13 +256,13 @@ int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
     unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
     flvtag_reserve (tag, sizeof (onCaptionInfo) + size + 3);
     memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
-    uint8_t* data = sizeof (onCaptionInfo) + flvtag_payload_data (tag);
+    uint8_t* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo);
     base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
 
     // Update the size of the base64 string
     data[-2] = size >> 8;
     data[-1] = size >> 0;
-    // rewrite the last array element
+    // write the last array element
     data[size+0] = 0x00;
     data[size+1] = 0x00;
     data[size+2] = 0x09;

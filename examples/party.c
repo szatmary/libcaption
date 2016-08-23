@@ -45,6 +45,7 @@ void write_amfcaptions (FILE* out, uint32_t timestamp, const char* text)
 
     for (msg = sei_message_head (&sei); msg; msg=sei_message_next (msg),++timestamp) {
         flvtag_amfcaption (&tag,timestamp,msg);
+        fprintf (stderr,"Wrote AMF %d\n", (int) flvtag_raw_size (&tag));
         flv_write_tag (out,&tag);
     }
 

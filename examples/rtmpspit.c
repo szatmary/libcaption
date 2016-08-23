@@ -87,7 +87,6 @@ int MyRTMP_Write (RTMP* r, const char* buf, int size)
     return size+s2;
 }
 
-
 int main (int argc, const char** argv)
 {
     FILE* flv;

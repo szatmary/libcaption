@@ -45,11 +45,14 @@ size_t utf8_string_length (const utf8_char_t* data, size_t size)
     size_t char_length, byts;
 
     if (0 == size) {
-        byts = strlen (data);
+        size = utf8_char_count (data,0);
     } else {
 
         for (byts = 0 ; 0 < size ; --size) {
-            char_length = utf8_char_length (data);
+            if (0 == (char_length = utf8_char_length (data))) {
+                break;
+            }
+
             data += char_length;
             byts += char_length;
         }
@@ -70,24 +73,21 @@ size_t utf8_char_copy (utf8_char_t* dst, const utf8_char_t* src)
     return bytes;
 }
 
-// returnes the number of utf8 charcters in a string givne the numbe of bytes
+// returnes the number of utf8 charcters in a string given the number of bytes
 // to count until the a null terminator, pass 0 for size
 utf8_size_t utf8_char_count (const char* data, size_t size)
 {
-    int i;
-    size_t bytes = 0;
+    size_t i, bytes = 0;
     utf8_size_t count = 0;
 
     if (0 == size) {
         size = strlen (data);
     }
 
-    for (i = 0 ; i < (int) size ; i += (int) bytes) {
-        bytes = utf8_char_length (&data[i]);
-
-        if (bytes > 0) {
-            ++count;
-        } else { break; }
+    for (i = 0 ; i < size ; ++count, i += bytes) {
+        if (0 == (bytes = utf8_char_length (&data[i]))) {
+            break;
+        }
     }
 
     return count;
