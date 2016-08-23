@@ -40,22 +40,21 @@ size_t utf8_char_length (const utf8_char_t* c)
 
 // returns length of the string in bytes
 // size is number of charcter to count (0 to count until NULL term)
-size_t utf8_string_length (const utf8_char_t* data, size_t size)
+size_t utf8_string_length (const utf8_char_t* data, utf8_size_t size)
 {
-    size_t char_length, byts;
+    size_t char_length, byts = 0;
 
     if (0 == size) {
         size = utf8_char_count (data,0);
-    } else {
+    }
 
-        for (byts = 0 ; 0 < size ; --size) {
-            if (0 == (char_length = utf8_char_length (data))) {
-                break;
-            }
-
-            data += char_length;
-            byts += char_length;
+    for (; 0 < size ; --size) {
+        if (0 == (char_length = utf8_char_length (data))) {
+            break;
         }
+
+        data += char_length;
+        byts += char_length;
     }
 
     return byts;

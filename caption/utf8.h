@@ -43,7 +43,7 @@ size_t utf8_char_length (const utf8_char_t* c);
     returns length of the string in bytes
     size is number of charcter to count (0 to count until NULL term)
 */
-size_t utf8_string_length (const utf8_char_t* data, size_t size);
+size_t utf8_string_length (const utf8_char_t* data, utf8_size_t size);
 /*! \brief
     \param
 */
