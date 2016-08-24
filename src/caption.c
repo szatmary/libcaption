@@ -158,23 +158,6 @@ int caption_frame_end (caption_frame_t* frame)
     return 1;
 }
 
-int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
-{
-    int chan;
-    char char1[5], char2[5];
-    size_t chars = eia608_to_utf8 (cc_data, &chan, &char1[0], &char2[0]);
-
-    if (0 < chars) {
-        eia608_write_char (frame,char1);
-    }
-
-    if (1 < chars) {
-        eia608_write_char (frame,char2);
-    }
-
-    return 1;
-}
-
 int caption_frame_decode_preamble (caption_frame_t* frame, uint16_t cc_data)
 {
     eia608_style_t sty;
@@ -289,6 +272,29 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
     }
 }
 
+int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
+{
+    int chan;
+    char char1[5], char2[5];
+    size_t chars = eia608_to_utf8 (cc_data, &chan, &char1[0], &char2[0]);
+
+    if (eia608_is_westeu (cc_data) || eia608_is_specialna (cc_data)) {
+        // For some reason, we back up a charcter here
+        caption_frame_decode_control (frame,eia608_control_command (eia608_control_backspace, chan));
+    }
+
+
+    if (0 < chars) {
+        eia608_write_char (frame,char1);
+    }
+
+    if (1 < chars) {
+        eia608_write_char (frame,char2);
+    }
+
+    return 1;
+}
+
 int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 {
     int status = 0;
@@ -309,7 +315,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
                eia608_is_specialna (cc_data) ||
                eia608_is_westeu (cc_data)) {
 
-        // Don't decode text if we dont know what more we are in.
+        // Don't decode text if we dont know what mode we are in.
         if (CAPTION_CLEAR == frame->state.mod) {
             return 1;
         }

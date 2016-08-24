@@ -162,7 +162,7 @@ uint16_t eia608_from_basicna (uint16_t bna1, uint16_t bna2)
         return 0;
     }
 
-    return eia608_parity (bna1| (bna2>>8));
+    return eia608_parity ( ( (0xFF00&bna1) >>0) | ( (0xFF00&bna2) >>8));
 }
 
 // prototype for re2c generated function
