@@ -437,7 +437,7 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
                     sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,cc_data));
                 } else if (eia608_is_westeu (cc_data)) {
                     // extended charcters overwrite the previous charcter, so insert a dummy char thren write the extended char
-                    sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,eia608_from_utf8_1 (EIA608_CHAR_SAPCE,DEFAULT_CHANNEL)));
+                    sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,eia608_from_utf8_1 (EIA608_CHAR_SPACE,DEFAULT_CHANNEL)));
                     sei_encode_eia608 (sei, &cea708, cc_data);
                 } else {
                     // previous was basic na, but current isnt; write previous and current
@@ -448,7 +448,7 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
                 prev_cc_data = 0; // previous is handled, we can forget it now
             } else if (eia608_is_westeu (cc_data)) {
                 // extended chars overwrite the previous chars, so insert a dummy char
-                sei_encode_eia608 (sei, &cea708, eia608_from_utf8_1 (EIA608_CHAR_SAPCE,DEFAULT_CHANNEL));
+                sei_encode_eia608 (sei, &cea708, eia608_from_utf8_1 (EIA608_CHAR_SPACE,DEFAULT_CHANNEL));
                 sei_encode_eia608 (sei, &cea708, cc_data);
             } else if (eia608_is_basicna (cc_data)) {
                 prev_cc_data = cc_data;
