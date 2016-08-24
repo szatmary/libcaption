@@ -366,6 +366,7 @@ void sei_append_708 (sei_t* sei, cea708_t* cea708)
     sei_message_t* msg = sei_message_new (sei_type_user_data_registered_itu_t_t35, 0, CEA608_MAX_SIZE);
     msg->size = cea708_render (cea708, sei_message_data (msg), sei_message_size (msg));
     sei_message_append (sei,msg);
+    // cea708_dump (cea708);
     cea708_init (cea708); // will confgure using HLS compatiable defaults
 }
 
@@ -393,6 +394,8 @@ void sei_encode_eia608 (sei_t* sei, cea708_t* cea708, uint16_t cc_data)
     cea708_add_cc_data (cea708, 1, cc_type_ntsc_cc_field_1, cc_data);
 }
 ////////////////////////////////////////////////////////////////////////////////
+// TODO use alternate charcters instead of always using space before extended charcters
+// TODO rewrite this function with better logic
 int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
 {
     int r,c;
@@ -432,9 +435,9 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
                 if (eia608_is_basicna (cc_data)) {
                     // previous and current chars are both basicna, combine them into current
                     sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,cc_data));
-                } else if (eia608_is_westeu (cc_data) || eia608_is_specialna (cc_data)) {
-                    // extended charcters overwrite the previous charcter, so insert a dummy char
-                    sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,eia608_from_utf8_1 (EIA608_CHAR_SPACE,DEFAULT_CHANNEL)));
+                } else if (eia608_is_westeu (cc_data)) {
+                    // extended charcters overwrite the previous charcter, so insert a dummy char thren write the extended char
+                    sei_encode_eia608 (sei, &cea708, eia608_from_basicna (prev_cc_data,eia608_from_utf8_1 (EIA608_CHAR_SAPCE,DEFAULT_CHANNEL)));
                     sei_encode_eia608 (sei, &cea708, cc_data);
                 } else {
                     // previous was basic na, but current isnt; write previous and current
@@ -443,14 +446,21 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
                 }
 
                 prev_cc_data = 0; // previous is handled, we can forget it now
-            } else if (eia608_is_westeu (cc_data) || eia608_is_specialna (cc_data)) {
+            } else if (eia608_is_westeu (cc_data)) {
                 // extended chars overwrite the previous chars, so insert a dummy char
-                sei_encode_eia608 (sei, &cea708, eia608_from_utf8_1 (EIA608_CHAR_SPACE,DEFAULT_CHANNEL));
+                sei_encode_eia608 (sei, &cea708, eia608_from_utf8_1 (EIA608_CHAR_SAPCE,DEFAULT_CHANNEL));
                 sei_encode_eia608 (sei, &cea708, cc_data);
             } else if (eia608_is_basicna (cc_data)) {
                 prev_cc_data = cc_data;
             } else {
                 sei_encode_eia608 (sei, &cea708, cc_data);
+            }
+
+            if (eia608_is_specialna (cc_data)) {
+                // specialna are treated as controll charcters. Duplicated controll charcters are discarded
+                // So we for a resume after a specialna as a noop to break repetition detection
+                // TODO only do this if the same charcter is repeated
+                sei_encode_eia608 (sei, &cea708, eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
             }
         }
 

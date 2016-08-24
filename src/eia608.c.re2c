@@ -198,15 +198,17 @@ void eia608_dump (uint16_t cc_data)
     char1[0] = char2[0] = 0;
     int row, col, chan, underline;
 
-    if (!eia608_varify (cc_data)) {
+    if (!eia608_parity_varify (cc_data)) {
         text = "parity failed";
     } else if (eia608_is_basicna (cc_data)) {
         text = "basicna";
         eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
     } else if (eia608_is_specialna (cc_data)) {
         text = "specialna";
+        eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
     } else if (eia608_is_westeu (cc_data)) {
         text = "westeu";
+        eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
     } else if (eia608_is_xds (cc_data)) {
         text = "xds";
     } else if (eia608_is_midrowchange (cc_data)) {
@@ -265,7 +267,7 @@ void eia608_dump (uint16_t cc_data)
         text = "unhandled";
     }
 
-    fprintf (stderr,"cc %04X (%04X) %s %s (%s)\n", cc_data, eia608_parity_strip (cc_data), char1, char2, text);
+    fprintf (stderr,"cc %04X (%04X) '%s' '%s' (%s)\n", cc_data, eia608_parity_strip (cc_data), char1, char2, text);
 }
 ////////////////////////////////////////////////////////////////////////////////
 // below this line is re2c

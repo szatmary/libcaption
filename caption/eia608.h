@@ -50,10 +50,6 @@ static inline int eia608_parity_strip (uint16_t cc_data) { return cc_data & 0x7F
 /*! \brief
     \param
 */
-static inline int eia608_varify (uint16_t cc_data) { return eia608_parity_varify (cc_data) && 0!= eia608_parity_strip (cc_data);}
-/*! \brief
-    \param
-*/
 static inline int eia608_test_second_channel_bit (uint16_t cc_data) { return (cc_data & 0x0800); }
 
 ////////////////////////////////////////////////////////////////////////////////

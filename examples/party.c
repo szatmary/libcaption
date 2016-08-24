@@ -21,7 +21,7 @@
 
 void get_dudes (char* str)
 {
-    sprintf (str, " %s%s %s(-_-)%s %s(-_-)%s %s(-_-)%s %s%s", EIA608_CHAR_EIGHTH_NOTE, EIA608_CHAR_EIGHTH_NOTE,
+    sprintf (str, " %s%s.%s(-_-)%s.%s(-_-)%s.%s(-_-)%s.%s%s", EIA608_CHAR_EIGHTH_NOTE, EIA608_CHAR_EIGHTH_NOTE,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT,
              ! (rand() % 2) ? EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT : EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT,
@@ -42,8 +42,10 @@ void write_amfcaptions (FILE* out, uint32_t timestamp, const char* text)
     caption_frame_init (&frame);
     caption_frame_from_text (&frame, text);
     sei_from_caption_frame (&sei, &frame);
+    caption_frame_dump (&frame);
 
     for (msg = sei_message_head (&sei); msg; msg=sei_message_next (msg),++timestamp) {
+        sei_dump (&sei);
         flvtag_amfcaption (&tag,timestamp,msg);
         fprintf (stderr,"Wrote AMF %d\n", (int) flvtag_raw_size (&tag));
         flv_write_tag (out,&tag);

@@ -22,11 +22,16 @@ void caption_frame_buffer_clear (caption_frame_buffer_t* buff)
     memset (buff,0,sizeof (caption_frame_buffer_t));
 }
 
-void caption_frame_init (caption_frame_t* frame)
+void caption_frame_state_clear (caption_frame_t* frame)
 {
     frame->str_pts = -1;
     frame->end_pts = -1;
-    frame->state = (caption_frame_state_t) {0,0,0,0,0}; // clear global state
+    frame->state = (caption_frame_state_t) {0,0,0,0,0,0,0}; // clear global state
+}
+
+void caption_frame_init (caption_frame_t* frame)
+{
+    caption_frame_state_clear (frame);
     caption_frame_buffer_clear (&frame->back);
     caption_frame_buffer_clear (&frame->front);
 }
@@ -155,6 +160,7 @@ int eia608_write_char (caption_frame_t* frame, char* c)
 int caption_frame_end (caption_frame_t* frame)
 {
     memcpy (&frame->front,&frame->back,sizeof (caption_frame_buffer_t));
+    caption_frame_state_clear (frame);
     return 1;
 }
 
@@ -185,6 +191,13 @@ int caption_frame_decode_midrowchange (caption_frame_t* frame, uint16_t cc_data)
     }
 
     return 0;
+}
+
+int caption_frame_backspace (caption_frame_t* frame)
+{
+    // do not reverse wrap (tw 28:20)
+    frame->state.col = (0 < frame->state.col) ? (frame->state.col - 1) : 0;
+    caption_frame_write_char (frame,frame->state.row,frame->state.col,eia608_style_white,0,EIA608_CHAR_NULL);
 }
 
 int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
@@ -225,9 +238,7 @@ int caption_frame_decode_control (caption_frame_t* frame, uint16_t cc_data)
 
     // Corrections (Is this only valid as part of paint on?)
     case eia608_control_backspace:
-        // do not reverse wrap (tw 28:20)
-        frame->state.col = (0 < frame->state.col) ? (frame->state.col - 1) : 0;
-        caption_frame_write_char (frame,frame->state.row,frame->state.col,eia608_style_white,0,EIA608_CHAR_NULL);
+        caption_frame_backspace (frame);
         return LIBCAPTION_READY;
 
     case eia608_control_delete_to_end_of_row: {
@@ -279,8 +290,8 @@ int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
     size_t chars = eia608_to_utf8 (cc_data, &chan, &char1[0], &char2[0]);
 
     if (eia608_is_westeu (cc_data) || eia608_is_specialna (cc_data)) {
-        // For some reason, we back up a charcter here
-        caption_frame_decode_control (frame,eia608_control_command (eia608_control_backspace, chan));
+        // Extended charcters replace the previous charcter for back compatibility
+        caption_frame_backspace (frame);
     }
 
 
@@ -299,7 +310,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 {
     int status = 0;
 
-    if (!eia608_varify (cc_data)) {
+    if (!eia608_parity_varify (cc_data)) {
         return 0;
     }
 
@@ -307,6 +318,16 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         if (0 > frame->str_pts) { frame->str_pts = pts; }
 
         if (pts > frame->end_pts) { frame->end_pts = pts; }
+    }
+
+    // skip padding
+    if (0 == eia608_parity_strip (cc_data)) {
+        return 1;
+    }
+
+    // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
+    if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data != frame->state.cc_data) {
+        return 1;
     }
 
     if (eia608_is_control (cc_data)) {
@@ -337,6 +358,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         frame->end_pts = -1;
     }
 
+    frame->state.cc_data = cc_data;
     return status;
 }
 ////////////////////////////////////////////////////////////////////////////////
