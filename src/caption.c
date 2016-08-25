@@ -326,10 +326,11 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
     }
 
     // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
-    if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data != frame->state.cc_data) {
+    if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data == frame->state.cc_data) {
         return 1;
     }
 
+    frame->state.cc_data = cc_data;
     if (eia608_is_control (cc_data)) {
         status = caption_frame_decode_control (frame,cc_data);
     } else if (eia608_is_basicna (cc_data) ||
@@ -358,7 +359,6 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         frame->end_pts = -1;
     }
 
-    frame->state.cc_data = cc_data;
     return status;
 }
 ////////////////////////////////////////////////////////////////////////////////
