@@ -121,5 +121,8 @@ int flvtag_initavc (flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t
 int flvtag_avcwritenal (flvtag_t* tag, uint8_t* data, size_t size);
 int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text);
 ////////////////////////////////////////////////////////////////////////////////
-int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
+int flvtag_amfcaption_708 (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
+////////////////////////////////////////////////////////////////////////////////
+// This method is expermental, and not currently available on Twitch
+int flvtag_amfcaption_utf8 (flvtag_t* tag, uint32_t timestamp, const utf8_char_t* text);
 #endif

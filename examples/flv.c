@@ -242,21 +242,21 @@ static void base64_encode (const unsigned char* in,  unsigned long inlen, unsign
     *outlen = p - out;
 }
 
-const char onCaptionInfo[] = { 0x02,0x00,0x0D, 'o','n','C','a','p','t','i','o','n','I','n','f','o',
-                               0x08, 0x00, 0x00, 0x00, 0x02,
-                               0x00, 0x04, 't','y','p','e',
-                               0x02, 0x00, 0x03, '7','0','8',
-                               0x00, 0x04, 'd','a','t','a',
-                               0x02, 0x00,0x00
-                             };
+const char onCaptionInfo708[] = { 0x02,0x00,0x0D, 'o','n','C','a','p','t','i','o','n','I','n','f','o',
+                                  0x08, 0x00, 0x00, 0x00, 0x02,
+                                  0x00, 0x04, 't','y','p','e',
+                                  0x02, 0x00, 0x03, '7','0','8',
+                                  0x00, 0x04, 'd','a','t','a',
+                                  0x02, 0x00,0x00
+                                };
 
-int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
+int flvtag_amfcaption_708 (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
 {
     flvtag_initamf (tag,timestamp);
     unsigned long size = 1 + (4 * ( (sei_message_size (msg) + 2) / 3));
-    flvtag_reserve (tag, sizeof (onCaptionInfo) + size + 3);
-    memcpy (flvtag_payload_data (tag),onCaptionInfo,sizeof (onCaptionInfo));
-    uint8_t* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo);
+    flvtag_reserve (tag, sizeof (onCaptionInfo708) + size + 3);
+    memcpy (flvtag_payload_data (tag),onCaptionInfo708,sizeof (onCaptionInfo708));
+    uint8_t* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo708);
     base64_encode (sei_message_data (msg), sei_message_size (msg), data, &size);
 
     // Update the size of the base64 string
@@ -266,7 +266,41 @@ int flvtag_amfcaption (flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
     data[size+0] = 0x00;
     data[size+1] = 0x00;
     data[size+2] = 0x09;
-    flvtag_updatesize (tag, sizeof (onCaptionInfo) + size + 3);
+    flvtag_updatesize (tag, sizeof (onCaptionInfo708) + size + 3);
+
+    return 1;
+}
+
+const char onCaptionInfoUTF8[] = { 0x02,0x00,0x0D, 'o','n','C','a','p','t','i','o','n','I','n','f','o',
+                                   0x08, 0x00, 0x00, 0x00, 0x02,
+                                   0x00, 0x04, 't','y','p','e',
+                                   0x02, 0x00, 0x04, 'U','T','F','8',
+                                   0x00, 0x04, 'd','a','t','a',
+                                   0x02, 0x00,0x00
+                                 };
+
+#define MAX_AMF_STRING 65636
+int flvtag_amfcaption_utf8 (flvtag_t* tag, uint32_t timestamp, const utf8_char_t* text)
+{
+    flvtag_initamf (tag,timestamp);
+    unsigned long size = strlen (text);
+
+    if (MAX_AMF_STRING < size) {
+        size = MAX_AMF_STRING;
+    }
+
+    flvtag_reserve (tag, sizeof (onCaptionInfoUTF8) + size + 3);
+    memcpy (flvtag_payload_data (tag),onCaptionInfoUTF8,sizeof (onCaptionInfoUTF8));
+    uint8_t* data = flvtag_payload_data (tag) + sizeof (onCaptionInfo708);
+    memcpy (data,text,size);
+    // Update the size of the string
+    data[-2] = size >> 8;
+    data[-1] = size >> 0;
+    // write the last array element
+    data[size+0] = 0x00;
+    data[size+1] = 0x00;
+    data[size+2] = 0x09;
+    flvtag_updatesize (tag, sizeof (onCaptionInfoUTF8) + size + 3);
 
     return 1;
 }

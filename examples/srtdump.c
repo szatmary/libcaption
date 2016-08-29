@@ -55,26 +55,6 @@ int main (int argc, char** argv)
         caption_frame_init (&frame);
         srt_to_caption_frame (srt,&frame);
         caption_frame_dump (&frame);
-
-        // Render to se messages
-        sei_t sei;
-        size_t sei_size;
-        sei_message_t* msg;
-        sei_init (&sei);
-        sei_from_caption_frame (&sei,&frame);
-        // uint8_t* sei_data = sei_render_alloc (&sei, &sei_size);
-
-        for (msg = sei_message_head (&sei) ; msg ; msg = sei_message_next (msg)) {
-            uint8_t* data = sei_message_data (msg);
-            int size = sei_message_size (msg);
-            // printf ("sei_message_size %d ", size);
-
-            for (int i = 0 ; i < size ; ++i) {
-                printf ("%02X ", data[i]);
-            }
-
-            printf ("\n----------------------------------------------------\n");
-        }
     }
 
     srt_free (head);

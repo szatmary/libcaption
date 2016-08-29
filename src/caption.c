@@ -331,6 +331,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
     }
 
     frame->state.cc_data = cc_data;
+
     if (eia608_is_control (cc_data)) {
         status = caption_frame_decode_control (frame,cc_data);
     } else if (eia608_is_basicna (cc_data) ||
