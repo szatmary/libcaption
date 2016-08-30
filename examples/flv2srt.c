@@ -32,12 +32,12 @@ int main (int argc, char** argv)
     FILE* flv = flv_open_read (path);
 
     if (!flv_read_header (flv,&has_audio,&has_video)) {
-        printf ("Not an flv file\n");
+        fprintf (stderr,"'%s' Not an flv file\n", path);
+    } else {
+        fprintf (stderr,"Reading from '%s'\n", path);
     }
 
     while (flv_read_tag (flv,&tag)) {
-        // fprintf (stderr,"got frame\n");
-
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             ssize_t  size = flvtag_payload_size (&tag);
             uint8_t* data = flvtag_payload_data (&tag);

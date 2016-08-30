@@ -20,7 +20,7 @@
 #define CAPTION_METHOD_SEI_708  0 // embedded 708
 #define CAPTION_METHOD_AMF_708  1 // onCaptionInfo type = 708
 #define CAPTION_METHOD_AMF_UTF8 2 // onCaptionInfo type = utf8
-#define CAPTION_METHOD CAPTION_METHOD_AMF_708
+#define CAPTION_METHOD CAPTION_METHOD_SEI_708
 
 void get_dudes (char* str)
 {

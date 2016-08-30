@@ -208,7 +208,7 @@ void sei_dump_messages (sei_message_t* head)
 ////////////////////////////////////////////////////////////////////////////////
 size_t sei_render_size (sei_t* sei)
 {
-    size_t size = 2;
+    size_t size = 2; // nalu_type + stop bit
     sei_message_t* msg;
 
     for (msg = sei_message_head (sei) ; msg ; msg = sei_message_next (msg)) {
@@ -227,12 +227,12 @@ size_t sei_render (sei_t* sei, uint8_t* data)
     sei_message_t* msg;
     (*data) = 6; ++data;
 
-    for (msg = sei->head ; msg ; msg = sei_message_next (msg)) {
+    for (msg = sei_message_head (sei) ; msg ; msg = sei_message_next (msg)) {
         int payloadType      = sei_message_type (msg);
         int payloadSize      = (int) sei_message_size (msg);
         uint8_t* payloadData = sei_message_data (msg);
 
-        while (255 < payloadType) {
+        while (255 <= payloadType) {
             (*data) = 255;
             ++data; ++size;
             payloadType /= 255;
@@ -241,7 +241,7 @@ size_t sei_render (sei_t* sei, uint8_t* data)
         (*data) = payloadType;
         ++data; ++size;
 
-        while (255 < payloadSize) {
+        while (255 <= payloadSize) {
             (*data) = 255;
             ++data; ++size;
             payloadSize /= 255;

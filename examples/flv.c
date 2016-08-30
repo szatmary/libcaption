@@ -29,14 +29,6 @@ void flvtag_free (flvtag_t* tag)
     flvtag_init (tag);
 }
 
-void flvtag_swap (flvtag_t* tag1, flvtag_t* tag2)
-{
-    flvtag_t* tag3;
-    (*tag3) = (*tag1);
-    (*tag1) = (*tag2);
-    (*tag2) = (*tag3);
-}
-
 int flvtag_reserve (flvtag_t* tag, uint32_t size)
 {
     size += FLV_TAG_HEADER_SIZE + FLV_TAG_FOOTER_SIZE;
@@ -354,7 +346,7 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
 
         // we want to write after AUD if present
         if (0 < sei_size && 9 != nalu_type) {
-            // fprintf (stderr,"Wrote SEI %d\n\n", sei_size);
+            // fprintf (stderr,"Wrote SEI %d '%d'\n\n", sei_size, sei_data[3]);
             flvtag_avcwritenal (&new_tag,sei_data,sei_size);
             sei_size = 0;
         }
