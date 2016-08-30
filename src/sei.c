@@ -235,7 +235,7 @@ size_t sei_render (sei_t* sei, uint8_t* data)
         while (255 <= payloadType) {
             (*data) = 255;
             ++data; ++size;
-            payloadType /= 255;
+            payloadType -= 255;
         }
 
         (*data) = payloadType;
@@ -244,7 +244,7 @@ size_t sei_render (sei_t* sei, uint8_t* data)
         while (255 <= payloadSize) {
             (*data) = 255;
             ++data; ++size;
-            payloadSize /= 255;
+            payloadSize -= 255;
         }
 
         (*data) = payloadSize;
@@ -295,7 +295,7 @@ int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, do
         int payloadType = 0;
         int payloadSize = 0;
 
-        while (0 < size && 0xFF == (*data)) {
+        while (0 < size && 255 == (*data)) {
             payloadType += 255;
             ++data; --size;
         }
@@ -307,7 +307,7 @@ int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, do
         payloadType += (*data);
         ++data; --size;
 
-        while (0 < size && 0xFF == (*data)) {
+        while (0 < size && 255 == (*data)) {
             payloadSize += 255;
             ++data; --size;
         }
