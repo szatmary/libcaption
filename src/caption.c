@@ -193,7 +193,7 @@ int caption_frame_decode_midrowchange (caption_frame_t* frame, uint16_t cc_data)
     return 0;
 }
 
-int caption_frame_backspace (caption_frame_t* frame)
+void caption_frame_backspace (caption_frame_t* frame)
 {
     // do not reverse wrap (tw 28:20)
     frame->state.col = (0 < frame->state.col) ? (frame->state.col - 1) : 0;
