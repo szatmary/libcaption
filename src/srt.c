@@ -144,7 +144,7 @@ srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev)
     int r, c, x, s, uln;
     eia608_style_t sty;
     // CRLF per row, plus an extra at the end
-    srt_t* srt = srt_new (0, ( (SCREEN_COLS+2) *SCREEN_ROWS)+2);
+    srt_t* srt = srt_new (0, 2+CAPTION_FRAME_TEXT_BYTES);
     utf8_char_t* data = srt_data (srt);
     srt->str_pts = frame->str_pts;
     srt->end_pts = frame->end_pts;
@@ -153,22 +153,10 @@ srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev)
         prev->next = srt;
     }
 
-    for (r = 0 ; r < SCREEN_ROWS ; ++r) {
-        for (c = 0, x = 0 ; c < SCREEN_COLS ; ++c) {
-            const char* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
+    caption_frame_to_text (frame,data);
+    // srt requires an extra new line
+    strcat ( (char*) data,"\r\n");
 
-            if (0 < (s = (int) utf8_char_copy (data,chr))) {
-                ++x; data += s;
-            }
-        }
-
-        if (x) {
-            strcpy ( (char*) data,"\r\n");
-            data += 2;
-        }
-    }
-
-    strcpy ( (char*) data,"\r\n");
     return srt;
 }
 

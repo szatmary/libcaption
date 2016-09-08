@@ -398,6 +398,29 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
+void caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data)
+{
+    int r, c, x, s, uln;
+    eia608_style_t sty;
+
+    data[0] = 0;
+
+    for (r = 0 ; r < SCREEN_ROWS ; ++r) {
+        for (c = 0, x = 0 ; c < SCREEN_COLS ; ++c) {
+            const char* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
+
+            if (0 < (s = (int) utf8_char_copy (data,chr))) {
+                ++x; data += s;
+            }
+        }
+
+        if (x) {
+            strcpy ( (char*) data,"\r\n");
+            data += 2;
+        }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf)
 {
     int r, c;

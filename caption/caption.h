@@ -106,6 +106,11 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data);
 /*! \brief
     \param
 */
+#define CAPTION_FRAME_TEXT_BYTES (((2+SCREEN_ROWS)*SCREEN_COLS*4)+1)
+void caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data);
+/*! \brief
+    \param
+*/
 #define CAPTION_FRAME_DUMP_BUF_SIZE 4096
 size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf);
 void caption_frame_dump (caption_frame_t* frame);
