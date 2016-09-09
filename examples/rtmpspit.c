@@ -1,5 +1,6 @@
 #include "flv.h"
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/select.h>
@@ -94,6 +95,7 @@ int main (int argc, const char** argv)
     RTMPPacket rtmpPacket;
 
     flvtag_t tag;
+    int32_t timestamp = 0;
     int has_audio, has_video;
     char* url = 0;
 
@@ -134,6 +136,11 @@ int main (int argc, const char** argv)
         if (! RTMP_IsConnected (rtmp) || RTMP_IsTimedout (rtmp)) {
             fprintf (stderr,"RTMP_IsConnected() Error\n");
             return EXIT_FAILURE;
+        }
+
+        if (flvtag_timestamp (&tag) > timestamp) {
+            usleep (1000 * (flvtag_timestamp (&tag) - timestamp));
+            timestamp = flvtag_timestamp (&tag);
         }
 
         MyRTMP_Write (rtmp, (const char*) flvtag_raw_data (&tag),flvtag_raw_size (&tag));
