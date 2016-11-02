@@ -24,6 +24,7 @@
 #ifndef LIBCAPTION_H
 #define LIBCAPTION_H
 #include "utf8.h"
+#include "xds.h"
 #include "eia608.h"
 
 // ssize_t is POSIX and does not exist on Windows
@@ -60,6 +61,7 @@ typedef struct  {
 typedef struct {
     double str_pts;
     double end_pts;
+    xds_t xds;
     caption_frame_state_t state;
     caption_frame_buffer_t front;
     caption_frame_buffer_t back;

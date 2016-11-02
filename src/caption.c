@@ -22,6 +22,7 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "utf8.h"
+#include "xds.h"
 #include "eia608.h"
 #include "caption.h"
 #include <stdio.h>
@@ -42,6 +43,7 @@ void caption_frame_state_clear (caption_frame_t* frame)
 void caption_frame_init (caption_frame_t* frame)
 {
     caption_frame_state_clear (frame);
+    xds_init (&frame->xds);
     caption_frame_buffer_clear (&frame->back);
     caption_frame_buffer_clear (&frame->front);
 }
@@ -318,10 +320,19 @@ int caption_frame_decode_text (caption_frame_t* frame, uint16_t cc_data)
 
 int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 {
-    int status = 0;
+    int status = LIBCAPTION_OK;
 
     if (!eia608_parity_varify (cc_data)) {
-        return 0;
+        return LIBCAPTION_ERROR;
+    }
+
+    if (eia608_is_padding (cc_data)) {
+        return LIBCAPTION_OK;
+    }
+
+    // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
+    if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data == frame->state.cc_data) {
+        return LIBCAPTION_OK;
     }
 
     if (0 < pts) {
@@ -330,19 +341,13 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
         if (pts > frame->end_pts) { frame->end_pts = pts; }
     }
 
-    // skip padding
-    if (0 == eia608_parity_strip (cc_data)) {
-        return 1;
-    }
-
-    // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
-    if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data == frame->state.cc_data) {
-        return 1;
-    }
-
     frame->state.cc_data = cc_data;
 
-    if (eia608_is_control (cc_data)) {
+    if (frame->xds.state) {
+        status = xds_decode (&frame->xds,cc_data);
+    } else if (eia608_is_xds (cc_data)) {
+        status =  xds_decode (&frame->xds,cc_data);
+    } else if (eia608_is_control (cc_data)) {
         status = caption_frame_decode_control (frame,cc_data);
     } else if (eia608_is_basicna (cc_data) ||
                eia608_is_specialna (cc_data) ||
@@ -350,14 +355,14 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 
         // Don't decode text if we dont know what mode we are in.
         if (CAPTION_CLEAR == frame->state.mod) {
-            return 1;
+            return LIBCAPTION_OK;
         }
 
         status = caption_frame_decode_text (frame,cc_data);
 
         // If we are in paint on mode, display immiditally
         if (1 == status && (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod)) {
-            status = 2;
+            status = LIBCAPTION_READY;
         }
     } else if (eia608_is_preamble (cc_data)) {
         status =  caption_frame_decode_preamble (frame,cc_data);
@@ -372,6 +377,7 @@ int caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
 
     return status;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
 {

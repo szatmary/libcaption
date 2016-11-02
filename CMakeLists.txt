@@ -25,6 +25,7 @@ set(CAPTION_SOURCES
   src/srt.c
   src/scc.c
   src/sei.c
+  src/xds.c
   src/cea708.c
   src/caption.c
   src/eia608_charmap.c

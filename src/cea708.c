@@ -183,7 +183,7 @@ void cea708_dump (cea708_t* cea708)
         cea708_cc_type_t type; int valid;
         uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
 
-        if (valid && (cc_type_ntsc_cc_field_1 == type || cc_type_ntsc_cc_field_2 == type)) {
+        if (valid && cc_type_ntsc_cc_field_1 == type) {
             eia608_dump (cc_data);
         }
     }
@@ -197,11 +197,11 @@ int cea708_to_caption_frame (caption_frame_t* frame, cea708_t* cea708, double pt
         cea708_cc_type_t type; int valid;
         uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
 
-        if (valid && (cc_type_ntsc_cc_field_1 == type || cc_type_ntsc_cc_field_2 == type)) {
+        if (valid && cc_type_ntsc_cc_field_1 == type) {
             caption_frame_decode (frame,cc_data, pts);
         }
     }
 
     // TODO look at the result of caption_frame_decode and return the rite value
-    return 2;
+    return LIBCAPTION_READY;
 }
