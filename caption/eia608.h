@@ -96,6 +96,10 @@ static inline int eia608_is_control (uint16_t cc_data) { return 0x1420 == (0x767
     \param
 */
 static inline int eia608_is_norpak (uint16_t cc_data) { return 0x1724 == (0x777C & cc_data) || 0x1728 == (0x777C & cc_data); }
+/*! \brief
+    \param
+*/
+static inline int eia608_is_padding (uint16_t cc_data) { return 0x8080 == cc_data; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // preamble

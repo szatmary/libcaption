@@ -65,7 +65,7 @@ int main (int argc, char** argv)
                 case LIBCAPTION_READY: {
 
                     if (6 == avcnalu_type (&nalu)) {
-                        fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
+                        // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
                         sei_init (&sei);
                         sei_parse_avcnalu (&sei, &nalu, ts.dts, ts.dts - ts.pts);
                         sei_to_caption_frame (&sei,&frame);

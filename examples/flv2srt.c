@@ -62,6 +62,19 @@ int main (int argc, char** argv)
                 if (6 == nalu_type) {
                     sei_init (&sei);
                     sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts (&tag), flvtag_cts (&tag));
+
+                    cea708_t cea708;
+                    sei_message_t* msg;
+                    cea708_init (&cea708);
+
+                    // for (msg = sei_message_head (&sei) ; msg ; msg = sei_message_next (msg)) {
+                    //     if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
+                    //         cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
+                    //         cea708_dump (&cea708);
+                    //     }
+                    // }
+
+                    // sei_dump(&sei);
                     sei_to_caption_frame (&sei,&frame);
                     sei_free (&sei);
 

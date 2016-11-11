@@ -198,7 +198,6 @@ uint16_t eia608_from_utf8_2 (const utf8_char_t* c1, const utf8_char_t* c2)
     uint16_t cc2 = _eia608_from_utf8 (c2);
     return eia608_from_basicna (cc1,cc2);
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 void eia608_dump (uint16_t cc_data)
 {
@@ -210,6 +209,8 @@ void eia608_dump (uint16_t cc_data)
 
     if (!eia608_parity_varify (cc_data)) {
         text = "parity failed";
+    } else if (0 == eia608_parity_strip (cc_data)) {
+        text = "pad";
     } else if (eia608_is_basicna (cc_data)) {
         text = "basicna";
         eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
