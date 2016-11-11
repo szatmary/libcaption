@@ -26,7 +26,19 @@
 #include "cea708.h"
 #include "caption.h"
 #include <float.h>
+////////////////////////////////////////////////////////////////////////////////
+#define MAX_NALU_SIZE (4*1024*1024)
+typedef struct {
+    size_t size;
+    uint8_t data[MAX_NALU_SIZE];
+} avcnalu_t;
 
+int avcnalu_init (avcnalu_t* nalu);
+int avcnalu_parse_annexb (avcnalu_t* nalu, const uint8_t** data, size_t* size);
+static inline uint8_t  avcnalu_type (avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
+static inline uint8_t* avcnalu_data (avcnalu_t* nalu) { return &nalu->data[0]; }
+static inline size_t   avcnalu_size (avcnalu_t* nalu) { return nalu->size; }
+////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t sei_message_t;
 
 typedef enum {
@@ -79,6 +91,11 @@ static inline double sei_pts (sei_t* sei) { return sei->dts + sei->cts; }
     \param
 */
 int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
+/*! \brief
+    \param
+*/
+// TODO add dts,cts to nalu
+static inline int sei_parse_avcnalu (sei_t* sei, avcnalu_t* nalu, double dts, double cts) { return sei_parse_nalu (sei,avcnalu_data (nalu),avcnalu_size (nalu),dts,cts);}
 /*! \brief
     \param
 */
@@ -176,13 +193,5 @@ static inline int nalu_to_caption_frame (caption_frame_t* frame, const uint8_t* 
     sei_free (&sei);
     return 1;
 }
-////////////////////////////////////////////////////////////////////////////////
-#define MAX_NALU_SIZE (4*1024*1024)
-typedef struct {
-    size_t size;
-    uint8_t data[MAX_NALU_SIZE];
-} avcnalu_t;
-
-int avces_parse_annexb (avcnalu_t* nalu, const uint8_t* data, size_t* size);
 ////////////////////////////////////////////////////////////////////////////////
 #endif

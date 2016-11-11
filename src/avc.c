@@ -549,7 +549,12 @@ static int avc_find_start_code_increnental (const uint8_t* data, int size, int p
     return pos;
 }
 
-int avces_parse_annexb (avcnalu_t* nalu, const uint8_t* data, size_t* size)
+int avcnalu_init (avcnalu_t* nalu)
+{
+    memset (nalu,0,sizeof (avcnalu_t));
+}
+
+int avcnalu_parse_annexb (avcnalu_t* nalu, const uint8_t** data, size_t* size)
 {
     int scpos, sclen;
     int new_size = nalu->size + (*size);
@@ -559,14 +564,16 @@ int avces_parse_annexb (avcnalu_t* nalu, const uint8_t* data, size_t* size)
         return LIBCAPTION_ERROR;
     }
 
-    memcpy (&nalu->data[nalu->size], data, size);
+    memcpy (&nalu->data[nalu->size], (*data), (*size));
     scpos = avc_find_start_code_increnental (&nalu->data[0], new_size, nalu->size, &sclen);
 
-    if (0<scpos) {
+    if (0<=scpos) {
+        (*data) += (scpos - nalu->size) + sclen;
+        (*size) -= (scpos - nalu->size) + sclen;
         nalu->size = scpos;
-        (*size) -= (new_size - scpos) + sclen;
         return 0 < nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
     } else {
+        (*size) = 0;
         nalu->size = new_size;
         return LIBCAPTION_OK;
     }

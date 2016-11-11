@@ -52,6 +52,10 @@ add_executable(flv2srt examples/flv2srt.c examples/flv.c)
 target_link_libraries(flv2srt caption)
 #install (FILES flv2srt DESTINATION bin)
 
+add_executable(ts2srt examples/ts2srt.c examples/ts.c)
+target_link_libraries(ts2srt caption)
+#install (FILES ts2srt DESTINATION bin)
+
 add_executable(flv+srt examples/flv+srt.c examples/flv.c)
 target_link_libraries(flv+srt caption)
 #install (FILES flv+srt DESTINATION bin)

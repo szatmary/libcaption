@@ -41,6 +41,7 @@ cmake_install.cmake
 scc2srt
 srt2vtt
 flv2srt
+ts2srt
 flv+srt
 srtdump
 party
