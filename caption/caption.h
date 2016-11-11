@@ -35,6 +35,10 @@ typedef signed int ssize_t;
 #endif
 #endif
 
+#define LIBCAPTION_OK 1
+#define LIBCAPTION_ERROR 0
+#define LIBCAPTION_READY 2
+
 #define SCREEN_ROWS 15
 #define SCREEN_COLS 32
 
@@ -101,9 +105,6 @@ const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int
     \param
 */
 
-#define LIBCAPTION_OK 1
-#define LIBCAPTION_ERROR 0
-#define LIBCAPTION_READY 2
 /*! \brief
     \param
 */

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "srt.h"
-#include "sei.h"
+#include "avc.h"
 // #include "sei.h"
 
 #define MAX_SRT_SIZE (10*1024*1024)

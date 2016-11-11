@@ -22,7 +22,7 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 
-#include "sei.h"
+#include "avc.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -484,4 +484,90 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
     sei->dts = frame->str_pts; // assumes in order frames
     // sei_dump (sei);
     return 1;
+}
+////////////////////////////////////////////////////////////////////////////////
+static int avc_is_start_code (const uint8_t* data, int size, int* len)
+{
+    if (3 > size) {
+        return -1;
+    }
+
+    if (1 < data[2]) {
+        return 3;
+    }
+
+    if (0 != data[1]) {
+        return 2;
+    }
+
+    if (0 == data[0]) {
+        if (1 == data[2]) {
+            *len = 3;
+            return 0;
+        }
+
+        if (4 <= size && 1 == data[3]) {
+            *len = 4;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+static int avc_find_start_code (const uint8_t* data, int size, int* len)
+{
+    int pos = 0;
+
+    for (;;) {
+        // is pos pointing to a start code?
+        int isc = avc_is_start_code (data + pos, size - pos, len);
+
+        if (0 < isc) {
+            pos += isc;
+        } else if (0 > isc) {
+            // No start code found
+            return isc;
+        } else {
+            // Start code found at pos
+            return pos;
+        }
+    }
+}
+
+
+static int avc_find_start_code_increnental (const uint8_t* data, int size, int prev_size, int* len)
+{
+    int offset = (3 <= prev_size) ? (prev_size - 3) : 0;
+    int pos = avc_find_start_code (data + offset, size - offset, len);
+
+    if (0 <= pos) {
+        return pos + offset;
+    }
+
+    return pos;
+}
+
+int avces_parse_annexb (avcnalu_t* nalu, const uint8_t* data, size_t* size)
+{
+    int scpos, sclen;
+    int new_size = nalu->size + (*size);
+
+    if (new_size > MAX_NALU_SIZE) {
+        (*size) = nalu->size = 0;
+        return LIBCAPTION_ERROR;
+    }
+
+    memcpy (&nalu->data[nalu->size], data, size);
+    scpos = avc_find_start_code_increnental (&nalu->data[0], new_size, nalu->size, &sclen);
+
+    if (0<scpos) {
+        nalu->size = scpos;
+        (*size) -= (new_size - scpos) + sclen;
+        return 0 < nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
+    } else {
+        nalu->size = new_size;
+        return LIBCAPTION_OK;
+    }
 }

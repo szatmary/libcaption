@@ -24,7 +24,7 @@ set(CAPTION_SOURCES
   src/utf8.c
   src/srt.c
   src/scc.c
-  src/sei.c
+  src/avc.c
   src/cea708.c
   src/caption.c
   src/eia608_charmap.c
@@ -35,6 +35,7 @@ set(CAPTION_HEADERS
   caption/utf8.h
   caption/sei.h
   caption/scc.h
+  caption/avc.c
   caption/cea708.h
   caption/eia608.h
   caption/caption.h

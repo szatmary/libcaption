@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "flv.h"
-#include "sei.h"
+#include "avc.h"
 
 #define CAPTION_METHOD_SEI_708  0 // embedded 708
 #define CAPTION_METHOD_AMF_708  1 // onCaptionInfo type = 708

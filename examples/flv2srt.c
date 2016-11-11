@@ -23,7 +23,7 @@
 /**********************************************************************************************/
 #include "flv.h"
 #include "srt.h"
-#include "sei.h"
+#include "avc.h"
 
 #define LENGTH_SIZE 4
 int main (int argc, char** argv)

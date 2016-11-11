@@ -21,8 +21,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_SEI_H
-#define LIBCAPTION_SEI_H
+#ifndef LIBCAPTION_AVC_H
+#define LIBCAPTION_AVC_H
 #include "cea708.h"
 #include "caption.h"
 #include <float.h>
@@ -177,5 +177,12 @@ static inline int nalu_to_caption_frame (caption_frame_t* frame, const uint8_t* 
     return 1;
 }
 ////////////////////////////////////////////////////////////////////////////////
+#define MAX_NALU_SIZE (4*1024*1024)
+typedef struct {
+    size_t size;
+    uint8_t data[MAX_NALU_SIZE];
+} avcnalu_t;
 
+int avces_parse_annexb (avcnalu_t* nalu, const uint8_t* data, size_t* size);
+////////////////////////////////////////////////////////////////////////////////
 #endif
