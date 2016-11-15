@@ -297,11 +297,10 @@ libcaption_stauts_t caption_frame_decode_text (caption_frame_t* frame, uint16_t 
     char char1[5], char2[5];
     size_t chars = eia608_to_utf8 (cc_data, &chan, &char1[0], &char2[0]);
 
-    if (eia608_is_westeu (cc_data) || eia608_is_specialna (cc_data)) {
+    if (eia608_is_westeu (cc_data)) {
         // Extended charcters replace the previous charcter for back compatibility
         caption_frame_backspace (frame);
     }
-
 
     if (0 < chars) {
         eia608_write_char (frame,char1);
