@@ -68,12 +68,16 @@ int main (int argc, char** argv)
                         // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
                         sei_init (&sei);
                         sei_parse_avcnalu (&sei, &nalu, ts.dts, ts.dts - ts.pts);
-                        sei_to_caption_frame (&sei,&frame);
-                        // caption_frame_dump (&frame);
-                        sei_free (&sei);
-                        srt = srt_from_caption_frame (&frame,srt);
+                        sei_dump (&sei);
 
-                        if (!head) {head = srt;}
+                        if (LIBCAPTION_READY == sei_to_caption_frame (&sei,&frame)) {
+                            caption_frame_dump (&frame);
+                            srt = srt_from_caption_frame (&frame,srt);
+
+                            if (!head) {head = srt;}
+                        }
+
+                        sei_free (&sei);
                     }
 
                     avcnalu_init (&nalu);

@@ -200,7 +200,9 @@ void sei_dump (sei_t* sei)
 
 void sei_dump_messages (sei_message_t* head)
 {
+    cea708_t cea708;
     sei_message_t* msg;
+    cea708_init (&cea708);
 
     for (msg = head ; msg ; msg = sei_message_next (msg)) {
         uint8_t* data = sei_message_data (msg);
@@ -213,6 +215,13 @@ void sei_dump_messages (sei_message_t* head)
         }
 
         fprintf (stderr,"\n");
+
+        if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
+            cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
+            cea708_dump (&cea708);
+        }
+
+
     }
 }
 
@@ -353,20 +362,22 @@ error:
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-int sei_to_caption_frame (sei_t* sei, caption_frame_t* frame)
+libcaption_stauts_t sei_to_caption_frame (sei_t* sei, caption_frame_t* frame)
 {
     cea708_t cea708;
     sei_message_t* msg;
+    libcaption_stauts_t status = LIBCAPTION_OK;
+
     cea708_init (&cea708);
 
     for (msg = sei_message_head (sei) ; msg ; msg = sei_message_next (msg)) {
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
             cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
-            cea708_to_caption_frame (frame, &cea708, sei_pts (sei));
+            status = libcaption_status_update (status, cea708_to_caption_frame (frame, &cea708, sei_pts (sei)));
         }
     }
 
-    return 1;
+    return status;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
