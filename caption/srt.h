@@ -27,10 +27,11 @@
 #include "eia608.h"
 #include "caption.h"
 
+// timestamp and duration are in seconds
 typedef struct _srt_t {
     struct _srt_t* next;
-    double str_pts;
-    double end_pts;
+    double timestamp;
+    double duration;
     size_t aloc;
 } srt_t;
 
@@ -64,7 +65,7 @@ int srt_to_caption_frame (srt_t* srt, caption_frame_t* frame);
 /*! \brief
     \param
 */
-srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev);
+srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev, srt_t** head);
 /*! \brief
     \param
 */

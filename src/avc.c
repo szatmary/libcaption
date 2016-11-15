@@ -355,7 +355,6 @@ int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, do
     }
 
     // There should be one trailing byte, 0x80. But really, we can just ignore that fact.
-
     return ret;
 error:
     sei_init (sei);
@@ -375,6 +374,11 @@ libcaption_stauts_t sei_to_caption_frame (sei_t* sei, caption_frame_t* frame)
             cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
             status = libcaption_status_update (status, cea708_to_caption_frame (frame, &cea708, sei_pts (sei)));
         }
+    }
+
+    if (LIBCAPTION_READY == status) {
+        frame->timestamp = sei->dts + sei->cts;
+        frame->duration = 0;
     }
 
     return status;
@@ -492,7 +496,7 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
     }
 
     sei_encode_eia608 (sei, &cea708, 0); // flush
-    sei->dts = frame->str_pts; // assumes in order frames
+    sei->dts = frame->timestamp; // assumes in order frames
     // sei_dump (sei);
     return 1;
 }

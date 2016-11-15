@@ -70,9 +70,10 @@ typedef struct  {
     uint16_t row, col, cc_data;
 } caption_frame_state_t;
 
+// timestamp and duration are in seconds
 typedef struct {
-    double str_pts;
-    double end_pts;
+    double timestamp;
+    double duration;
     xds_t xds;
     caption_frame_state_t state;
     caption_frame_buffer_t front;
@@ -114,7 +115,7 @@ const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int
 /*! \brief
     \param
 */
-libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts);
+libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double timestamp);
 
 /*! \brief
     \param

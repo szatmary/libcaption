@@ -35,8 +35,8 @@ void caption_frame_buffer_clear (caption_frame_buffer_t* buff)
 
 void caption_frame_state_clear (caption_frame_t* frame)
 {
-    frame->str_pts = -1;
-    frame->end_pts = -1;
+    frame->timestamp = -1;
+    frame->duration = 0;
     frame->state = (caption_frame_state_t) {0,0,0,0,0,0,0}; // clear global state
 }
 
@@ -313,7 +313,7 @@ libcaption_stauts_t caption_frame_decode_text (caption_frame_t* frame, uint16_t 
     return LIBCAPTION_OK;
 }
 
-libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double pts)
+libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double timestamp)
 {
     libcaption_stauts_t status = LIBCAPTION_OK;
 
@@ -330,10 +330,8 @@ libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_da
         return LIBCAPTION_OK;
     }
 
-    if (0 < pts) {
-        if (0 > frame->str_pts) { frame->str_pts = pts; }
-
-        if (pts > frame->end_pts) { frame->end_pts = pts; }
+    if (0 > frame->timestamp && 0 < timestamp) {
+        frame->timestamp = timestamp;
     }
 
     frame->state.cc_data = cc_data;
@@ -363,11 +361,6 @@ libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_da
         status = caption_frame_decode_preamble (frame,cc_data);
     } else if (eia608_is_midrowchange (cc_data)) {
         status = caption_frame_decode_midrowchange (frame,cc_data);
-    }
-
-    if (LIBCAPTION_READY==status) {
-        frame->str_pts = pts;
-        frame->end_pts = -1;
     }
 
     return status;
