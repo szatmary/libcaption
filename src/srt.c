@@ -27,22 +27,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define SRTTIME2MS(HH,MM,SS,MS) ((HH*3600.0 + MM*60.0 + SS) * 1000.0 + MS)
-int srt_parse_time (srt_t* srt, const char* line)
-{
-    double timestamp;
-    int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
-
-    if (8 == sscanf (line, "%d:%2d:%2d%*1[,.]%3d --> %d:%2d:%2d%*1[,.]%3d", &hh1, &mm1, &ss1, &ms1, &hh2, &mm2, &ss2, &ms2)) {
-        timestamp = SRTTIME2MS (hh2, mm2, ss2, ms2);
-        srt->timestamp = SRTTIME2MS (hh1, mm1, ss1, ms1);
-        srt->duration = timestamp - srt->timestamp;
-        return 1;
-    }
-
-    return 0;
-}
-
 void srt_free (srt_t* srt)
 {
     srt_t* next;
@@ -82,11 +66,12 @@ srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* p
     return srt;
 }
 
+#define SRTTIME2SECONDS(HH,MM,SS,MS) ((HH*3600.0) + (MM*60.0) + SS + (MS/1000.0))
 srt_t* srt_parse (const utf8_char_t* data, size_t size)
 {
     int counter;
-    double str_pts, end_pts;
     srt_t* head = 0, *prev = 0;
+    double str_pts = 0, end_pts = 0;
     size_t line_length = 0, trimmed_length = 0;
     int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
 
@@ -116,10 +101,8 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
 
         {
             if (8 == sscanf (data, "%d:%2d:%2d%*1[,.]%3d --> %d:%2d:%2d%*1[,.]%3d", &hh1, &mm1, &ss1, &ms1, &hh2, &mm2, &ss2, &ms2)) {
-                str_pts = SRTTIME2MS (hh1, mm1, ss1, ms1);
-                end_pts = SRTTIME2MS (hh2, mm2, ss2, ms2);
-            } else {
-
+                str_pts = SRTTIME2SECONDS (hh1, mm1, ss1, ms1);
+                end_pts = SRTTIME2SECONDS (hh2, mm2, ss2, ms2);
             }
 
             data += line_length;
@@ -198,10 +181,9 @@ static void _dump (srt_t* head, char type)
         }
 
         else if ('v' == type) {
-            printf ("%d:%02d:%02d --> %02d:%02d:%02d\r\n%s\r\n",
-                    hh1, mm1, ss1, hh2, mm2, ss2, srt_data (srt));
+            printf ("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d\r\n%s\r\n",
+                    hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2, srt_data (srt));
         }
-
     }
 }
 
