@@ -27,16 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-void srt_free (srt_t* srt)
-{
-    srt_t* next;
 
-    while (srt) {
-        next = srt->next;
-        free (srt);
-        srt = next;
-    }
-}
 
 srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* prev, srt_t** head)
 {
@@ -64,6 +55,20 @@ srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* p
 
     dest[size] = '\0';
     return srt;
+}
+
+srt_t* srt_free_head (srt_t* head)
+{
+    srt_t* next = head->next;
+    free (head);
+    return next;
+}
+
+void srt_free (srt_t* srt)
+{
+    while (srt) {
+        srt = srt_free_head (srt);
+    }
 }
 
 #define SRTTIME2SECONDS(HH,MM,SS,MS) ((HH*3600.0) + (MM*60.0) + SS + (MS/1000.0))

@@ -21,67 +21,76 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_SRT_H
-#define LIBCAPTION_SRT_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "flv.h"
+#include "avc.h"
+#include "srt.h"
+#include "wonderland.h"
 
-#include "eia608.h"
-#include "caption.h"
+#define SECONDS_PER_LINE 3.0
+srt_t* appennd_caption (const utf8_char_t* data, srt_t* prev, srt_t** head)
+{
 
-// timestamp and duration are in seconds
-typedef struct _srt_t {
-    struct _srt_t* next;
-    double timestamp;
-    double duration;
-    size_t aloc;
-} srt_t;
+    int r, c, chan = 0;
+    ssize_t size = (ssize_t) strlen (data);
+    size_t char_count, char_length, line_length = 0, trimmed_length = 0;
+
+    for (r = 0 ; 0 < size && SCREEN_ROWS > r ; ++r) {
+        line_length = utf8_line_length (data);
+        trimmed_length = utf8_trimmed_length (data,line_length);
+        char_count = utf8_char_count (data,trimmed_length);
+
+        // If char_count is greater than one line can display, split it.
+        if (SCREEN_COLS < char_count) {
+            char_count = utf8_wrap_length (data,SCREEN_COLS);
+            line_length = utf8_string_length (data,char_count+1);
+        }
+
+        // fprintf (stderr,"%.*s\n", line_length, data);
+        prev = srt_new (data, line_length, prev ? prev->timestamp + SECONDS_PER_LINE : 0, prev, head);
+
+        data += line_length;
+        size -= (ssize_t) line_length;
+    }
+
+    return prev;
+}
+
+int main (int argc, char** argv)
+{
+    int i = 0;
+    flvtag_t tag;
+    srt_t* head = 0, *tail = 0;
+    int has_audio, has_video;
+    FILE* flv = flv_open_read (argv[1]);
+    FILE* out = flv_open_write (argv[2]);
+    flvtag_init (&tag);
+
+    if (!flv_read_header (flv,&has_audio,&has_video)) {
+        fprintf (stderr,"%s is not an flv file\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+
+    flv_write_header (out,has_audio,has_video);
+
+    while (flv_read_tag (flv,&tag)) {
+        if (head && head->timestamp <= flvtag_pts_seconds (&tag)) {
+            fprintf (stderr,"%s\n", srt_data (head));
+            flvtag_addcaption (&tag, srt_data (head));
+            head = srt_free_head (head);
+        }
+
+        if (wonderland[i][0]) {
+            tail = appennd_caption (wonderland[i], tail, &head);
+            ++i;
+        }
 
 
 
+        flv_write_tag (out,&tag);
+    }
 
-/*! \brief
-    \param
-*/
-srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* prev, srt_t** head);
-/*! \brief
-    \param
-*/
-srt_t* srt_free_head (srt_t* head);
-// returns the head of the link list. must bee freed when done
-/*! \brief
-    \param
-*/
-srt_t* srt_parse (const utf8_char_t* data, size_t size);
-/*! \brief
-    \param
-*/
-void srt_free (srt_t* srt);
-
-/*! \brief
-    \param
-*/
-static inline srt_t* srt_next (srt_t* srt) { return srt->next; }
-/*! \brief
-    \param
-*/
-static inline utf8_char_t* srt_data (srt_t* srt) { return (utf8_char_t*) (srt) + sizeof (srt_t); }
-// This only converts teh surrent SRT, It does not walk the list
-/*! \brief
-    \param
-*/
-int srt_to_caption_frame (srt_t* srt, caption_frame_t* frame);
-
-// returns teh new srt. Head is not tracher internally.
-/*! \brief
-    \param
-*/
-srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev, srt_t** head);
-/*! \brief
-    \param
-*/
-void srt_dump (srt_t* srt);
-/*! \brief
-    \param
-*/
-void vtt_dump (srt_t* srt);
-
-#endif
+    return EXIT_SUCCESS;
+}

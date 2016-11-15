@@ -77,6 +77,10 @@ add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
 #install (FILES scc2srt DESTINATION bin)
 
+add_executable(rollup examples/rollup.c examples/flv.c)
+target_link_libraries(rollup caption)
+#install (FILES rollup DESTINATION bin)
+
 #include_directories(/usr/local/include)
 #add_executable(rtmpspit examples/rtmpspit.c  examples/flv.c)
 #target_link_libraries(rtmpspit caption rtmp)
