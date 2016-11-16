@@ -68,6 +68,11 @@ int main (int argc, char** argv)
     FILE* out = flv_open_write (argv[2]);
     flvtag_init (&tag);
 
+    for (i = 0 ; wonderland[i][0]; ++i) {
+        tail = appennd_caption (wonderland[i], tail, &head);
+    }
+
+
     if (!flv_read_header (flv,&has_audio,&has_video)) {
         fprintf (stderr,"%s is not an flv file\n", argv[1]);
         return EXIT_FAILURE;
@@ -76,17 +81,11 @@ int main (int argc, char** argv)
     flv_write_header (out,has_audio,has_video);
 
     while (flv_read_tag (flv,&tag)) {
-        if (head && head->timestamp <= flvtag_pts_seconds (&tag)) {
-            fprintf (stderr,"%s\n", srt_data (head));
+        if (head && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag) && head->timestamp <= flvtag_pts_seconds (&tag)) {
+            fprintf (stderr,"%f %s\n", flvtag_pts_seconds (&tag), srt_data (head));
             flvtag_addcaption (&tag, srt_data (head));
             head = srt_free_head (head);
         }
-
-        if (wonderland[i][0]) {
-            tail = appennd_caption (wonderland[i], tail, &head);
-            ++i;
-        }
-
 
 
         flv_write_tag (out,&tag);
