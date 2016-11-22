@@ -21,81 +21,75 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "ts.h"
-#include "srt.h"
-#include "avc.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "flv.h"
+#include "avc.h"
+#include "srt.h"
+#include "wonderland.h"
+
+#define SECONDS_PER_LINE 3.0
+srt_t* appennd_caption (const utf8_char_t* data, srt_t* prev, srt_t** head)
+{
+
+    int r, c, chan = 0;
+    ssize_t size = (ssize_t) strlen (data);
+    size_t char_count, char_length, line_length = 0, trimmed_length = 0;
+
+    for (r = 0 ; 0 < size && SCREEN_ROWS > r ; ++r) {
+        line_length = utf8_line_length (data);
+        trimmed_length = utf8_trimmed_length (data,line_length);
+        char_count = utf8_char_count (data,trimmed_length);
+
+        // If char_count is greater than one line can display, split it.
+        if (SCREEN_COLS < char_count) {
+            char_count = utf8_wrap_length (data,SCREEN_COLS);
+            line_length = utf8_string_length (data,char_count+1);
+        }
+
+        // fprintf (stderr,"%.*s\n", line_length, data);
+        prev = srt_new (data, line_length, prev ? prev->timestamp + SECONDS_PER_LINE : 0, prev, head);
+
+        data += line_length;
+        size -= (ssize_t) line_length;
+    }
+
+    return prev;
+}
 
 int main (int argc, char** argv)
 {
-    const char* path = argv[1];
+    int i = 0;
+    flvtag_t tag;
+    srt_t* head = 0, *tail = 0;
+    int has_audio, has_video;
+    FILE* flv = flv_open_read (argv[1]);
+    FILE* out = flv_open_write (argv[2]);
+    flvtag_init (&tag);
 
-    ts_t ts;
-    sei_t sei;
-    avcnalu_t nalu;
-    srt_t* srt = 0, *head = 0;
-    caption_frame_t frame;
-    uint8_t pkt[TS_PACKET_SIZE];
-    ts_init (&ts);
-    avcnalu_init (&nalu);
-    caption_frame_init (&frame);
-
-    FILE* file = fopen (path,"rb+");
-
-    while (TS_PACKET_SIZE == fread (&pkt[0],1,TS_PACKET_SIZE, file)) {
-        switch (ts_parse_packet (&ts,&pkt[0])) {
-        case LIBCAPTION_OK:
-            // fprintf (stderr,"read ts packet\n");
-            break;
-
-        case LIBCAPTION_READY: {
-            // fprintf (stderr,"read ts packet DATA\n");
-            while (ts.size) {
-                // fprintf (stderr,"ts.size %d (%02X%02X%02X%02X)\n",ts.size, ts.data[0], ts.data[1], ts.data[2], ts.data[3]);
-
-                switch (avcnalu_parse_annexb (&nalu, &ts.data, &ts.size)) {
-                case LIBCAPTION_OK:
-                    break;
-
-                case LIBCAPTION_ERROR:
-                    // fprintf (stderr,"LIBCAPTION_ERROR == avcnalu_parse_annexb()\n");
-                    avcnalu_init (&nalu);
-                    break;
-
-                case LIBCAPTION_READY: {
-
-                    if (6 == avcnalu_type (&nalu)) {
-                        // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
-                        sei_init (&sei);
-                        sei_parse_avcnalu (&sei, &nalu, ts_dts_seconds (&ts), ts_cts_seconds (&ts));
-
-                        // sei_dump (&sei);
-
-                        if (LIBCAPTION_READY == sei_to_caption_frame (&sei,&frame)) {
-                            // caption_frame_dump (&frame);
-                            srt = srt_from_caption_frame (&frame,srt,&head);
-
-                            // srt_dump (srt);
-                        }
-
-                        sei_free (&sei);
-                    }
-
-                    avcnalu_init (&nalu);
-                } break;
-                }
-            }
-        } break;
-
-        case LIBCAPTION_ERROR:
-            // fprintf (stderr,"read ts packet ERROR\n");
-            break;
-        }
-
+    for (i = 0 ; wonderland[i][0]; ++i) {
+        tail = appennd_caption (wonderland[i], tail, &head);
     }
 
-    srt_dump (head);
-    srt_free (head);
 
-    return 1;
+    if (!flv_read_header (flv,&has_audio,&has_video)) {
+        fprintf (stderr,"%s is not an flv file\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+
+    flv_write_header (out,has_audio,has_video);
+
+    while (flv_read_tag (flv,&tag)) {
+        if (head && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag) && head->timestamp <= flvtag_pts_seconds (&tag)) {
+            fprintf (stderr,"%f %s\n", flvtag_pts_seconds (&tag), srt_data (head));
+            flvtag_addcaption (&tag, srt_data (head));
+            head = srt_free_head (head);
+        }
+
+
+        flv_write_tag (out,&tag);
+    }
+
+    return EXIT_SUCCESS;
 }
