@@ -160,10 +160,10 @@ srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev, srt_t** head
 
 static inline void _crack_time (double tt, int* hh, int* mm, int* ss, int* ms)
 {
-    (*ms) = (int64_t) (tt * 1000) % 1000;
-    (*ss) = (int64_t) (tt) % 60;
-    (*mm) = (int64_t) (tt / (60)) % 60;
-    (*hh) = (int64_t) (tt / (60*60));
+    (*ms) = (int) ((int64_t) (tt * 1000.0) % 1000);
+    (*ss) = (int) ((int64_t) (tt) % 60);
+    (*mm) = (int) ((int64_t) (tt / (60.0)) % 60);
+    (*hh) = (int) ((int64_t) (tt / (60.0*60.0)));
 }
 
 static void _dump (srt_t* head, char type)
