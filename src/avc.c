@@ -572,7 +572,7 @@ void avcnalu_init (avcnalu_t* nalu)
 int avcnalu_parse_annexb (avcnalu_t* nalu, const uint8_t** data, size_t* size)
 {
     int scpos, sclen;
-    int new_size = nalu->size + (*size);
+    int new_size = (int) (nalu->size + (*size));
 
     if (new_size > MAX_NALU_SIZE) {
         (*size) = nalu->size = 0;
@@ -580,7 +580,7 @@ int avcnalu_parse_annexb (avcnalu_t* nalu, const uint8_t** data, size_t* size)
     }
 
     memcpy (&nalu->data[nalu->size], (*data), (*size));
-    scpos = avc_find_start_code_increnental (&nalu->data[0], new_size, nalu->size, &sclen);
+    scpos = avc_find_start_code_increnental (&nalu->data[0], new_size, (int) nalu->size, &sclen);
 
     if (0<=scpos) {
         (*data) += (scpos - nalu->size) + sclen;
