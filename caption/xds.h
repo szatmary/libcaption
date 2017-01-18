@@ -13,6 +13,9 @@
 
 #ifndef LIBCAPTION_XDS_H
 #define LIBCAPTION_XDS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stddef.h>
 #include <inttypes.h>
@@ -29,4 +32,7 @@ typedef struct {
 void xds_init (xds_t* xds);
 int xds_decode (xds_t* xds, uint16_t cc);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

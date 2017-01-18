@@ -23,9 +23,15 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_SCC_H
 #define LIBCAPTION_SCC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "eia608.h"
 
 int scc_to_608 (const char* line, double* pts, uint16_t* cc, int cc_max);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

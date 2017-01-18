@@ -23,6 +23,10 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_AVC_H
 #define LIBCAPTION_AVC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "cea708.h"
 #include "caption.h"
 #include <float.h>
@@ -195,4 +199,7 @@ static inline int nalu_to_caption_frame (caption_frame_t* frame, const uint8_t* 
     return 1;
 }
 ////////////////////////////////////////////////////////////////////////////////
+#ifdef __cplusplus
+}
+#endif
 #endif

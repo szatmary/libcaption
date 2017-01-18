@@ -23,6 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_EIA608_CHARMAP_H
 #define LIBCAPTION_EIA608_CHARMAP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define EIA608_CHAR_COUNT 176
 extern const char* eia608_char_map[EIA608_CHAR_COUNT];
@@ -227,4 +230,7 @@ extern const char* eia608_char_map[EIA608_CHAR_COUNT];
 #define EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT            "\xE2\x94\x94" // lower left
 #define EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT             "\xE2\x94\x98" // bottom right
 
+#ifdef __cplusplus
+}
+#endif
 #endif

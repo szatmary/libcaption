@@ -23,6 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_CEA708_H
 #define LIBCAPTION_CEA708_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "caption.h"
 #define CEA608_MAX_SIZE (255)
@@ -107,4 +110,7 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size);
     \param
 */
 void cea708_dump (cea708_t* cea708);
+#ifdef __cplusplus
+}
+#endif
 #endif

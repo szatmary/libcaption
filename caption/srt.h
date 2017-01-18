@@ -23,6 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_SRT_H
 #define LIBCAPTION_SRT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "eia608.h"
 #include "caption.h"
@@ -84,4 +87,7 @@ void srt_dump (srt_t* srt);
 */
 void vtt_dump (srt_t* srt);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

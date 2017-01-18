@@ -23,6 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_EIA608_H
 #define LIBCAPTION_EIA608_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "utf8.h"
 #include "eia608_charmap.h"
@@ -201,6 +204,7 @@ int eia608_to_utf8 (uint16_t c, int* chan, utf8_char_t* char1, utf8_char_t* char
 */
 void eia608_dump (uint16_t cc_data);
 ////////////////////////////////////////////////////////////////////////////////
-
-
+#ifdef __cplusplus
+}
+#endif
 #endif

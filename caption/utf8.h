@@ -23,6 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_UTF8_H
 #define LIBCAPTION_UTF8_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stddef.h>
 #include <inttypes.h>
@@ -93,5 +96,7 @@ utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size);
 */
 int utf8_line_count (const utf8_char_t* data);
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif

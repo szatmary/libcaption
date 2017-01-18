@@ -23,6 +23,10 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_H
 #define LIBCAPTION_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "utf8.h"
 #include "xds.h"
 #include "eia608.h"
@@ -138,4 +142,7 @@ void caption_frame_dump (caption_frame_t* frame);
 #define CAPTION_FRAME_JSON_BUF_SIZE 32768
 size_t caption_frame_json (caption_frame_t* frame, utf8_char_t* buf);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
