@@ -22,7 +22,7 @@ extern "C" {
 
 typedef struct {
     int state;
-    uint8_t class;
+    uint8_t class_code;
     uint8_t type;
     uint32_t size;
     uint8_t content[32];

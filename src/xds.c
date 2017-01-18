@@ -26,7 +26,7 @@ int xds_decode (xds_t* xds, uint16_t cc)
     default:
     case 0:
         xds_init (xds);
-        xds->class = (cc&0x0F00) >>8;
+        xds->class_code = (cc&0x0F00) >>8;
         xds->type = (cc&0x000F);
         xds->state = 1;
         return LIBCAPTION_OK;
