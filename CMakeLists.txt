@@ -34,7 +34,9 @@ set(CAPTION_SOURCES
 
 set(CAPTION_HEADERS
   caption/utf8.h
+  caption/sei.h
   caption/scc.h
+  caption/avc.c
   caption/cea708.h
   caption/eia608.h
   caption/caption.h
@@ -49,40 +51,40 @@ endif()
 
 add_executable(flv2srt examples/flv2srt.c examples/flv.c)
 target_link_libraries(flv2srt caption)
-install(TARGETS flv2srt DESTINATION bin)
+#install (FILES flv2srt DESTINATION bin)
 
 add_executable(ts2srt examples/ts2srt.c examples/ts.c)
 target_link_libraries(ts2srt caption)
-install(TARGETS ts2srt DESTINATION bin)
+#install (FILES ts2srt DESTINATION bin)
 
 add_executable(flv+srt examples/flv+srt.c examples/flv.c)
 target_link_libraries(flv+srt caption)
-install(TARGETS flv+srt DESTINATION bin)
+#install (FILES flv+srt DESTINATION bin)
 
 add_executable(party examples/party.c examples/flv.c)
 target_link_libraries(party caption)
-install(TARGETS party DESTINATION bin)
+#install (FILES party DESTINATION bin)
 
 add_executable(srtdump examples/srtdump.c )
 target_link_libraries(srtdump caption)
-install(TARGETS srtdump DESTINATION bin)
+#install (FILES srtdump DESTINATION bin)
 
 add_executable(srt2vtt examples/srt2vtt.c)
 target_link_libraries(srt2vtt caption)
-install(TARGETS srt2vtt DESTINATION bin)
+#install (FILES srt2vtt DESTINATION bin)
 
 add_executable(scc2srt examples/scc2srt.c)
 target_link_libraries(scc2srt caption)
-install(TARGETS scc2srt DESTINATION bin)
+#install (FILES scc2srt DESTINATION bin)
 
 add_executable(rollup examples/rollup.c examples/flv.c)
 target_link_libraries(rollup caption)
-install(TARGETS rollup DESTINATION bin)
+#install (FILES rollup DESTINATION bin)
 
 #include_directories(/usr/local/include)
 #add_executable(rtmpspit examples/rtmpspit.c  examples/flv.c)
 #target_link_libraries(rtmpspit caption rtmp)
-#install(TARGETS rtmpspit DESTINATION bin)
+#install (FILES rtmpspit DESTINATION bin)
 
 # unit-tests
 #add_executable(eia608_test unit_tests/eia608_test.c )
