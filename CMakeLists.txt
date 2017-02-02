@@ -34,9 +34,7 @@ set(CAPTION_SOURCES
 
 set(CAPTION_HEADERS
   caption/utf8.h
-  caption/sei.h
   caption/scc.h
-  caption/avc.c
   caption/cea708.h
   caption/eia608.h
   caption/caption.h
