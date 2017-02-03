@@ -33,12 +33,15 @@ set(CAPTION_SOURCES
 )
 
 set(CAPTION_HEADERS
-  caption/utf8.h
-  caption/scc.h
+  caption/avc.h
+  caption/caption.h
   caption/cea708.h
   caption/eia608.h
-  caption/caption.h
   caption/eia608_charmap.h
+  caption/scc.h
+  caption/srt.h
+  caption/utf8.h
+  caption/xds.h
 )
 
 add_library(caption ${CAPTION_SOURCES})
