@@ -93,7 +93,7 @@ target_link_libraries(rollup caption)
 #add_executable(test_captions unit_tests/test_sei.c )
 #target_link_libraries(test_captions caption)
 
-install (TARGETS caption DESTINATION lib EXPORT caption-targets)
+install (TARGETS caption DESTINATION lib)
 install (FILES ${CAPTION_HEADERS} DESTINATION include/caption)
 
 find_package(Doxygen)
