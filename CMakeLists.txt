@@ -94,7 +94,7 @@ target_link_libraries(rollup caption)
 #target_link_libraries(test_captions caption)
 
 install (TARGETS caption DESTINATION lib)
-install (FILES ${CAPTION_HEADERS} DESTINATION include/caption)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/caption DESTINATION include)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
