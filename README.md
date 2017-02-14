@@ -4,7 +4,7 @@ Matthew Szatmary m3u8@twitch.tv / matt@szatmary.org
 
 # libcaption
 
-libcaption is a small library written in C to aid in the creating and parsing of closed caption data for use in the twitch player, open sourced to use within community developed broadcast tools. To maintain consistency across platforms libcaption aims to implement a subset of EIA608, CEA708 as supported by the Apple iOS platform.
+libcaption is a small library written in C to aid in the creating and parsing of closed caption data for use in the twitch player, open sourced under the MIT license to use within community developed broadcast tools. To maintain consistency across platforms libcaption aims to implement a subset of EIA608, CEA708 as supported by the Apple iOS platform.
 
 608 support is currently limited to encoding and decoding the necessary control and preamble codes as well as support for the Basic North American, Special North American and Extended Western European character sets.
 

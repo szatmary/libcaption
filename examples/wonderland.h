@@ -1,3 +1,4 @@
+// Public domain
 const char* wonderland[] = {
     "Project Gutenberg’s Alice’s Adventures in Wonderland, by Lewis Carroll",
     "This eBook is for the use of anyone anywhere at no cost and with",
