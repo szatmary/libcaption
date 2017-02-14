@@ -21,7 +21,7 @@ if(RE2C)
   message(STATUS "Found re2c: ${RE2C}")
   set(eia608_cc ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c)
   add_custom_command(OUTPUT ${eia608_cc}
-    COMMAND ${RE2C} -bis -o ${eia608_cc} ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
+    COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_cc} ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
     COMMENT "Generating ${eia608_cc}")
 else()
