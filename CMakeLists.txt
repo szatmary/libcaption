@@ -16,9 +16,17 @@ endif()
 # Don't need to prefix local includes with "caption/*"
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c
-  COMMAND re2c -bis -o ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c)
+find_program(RE2C re2c)
+if(RE2C)
+  message(STATUS "Found re2c: ${RE2C}")
+  set(eia608_cc ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c)
+  add_custom_command(OUTPUT ${eia608_cc}
+    COMMAND ${RE2C} -bis -o ${eia608_cc} ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
+    COMMENT "Generating ${eia608_cc}")
+else()
+  message(SEND_ERROR "Could not find re2c executable")
+endif()
 
 set(CAPTION_SOURCES
   src/utf8.c
