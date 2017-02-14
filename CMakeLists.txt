@@ -52,42 +52,7 @@ endif()
 
 option(BUILD_EXAMPLES "Build examples" ON)
 if(BUILD_EXAMPLES)
-  add_executable(flv2srt examples/flv2srt.c examples/flv.c)
-  target_link_libraries(flv2srt caption)
-  install(TARGETS flv2srt DESTINATION bin)
-
-  add_executable(ts2srt examples/ts2srt.c examples/ts.c)
-  target_link_libraries(ts2srt caption)
-  install(TARGETS ts2srt DESTINATION bin)
-
-  add_executable(flv+srt examples/flv+srt.c examples/flv.c)
-  target_link_libraries(flv+srt caption)
-  install(TARGETS flv+srt DESTINATION bin)
-
-  add_executable(party examples/party.c examples/flv.c)
-  target_link_libraries(party caption)
-  install(TARGETS party DESTINATION bin)
-
-  add_executable(srtdump examples/srtdump.c )
-  target_link_libraries(srtdump caption)
-  install(TARGETS srtdump DESTINATION bin)
-
-  add_executable(srt2vtt examples/srt2vtt.c)
-  target_link_libraries(srt2vtt caption)
-  install(TARGETS srt2vtt DESTINATION bin)
-
-  add_executable(scc2srt examples/scc2srt.c)
-  target_link_libraries(scc2srt caption)
-  install(TARGETS scc2srt DESTINATION bin)
-
-  add_executable(rollup examples/rollup.c examples/flv.c)
-  target_link_libraries(rollup caption)
-  install(TARGETS rollup DESTINATION bin)
-
-  #include_directories(/usr/local/include)
-  #add_executable(rtmpspit examples/rtmpspit.c  examples/flv.c)
-  #target_link_libraries(rtmpspit caption rtmp)
-  #install(TARGETS rtmpspit DESTINATION bin)
+  add_subdirectory(examples)
 endif()
 
 # unit-tests
