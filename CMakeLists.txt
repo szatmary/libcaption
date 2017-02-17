@@ -17,15 +17,17 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
 
 find_program(RE2C re2c)
+set(eia608_cc ${CMAKE_SOURCE_DIR}/src/eia608.c)
 if(RE2C)
   message(STATUS "Found re2c: ${RE2C}")
-  set(eia608_cc ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c)
   add_custom_command(OUTPUT ${eia608_cc}
     COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_cc} ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
     COMMENT "Generating ${eia608_cc}")
 else()
-  message(SEND_ERROR "Could not find re2c executable")
+  set(cached_eia608_cc ${CMAKE_SOURCE_DIR}/src/eia608.c.cached)
+  message(WARNING "Could not find re2c executable.  Copying ${cached_eia608_cc} to ${eia608_cc}")
+  configure_file(${cached_eia608_cc} ${eia608_cc} COPYONLY)
 endif()
 
 set(CAPTION_SOURCES
