@@ -18,6 +18,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
 
 option(ENABLE_RE2C "Use RE2C to generate eia608.c" ON)
 set(eia608_from_utf8_c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c)
+set(eia608_from_utf8_c_cached ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
 if(ENABLE_RE2C)
   find_program(RE2C re2c)
   set(eia608_from_utf8_re2c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.re2c)
@@ -33,13 +34,13 @@ if(ENABLE_RE2C)
     add_custom_target(re2c
       COMMAND ${CMAKE_COMMAND} -E remove ${eia608_from_utf8_c}
       COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c}
+      COMMAND ${CMAKE_COMMAND} -E copy ${eia608_from_utf8_c} ${eia608_from_utf8_c_cached}
       DEPENDS ${eia608_from_utf8_re2c}
       COMMENT "Generating ${eia608_from_utf8_re2c}")
   else()
     message(SEND_ERROR "Could not find re2c executable")
   endif()
 else()
-  set(eia608_from_utf8_c_cached ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
   message(WARNING "Using cached re2c file: ${eia608_from_utf8_c_cached}")
   if(NOT EXISTS ${eia608_from_utf8_c})
     file(WRITE ${eia608_from_utf8_c} "")
