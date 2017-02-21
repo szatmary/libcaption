@@ -16,23 +16,35 @@ endif()
 # Don't need to prefix local includes with "caption/*"
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
 
-set(eia608_cc ${CMAKE_SOURCE_DIR}/src/eia608.c)
 option(ENABLE_RE2C "Use RE2C to generate eia608.c" ON)
+set(eia608_from_utf8_c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c)
 if(ENABLE_RE2C)
   find_program(RE2C re2c)
+  set(eia608_from_utf8_re2c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.re2c)
   if(RE2C)
     message(STATUS "Found re2c: ${RE2C}")
-    add_custom_command(OUTPUT ${eia608_cc}
-      COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_cc} ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/eia608.c.re2c
-      COMMENT "Generating ${eia608_cc}")
+
+    # Create a temporary file until re2c regenerates it so that CMake doesn't
+    # complain about the missing source file
+    if(NOT EXISTS ${eia608_from_utf8_c})
+      file(WRITE ${eia608_from_utf8_c} "")
+    endif()
+
+    add_custom_target(re2c
+      COMMAND ${CMAKE_COMMAND} -E remove ${eia608_from_utf8_c}
+      COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c}
+      DEPENDS ${eia608_from_utf8_re2c}
+      COMMENT "Generating ${eia608_from_utf8_re2c}")
   else()
     message(SEND_ERROR "Could not find re2c executable")
   endif()
 else()
-  set(cached_eia608_cc ${CMAKE_SOURCE_DIR}/src/eia608.c.cached)
-  message(WARNING "Using cached re2c file: ${cached_eia608_cc}")
-  configure_file(${cached_eia608_cc} ${eia608_cc} COPYONLY)
+  set(eia608_from_utf8_c_cached ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
+  message(WARNING "Using cached re2c file: ${eia608_from_utf8_c_cached}")
+  if(NOT EXISTS ${eia608_from_utf8_c})
+    file(WRITE ${eia608_from_utf8_c} "")
+  endif()
+  configure_file(${eia608_from_utf8_c_cached} ${eia608_from_utf8_c} COPYONLY)
 endif()
 
 set(CAPTION_SOURCES
@@ -43,8 +55,9 @@ set(CAPTION_SOURCES
   src/xds.c
   src/cea708.c
   src/caption.c
-  src/eia608_charmap.c
   src/eia608.c
+  src/eia608_charmap.c
+  src/eia608_from_utf8.c
 )
 
 set(CAPTION_HEADERS
@@ -60,6 +73,10 @@ set(CAPTION_HEADERS
 )
 
 add_library(caption ${CAPTION_SOURCES})
+
+if(ENABLE_RE2C)
+  add_dependencies(caption re2c)
+endif()
 
 if(CMAKE_VERSION VERSION_EQUAL 2.8.12 OR CMAKE_VERSION VERSION_GREATER 2.8.12)
 target_include_directories(caption PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
