@@ -327,14 +327,15 @@ libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_da
 
     // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
     if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data == frame->state.cc_data) {
+        frame->state.cc_data = cc_data;
         return LIBCAPTION_OK;
     }
+
+    frame->state.cc_data = cc_data;
 
     if (0 > frame->timestamp && 0 < timestamp) {
         frame->timestamp = timestamp;
     }
-
-    frame->state.cc_data = cc_data;
 
     if (frame->xds.state) {
         status = xds_decode (&frame->xds,cc_data);
