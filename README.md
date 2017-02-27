@@ -1,5 +1,5 @@
 # version
-v0.6
+v0.7
 Matthew Szatmary m3u8@twitch.tv / matt@szatmary.org
 
 # libcaption
