@@ -30,7 +30,7 @@
 // #include "sei.h"
 
 #define MAX_SRT_SIZE (10*1024*1024)
-#define MAX_READ_SIZE 4096
+#define CLEAR_TIMEOUT 6.0 // seconds
 
 srt_t* srt_from_file (const char* path)
 {
@@ -58,6 +58,7 @@ srt_t* srt_from_file (const char* path)
 int main (int argc, char** argv)
 {
     flvtag_t tag;
+    double clear_timestamp = 0;
     FILE* flv = flv_open_read (argv[1]);
     FILE* out = flv_open_write (argv[3]);
 
@@ -80,11 +81,18 @@ int main (int argc, char** argv)
     flv_write_header (out,has_audio,has_video);
 
     while (flv_read_tag (flv,&tag)) {
-        // TODO handle B freame!
-        if (srt && flvtag_pts_seconds (&tag) >= srt->timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-            fprintf (stderr,"%f: %s\n", srt->timestamp, srt_data (srt));
+        // TODO handle B frames better
+        double timestamp = flvtag_pts_seconds (&tag);
+
+        if (srt && timestamp >= srt->timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
+            fprintf (stderr,"%0.02f, %0.02f: %s\n", srt->timestamp, srt->duration, srt_data (srt));
             flvtag_addcaption (&tag, srt_data (srt));
             srt = srt->next;
+            clear_timestamp = srt->timestamp + srt->duration;
+        } else if (timestamp >= clear_timestamp) {
+            fprintf (stderr,"%0.02f: [CAPTIONS CLEARED]\n", timestamp);
+            flvtag_addcaption (&tag, NULL);
+            clear_timestamp = timestamp + CLEAR_TIMEOUT;
         }
 
         flv_write_tag (out,&tag);

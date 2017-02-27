@@ -54,6 +54,7 @@ int flvtag_reserve (flvtag_t* tag, uint32_t size)
 FILE* flv_open_read (const char* flv)
 {
     if (0 == flv || 0 == strcmp ("-",flv)) {
+        freopen (NULL, "rb", stdin);
         return stdin;
     }
 
@@ -63,6 +64,7 @@ FILE* flv_open_read (const char* flv)
 FILE* flv_open_write (const char* flv)
 {
     if (0 == flv || 0 == strcmp ("-",flv)) {
+        freopen (NULL, "wb", stdout);
         return stdout;
     }
 
@@ -215,7 +217,6 @@ static void base64_encode (const unsigned char* in,  unsigned long inlen, unsign
 
     if (*outlen < len2 + 1) {
         *outlen = len2 + 1;
-        fprintf (stderr,"\n\nHERE\n\n");
         return;
     }
 
@@ -331,12 +332,17 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
     }
 
     sei_t sei;
-    caption_frame_t frame;
 
     sei_init (&sei);
-    caption_frame_init (&frame);
-    caption_frame_from_text (&frame, text);
-    sei_from_caption_frame (&sei, &frame);
+
+    if (text) {
+        caption_frame_t frame;
+        caption_frame_init (&frame);
+        caption_frame_from_text (&frame, text);
+        sei_from_caption_frame (&sei, &frame);
+    } else {
+        sei_from_caption_clear (&sei);
+    }
 
     uint8_t* sei_data = malloc (sei_render_size (&sei));
     size_t sei_size = sei_render (&sei, sei_data);
@@ -354,7 +360,7 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
         data += LENGTH_SIZE + nalu_size;
         size -= LENGTH_SIZE + nalu_size;
 
-        if (0 < sei_size && 7 != nalu_type && 8 != nalu_type && 9 != nalu_type ) {
+        if (0 < sei_size && 7 != nalu_type && 8 != nalu_type && 9 != nalu_type) {
             // fprintf (stderr,"Wrote SEI %d '%d'\n\n", sei_size, sei_data[3]);
             flvtag_avcwritenal (&new_tag,sei_data,sei_size);
             sei_size = 0;

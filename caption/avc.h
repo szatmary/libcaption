@@ -181,7 +181,11 @@ void sei_dump_messages (sei_message_t* head);
 /*! \brief
     \param
 */
-int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame);
+libcaption_stauts_t sei_from_caption_frame (sei_t* sei, caption_frame_t* frame);
+/*! \brief
+    \param
+*/
+libcaption_stauts_t sei_from_caption_clear (sei_t* sei);
 /*! \brief
     \param
 */

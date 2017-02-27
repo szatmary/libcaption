@@ -421,7 +421,7 @@ void sei_encode_eia608 (sei_t* sei, cea708_t* cea708, uint16_t cc_data)
 }
 ////////////////////////////////////////////////////////////////////////////////
 // TODO move this out of sei
-int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
+libcaption_stauts_t sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
 {
     int r,c;
     cea708_t cea708;
@@ -498,7 +498,19 @@ int sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
     sei_encode_eia608 (sei, &cea708, 0); // flush
     sei->dts = frame->timestamp; // assumes in order frames
     // sei_dump (sei);
-    return 1;
+    return LIBCAPTION_OK;
+}
+
+libcaption_stauts_t sei_from_caption_clear (sei_t* sei)
+{
+    cea708_t cea708;
+    cea708_init (&cea708); // set up a new popon frame
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_erase_display_memory, DEFAULT_CHANNEL));
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_end_of_caption, DEFAULT_CHANNEL));
+    sei_append_708 (sei,&cea708);
+    return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
 static int avc_is_start_code (const uint8_t* data, int size, int* len)
