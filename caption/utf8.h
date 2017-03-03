@@ -81,7 +81,7 @@ size_t utf8_trimmed_length (const char* data, size_t size);
     returns the length in bytes of the line including the new line charcter(s)
     auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-size_t utf8_line_length (const char* data);
+size_t utf8_line_length (const utf8_char_t* data);
 /*! \brief
     \param
 
@@ -95,6 +95,15 @@ utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size);
     returns number of new lins in teh string
 */
 int utf8_line_count (const utf8_char_t* data);
+
+/*! \brief
+    \param
+    size in/out. In the the max seize, out is the size read;
+    returns number of new lins in teh string
+*/
+#define UFTF_DEFAULT_MAX_FILE_SIZE = (50*1024*1024);
+
+utf8_char_t* utf8_load_text_file (const char* path, size_t* size);
 
 #ifdef __cplusplus
 }

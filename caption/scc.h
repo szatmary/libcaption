@@ -29,7 +29,14 @@ extern "C" {
 
 #include "eia608.h"
 
-int scc_to_608 (const char* line, double* pts, uint16_t* cc, int cc_max);
+#define SCC_MAX_CC 128
+typedef struct _scc_t {
+    double timestamp;
+    unsigned int cc_count;
+    uint16_t cc_data[SCC_MAX_CC];
+} scc_t;
+
+size_t scc_to_608 (scc_t* scc, const utf8_char_t* data);
 
 #ifdef __cplusplus
 }

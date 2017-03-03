@@ -32,6 +32,7 @@
 #define MAX_SRT_SIZE (10*1024*1024)
 #define CLEAR_TIMEOUT 6.0 // seconds
 
+// TODO replace this with utf8_load_text_file
 srt_t* srt_from_file (const char* path)
 {
     srt_t* head = 0;
