@@ -108,7 +108,7 @@ utf8_size_t utf8_char_count (const char* data, size_t size)
 }
 
 // returnes the length of the line in bytes triming not printable charcters at the end
-size_t utf8_trimmed_length (const char* data, size_t size)
+size_t utf8_trimmed_length (const utf8_char_t* data, size_t size)
 {
     for (; 0 < size && ' ' >= (uint8_t) data[size-1] ; --size) { }
 
