@@ -371,10 +371,6 @@ int flvtag_addsei (flvtag_t* tag, sei_t* sei)
 
 int flvtag_addcaption_text (flvtag_t* tag, const utf8_char_t* text)
 {
-    if (flvtag_avcpackettype_nalu != flvtag_avcpackettype (tag)) {
-        return 0;
-    }
-
     sei_t sei;
     sei_init (&sei);
 
@@ -392,13 +388,8 @@ int flvtag_addcaption_text (flvtag_t* tag, const utf8_char_t* text)
     return ret;
 }
 
-
 int flvtag_addcaption_scc (flvtag_t* tag, const scc_t* scc)
 {
-    if (flvtag_avcpackettype_nalu != flvtag_avcpackettype (tag)) {
-        return 0;
-    }
-
     sei_t sei;
     sei_init (&sei);
     sei_from_scc (&sei, scc);

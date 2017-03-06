@@ -70,6 +70,10 @@ size_t scc_to_608 (scc_t** scc, const utf8_char_t* data)
         return 0;
     }
 
+    if ( (*scc)) {
+        (*scc)->cc_size = 0;
+    }
+
     // skip 'Scenarist_SCC V1.0' header
     if (2 == sscanf (data, "Scenarist_SCC V%1d.%1d", &v1, &v2)) {
         data += 18; size += 18;

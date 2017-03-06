@@ -68,8 +68,8 @@ int main (int argc, char** argv)
         // TODO handle B frames better
         double timestamp = flvtag_pts_seconds (&tag);
 
-        if (scc && scc->timestamp < timestamp) {
-            fprintf (stderr,"%0.02f\n", scc->timestamp);
+        if (scc && scc->cc_size && scc->timestamp < timestamp) {
+            fprintf (stderr,"%0.02f cc_size %d\n", scc->timestamp, scc->cc_size);
             flvtag_addcaption_scc (&tag, scc);
             // read next scc
             scc_data += scc_to_608 (&scc,scc_data);
