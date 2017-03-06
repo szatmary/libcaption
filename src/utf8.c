@@ -25,6 +25,8 @@
 
 
 #include "utf8.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 const utf8_char_t* utf8_char_next (const char* s)
@@ -106,7 +108,7 @@ utf8_size_t utf8_char_count (const char* data, size_t size)
 }
 
 // returnes the length of the line in bytes triming not printable charcters at the end
-size_t utf8_trimmed_length (const char* data, size_t size)
+size_t utf8_trimmed_length (const utf8_char_t* data, size_t size)
 {
     for (; 0 < size && ' ' >= (uint8_t) data[size-1] ; --size) { }
 
@@ -115,7 +117,7 @@ size_t utf8_trimmed_length (const char* data, size_t size)
 
 // returns the length in bytes of the line including the new line charcter(s)
 // auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
-size_t utf8_line_length (const char* data)
+size_t utf8_line_length (const utf8_char_t* data)
 {
     size_t len = 0;
 
@@ -167,4 +169,37 @@ int utf8_line_count (const utf8_char_t* data)
     } while (0<len);
 
     return count-1;
+}
+
+utf8_char_t* utf8_load_text_file (const char* path, size_t* size)
+{
+    utf8_char_t* data = NULL;
+    FILE* file = fopen (path,"r");
+
+    if (file) {
+        fseek (file,0,SEEK_END);
+        size_t file_size = ftell (file);
+        fprintf (stderr,"fiel size %d\n",file_size);
+        fseek (file,0,SEEK_SET);
+
+        if (0 == (*size) || file_size <= (*size)) {
+            (*size) = 0;
+            data = (utf8_char_t*) malloc (1+file_size);
+            data[file_size] = 0;
+
+            if (data) {
+                utf8_char_t* pos = data;
+                size_t bytes_read = 0;
+
+                while (0 < (bytes_read = fread (pos,1,file_size- (*size),file))) {
+                    pos += bytes_read;
+                    (*size) += bytes_read;
+                }
+            }
+
+            fclose (file);
+        }
+    }
+
+    return data;
 }

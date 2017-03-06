@@ -100,7 +100,7 @@ int main (int argc, char** argv)
             get_dudes (partyDudes);
 
             if (CAPTION_METHOD == CAPTION_METHOD_SEI_708) {
-                flvtag_addcaption (&tag, partyDudes);
+                flvtag_addcaption_text (&tag, partyDudes);
             } else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
                 write_amfcaptions_708 (out,nextParty,partyDudes);
             } else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
