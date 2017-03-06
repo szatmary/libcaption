@@ -83,7 +83,7 @@ int main (int argc, char** argv)
     while (flv_read_tag (flv,&tag)) {
         if (head && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag) && head->timestamp <= flvtag_pts_seconds (&tag)) {
             fprintf (stderr,"%f %s\n", flvtag_pts_seconds (&tag), srt_data (head));
-            flvtag_addcaption (&tag, srt_data (head));
+            flvtag_addcaption_text (&tag, srt_data (head));
             head = srt_free_head (head);
         }
 

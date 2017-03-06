@@ -179,22 +179,25 @@ utf8_char_t* utf8_load_text_file (const char* path, size_t* size)
     if (file) {
         fseek (file,0,SEEK_END);
         size_t file_size = ftell (file);
+        fprintf (stderr,"fiel size %d\n",file_size);
         fseek (file,0,SEEK_SET);
 
         if (0 == (*size) || file_size <= (*size)) {
-            data = (utf8_char_t*) malloc (file_size);
+            (*size) = 0;
+            data = (utf8_char_t*) malloc (1+file_size);
+            data[file_size] = 0;
 
             if (data) {
                 utf8_char_t* pos = data;
                 size_t bytes_read = 0;
 
-                while (0 < (bytes_read = fread (pos,1,data-pos,file))) {
+                while (0 < (bytes_read = fread (pos,1,file_size- (*size),file))) {
                     pos += bytes_read;
+                    (*size) += bytes_read;
                 }
             }
 
             fclose (file);
-            (*size) = file_size;
         }
     }
 

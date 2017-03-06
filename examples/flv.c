@@ -325,29 +325,15 @@ int flvtag_avcwritenal (flvtag_t* tag, uint8_t* data, size_t size)
     return 1;
 }
 
-int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
+int flvtag_addsei (flvtag_t* tag, sei_t* sei)
 {
     if (flvtag_avcpackettype_nalu != flvtag_avcpackettype (tag)) {
         return 0;
     }
 
-    sei_t sei;
+    uint8_t* sei_data = malloc (sei_render_size (sei));
+    size_t sei_size = sei_render (sei, sei_data);
 
-    sei_init (&sei);
-
-    if (text) {
-        caption_frame_t frame;
-        caption_frame_init (&frame);
-        caption_frame_from_text (&frame, text);
-        sei_from_caption_frame (&sei, &frame);
-    } else {
-        sei_from_caption_clear (&sei);
-    }
-
-    uint8_t* sei_data = malloc (sei_render_size (&sei));
-    size_t sei_size = sei_render (&sei, sei_data);
-
-    // rewrite tag
     flvtag_t new_tag;
     flvtag_initavc (&new_tag, flvtag_dts (tag), flvtag_cts (tag), flvtag_frametype (tag));
     uint8_t* data = flvtag_payload_data (tag);
@@ -377,13 +363,46 @@ int flvtag_addcaption (flvtag_t* tag, const utf8_char_t* text)
         sei_size = 0;
     }
 
-    if (sei_data) {
-        free (sei_data);
-    }
-
     free (tag->data);
-    sei_free (&sei);
     tag->data = new_tag.data;
     tag->aloc = new_tag.aloc;
     return 1;
+}
+
+int flvtag_addcaption_text (flvtag_t* tag, const utf8_char_t* text)
+{
+    if (flvtag_avcpackettype_nalu != flvtag_avcpackettype (tag)) {
+        return 0;
+    }
+
+    sei_t sei;
+    sei_init (&sei);
+
+    if (text) {
+        caption_frame_t frame;
+        caption_frame_init (&frame);
+        caption_frame_from_text (&frame, text);
+        sei_from_caption_frame (&sei, &frame);
+    } else {
+        sei_from_caption_clear (&sei);
+    }
+
+    int ret = flvtag_addsei (tag,&sei);
+    sei_free (&sei);
+    return ret;
+}
+
+
+int flvtag_addcaption_scc (flvtag_t* tag, const scc_t* scc)
+{
+    if (flvtag_avcpackettype_nalu != flvtag_avcpackettype (tag)) {
+        return 0;
+    }
+
+    sei_t sei;
+    sei_init (&sei);
+    sei_from_scc (&sei, scc);
+    int ret = flvtag_addsei (tag,&sei);
+    sei_free (&sei);
+    return ret;
 }

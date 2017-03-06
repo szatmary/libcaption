@@ -501,6 +501,18 @@ libcaption_stauts_t sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
     return LIBCAPTION_OK;
 }
 
+libcaption_stauts_t sei_from_scc (sei_t* sei, scc_t* scc)
+{
+    cea708_t cea708;
+    cea708_init (&cea708); // set up a new popon frame
+
+    for (int i = 0 ; i < scc->cc_size ; ++i) {
+        cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, scc->cc_data[i]);
+    }
+
+    return LIBCAPTION_OK;
+}
+
 libcaption_stauts_t sei_from_caption_clear (sei_t* sei)
 {
     cea708_t cea708;

@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+#include "scc.h"
 #include "cea708.h"
 #include "caption.h"
 #include <float.h>
@@ -178,6 +179,10 @@ void sei_dump (sei_t* sei);
 */
 void sei_dump_messages (sei_message_t* head);
 ////////////////////////////////////////////////////////////////////////////////
+/*! \brief
+    \param
+*/
+libcaption_stauts_t sei_from_scc (sei_t* sei, scc_t* scc);
 /*! \brief
     \param
 */

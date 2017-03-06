@@ -21,58 +21,64 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "utf8.h"
-
+#include "flv.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 
 
 int main (int argc, char** argv)
 {
 
-    size_t scc_file_size = 0;
-    utf8_char_t* scc_file_data = utf8_load_text_file (argv[2], &scc_file_size);
-    utf8_char_t* scc_file_curr = scc_file_data;
-
-    do {
-
-        size_t line_length = utf8_line_length (scc_file_curr);;
-        scc_file_curr += line_length;
-    } while (scc_file_curr < scc_file_data);
+    scc_t* scc = NULL;
+    size_t scc_size = 0;
+    utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[2], &scc_size);
+    utf8_char_t* scc_data = scc_data_ptr;
 
 
-    // flvtag_t tag;
-    // double clear_timestamp = 0;
-    // FILE* flv = flv_open_read (argv[1]);
-    // FILE* out = flv_open_write (argv[3]);
-    //
-    // int has_audio, has_video;
-    // flvtag_init (&tag);
-    //
-    // if (!flv_read_header (flv,&has_audio,&has_video)) {
-    //     fprintf (stderr,"%s is not an flv file\n", argv[1]);
-    //     return EXIT_FAILURE;
-    // }
-    //
-    // flv_write_header (out,has_audio,has_video);
-    //
-    // while (flv_read_tag (flv,&tag)) {
-    //     // TODO handle B frames better
-    //     double timestamp = flvtag_pts_seconds (&tag);
-    //
-    //     if (srt && timestamp >= srt->timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-    //         fprintf (stderr,"%0.02f, %0.02f: %s\n", srt->timestamp, srt->duration, srt_data (srt));
-    //         flvtag_addcaption (&tag, srt_data (srt));
-    //         srt = srt->next;
-    //         clear_timestamp = srt->timestamp + srt->duration;
-    //     } else if (timestamp >= clear_timestamp) {
-    //         fprintf (stderr,"%0.02f: [CAPTIONS CLEARED]\n", timestamp);
-    //         flvtag_addcaption (&tag, NULL);
-    //         clear_timestamp = timestamp + CLEAR_TIMEOUT;
-    //     }
-    //
-    //     flv_write_tag (out,&tag);
-    //     // Write tag out here
+    // utf8_char_t* scc_file_curr = scc_file_data;
+    // while (0 < (bytes_read = ))) {
+    //     // fprintf (stderr,"READ '%.*s'\n", bytes_read, scc_file_data);
+    //     scc_file_data += bytes_read;
+    //     scc_file_size -= bytes_read;
+    //     fprintf (stderr,"timestamp %f\n", scc->timestamp);
     // }
 
+
+
+    flvtag_t tag;
+    double clear_timestamp = 0;
+    FILE* flv = flv_open_read (argv[1]);
+    FILE* out = flv_open_write (argv[3]);
+
+    int has_audio, has_video;
+    flvtag_init (&tag);
+
+    if (!flv_read_header (flv,&has_audio,&has_video)) {
+        fprintf (stderr,"%s is not an flv file\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+
+    flv_write_header (out,has_audio,has_video);
+
+    // read the first scc
+    scc_data += scc_to_608 (&scc,scc_data);
+
+    while (flv_read_tag (flv,&tag)) {
+        // TODO handle B frames better
+        double timestamp = flvtag_pts_seconds (&tag);
+
+        if (scc && scc->timestamp < timestamp) {
+            fprintf (stderr,"%0.02f\n", scc->timestamp);
+            flvtag_addcaption_scc (&tag, scc);
+            // read next scc
+            scc_data += scc_to_608 (&scc,scc_data);
+        }
+
+        flv_write_tag (out,&tag);
+    }
+
+    free (scc_data_ptr);
+    flvtag_free (&tag);
     return EXIT_SUCCESS;
 }

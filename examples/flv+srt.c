@@ -87,12 +87,12 @@ int main (int argc, char** argv)
 
         if (srt && timestamp >= srt->timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             fprintf (stderr,"%0.02f, %0.02f: %s\n", srt->timestamp, srt->duration, srt_data (srt));
-            flvtag_addcaption (&tag, srt_data (srt));
+            flvtag_addcaption_text (&tag, srt_data (srt));
             srt = srt->next;
             clear_timestamp = srt->timestamp + srt->duration;
         } else if (timestamp >= clear_timestamp) {
             fprintf (stderr,"%0.02f: [CAPTIONS CLEARED]\n", timestamp);
-            flvtag_addcaption (&tag, NULL);
+            flvtag_addcaption_text (&tag, NULL);
             clear_timestamp = timestamp + CLEAR_TIMEOUT;
         }
 
@@ -101,5 +101,6 @@ int main (int argc, char** argv)
     }
 
     srt_free (head);
+    flvtag_free (&tag);
     return EXIT_SUCCESS;
 }

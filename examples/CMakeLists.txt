@@ -10,9 +10,9 @@ add_executable(srt2vtt srt2vtt.c)
 target_link_libraries(srt2vtt caption)
 install(TARGETS srt2vtt DESTINATION bin)
 
-add_executable(scc2srt scc2srt.c)
-target_link_libraries(scc2srt caption)
-install(TARGETS scc2srt DESTINATION bin)
+#add_executable(scc2srt scc2srt.c)
+#target_link_libraries(scc2srt caption)
+#install(TARGETS scc2srt DESTINATION bin)
 
 add_executable(flv+srt flv+srt.c flv.c)
 target_link_libraries(flv+srt caption)
