@@ -29,26 +29,13 @@
 
 int main (int argc, char** argv)
 {
-
+    flvtag_t tag;
     scc_t* scc = NULL;
     size_t scc_size = 0;
-    utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[2], &scc_size);
-    utf8_char_t* scc_data = scc_data_ptr;
-
-
-    // utf8_char_t* scc_file_curr = scc_file_data;
-    // while (0 < (bytes_read = ))) {
-    //     // fprintf (stderr,"READ '%.*s'\n", bytes_read, scc_file_data);
-    //     scc_file_data += bytes_read;
-    //     scc_file_size -= bytes_read;
-    //     fprintf (stderr,"timestamp %f\n", scc->timestamp);
-    // }
-
-
-
-    flvtag_t tag;
     double clear_timestamp = 0;
+    utf8_char_t* scc_data = scc_data_ptr;
     FILE* flv = flv_open_read (argv[1]);
+    utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[2], &scc_size);
     FILE* out = flv_open_write (argv[3]);
 
     int has_audio, has_video;
@@ -65,7 +52,6 @@ int main (int argc, char** argv)
     scc_data += scc_to_608 (&scc,scc_data);
 
     while (flv_read_tag (flv,&tag)) {
-        // TODO handle B frames better
         double timestamp = flvtag_pts_seconds (&tag);
 
         if (scc && scc->cc_size && scc->timestamp < timestamp) {
