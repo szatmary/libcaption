@@ -170,7 +170,6 @@ libcaption_stauts_t eia608_write_char (caption_frame_t* frame, char* c)
 libcaption_stauts_t caption_frame_end (caption_frame_t* frame)
 {
     memcpy (&frame->front,&frame->back,sizeof (caption_frame_buffer_t));
-    caption_frame_state_clear (frame);
     caption_frame_buffer_clear (&frame->back);
     return LIBCAPTION_READY;
 }
