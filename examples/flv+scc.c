@@ -33,9 +33,9 @@ int main (int argc, char** argv)
     scc_t* scc = NULL;
     size_t scc_size = 0;
     double clear_timestamp = 0;
-    utf8_char_t* scc_data = scc_data_ptr;
     FILE* flv = flv_open_read (argv[1]);
     utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[2], &scc_size);
+    utf8_char_t* scc_data = scc_data_ptr;
     FILE* out = flv_open_write (argv[3]);
 
     int has_audio, has_video;
