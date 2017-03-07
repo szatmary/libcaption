@@ -511,6 +511,7 @@ libcaption_stauts_t sei_from_scc (sei_t* sei, const scc_t* scc)
             sei_append_708 (sei,&cea708);
         }
 
+        eia608_dump (scc->cc_data[i]);
         cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, scc->cc_data[i]);
     }
 
@@ -525,9 +526,9 @@ libcaption_stauts_t sei_from_caption_clear (sei_t* sei)
 {
     cea708_t cea708;
     cea708_init (&cea708); // set up a new popon frame
+    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
     cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_erase_display_memory, DEFAULT_CHANNEL));
-    cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
     cea708_add_cc_data (&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command (eia608_control_end_of_caption, DEFAULT_CHANNEL));
     sei_append_708 (sei,&cea708);
     return LIBCAPTION_OK;

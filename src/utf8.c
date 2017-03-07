@@ -179,7 +179,6 @@ utf8_char_t* utf8_load_text_file (const char* path, size_t* size)
     if (file) {
         fseek (file,0,SEEK_END);
         size_t file_size = ftell (file);
-        fprintf (stderr,"fiel size %d\n",file_size);
         fseek (file,0,SEEK_SET);
 
         if (0 == (*size) || file_size <= (*size)) {

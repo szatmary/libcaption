@@ -54,7 +54,7 @@ int main (int argc, char** argv)
     while (flv_read_tag (flv,&tag)) {
         double timestamp = flvtag_pts_seconds (&tag);
 
-        if (scc && scc->cc_size && scc->timestamp < timestamp) {
+        if (scc && scc->cc_size && scc->timestamp < timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             fprintf (stderr,"%0.02f cc_size %d\n", scc->timestamp, scc->cc_size);
             flvtag_addcaption_scc (&tag, scc);
             // read next scc
