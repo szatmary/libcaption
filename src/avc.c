@@ -503,10 +503,11 @@ libcaption_stauts_t sei_from_caption_frame (sei_t* sei, caption_frame_t* frame)
 
 libcaption_stauts_t sei_from_scc (sei_t* sei, const scc_t* scc)
 {
+    unsigned int i;
     cea708_t cea708;
     cea708_init (&cea708); // set up a new popon frame
 
-    for (int i = 0 ; i < scc->cc_size ; ++i) {
+    for (i = 0 ; i < scc->cc_size ; ++i) {
         if (31 == cea708.user_data.cc_count) {
             sei_append_708 (sei,&cea708);
         }
