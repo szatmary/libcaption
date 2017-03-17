@@ -378,7 +378,6 @@ libcaption_stauts_t sei_to_caption_frame (sei_t* sei, caption_frame_t* frame)
 
     if (LIBCAPTION_READY == status) {
         frame->timestamp = sei->dts + sei->cts;
-        frame->duration = 0;
     }
 
     return status;

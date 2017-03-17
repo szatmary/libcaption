@@ -61,7 +61,7 @@ int main (int argc, char** argv)
 
                 if (6 == nalu_type) {
                     sei_init (&sei);
-                    sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts (&tag), flvtag_cts (&tag));
+                    sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts_seconds (&tag), flvtag_cts_seconds (&tag));
 
                     cea708_t cea708;
                     sei_message_t* msg;

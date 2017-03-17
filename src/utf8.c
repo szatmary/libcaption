@@ -44,11 +44,11 @@ size_t utf8_char_length (const utf8_char_t* c)
 
     if (0x00 == (c[0]&0x80)) { return 1; }
 
-    if (0xC0 == (c[0]&0xE0) && 0x80 == (c[1]&0xC0)) { return 2; }
+    if (0xC0 == (c[0]&0xE0)) { return 2; }
 
-    if (0xE0 == (c[0]&0xF0) && 0x80 == (c[1]&0xC0) && 0x80 == (c[2]&0xC0)) { return 3; }
+    if (0xE0 == (c[0]&0xF0)) { return 3; }
 
-    if (0xF0 == (c[0]&0xF8) && 0x80 == (c[1]&0xC0) && 0x80 == (c[2]&0xC0) && 0x80 == (c[3]&0xC0)) { return 4; }
+    if (0xF0 == (c[0]&0xF8)) { return 4; }
 
     return 0;
 }

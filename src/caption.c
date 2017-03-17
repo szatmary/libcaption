@@ -36,7 +36,6 @@ void caption_frame_buffer_clear (caption_frame_buffer_t* buff)
 void caption_frame_state_clear (caption_frame_t* frame)
 {
     frame->timestamp = -1;
-    frame->duration = 0;
     frame->state = (caption_frame_state_t) {0,0,0,0,0,0,0}; // clear global state
 }
 
@@ -314,55 +313,57 @@ libcaption_stauts_t caption_frame_decode_text (caption_frame_t* frame, uint16_t 
 
 libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double timestamp)
 {
-    libcaption_stauts_t status = LIBCAPTION_OK;
-
     if (!eia608_parity_varify (cc_data)) {
-        return LIBCAPTION_ERROR;
+        frame->status = LIBCAPTION_ERROR;
+        return frame->status;
     }
 
     if (eia608_is_padding (cc_data)) {
-        return LIBCAPTION_OK;
+        frame->status = LIBCAPTION_OK;
+        return frame->status;
+    }
+
+    if (0 > frame->timestamp || LIBCAPTION_READY == frame->status) {
+        frame->timestamp = timestamp;
     }
 
     // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
     if ( (eia608_is_specialna (cc_data) || eia608_is_control (cc_data)) && cc_data == frame->state.cc_data) {
-        return LIBCAPTION_OK;
+        frame->status = LIBCAPTION_OK;
+        return frame->status;
     }
 
     frame->state.cc_data = cc_data;
 
-    if (0 > frame->timestamp && 0 < timestamp) {
-        frame->timestamp = timestamp;
-    }
-
     if (frame->xds.state) {
-        status = xds_decode (&frame->xds,cc_data);
+        frame->status = xds_decode (&frame->xds,cc_data);
     } else if (eia608_is_xds (cc_data)) {
-        status = xds_decode (&frame->xds,cc_data);
+        frame->status = xds_decode (&frame->xds,cc_data);
     } else if (eia608_is_control (cc_data)) {
-        status = caption_frame_decode_control (frame,cc_data);
+        frame->status = caption_frame_decode_control (frame,cc_data);
     } else if (eia608_is_basicna (cc_data) ||
                eia608_is_specialna (cc_data) ||
                eia608_is_westeu (cc_data)) {
 
         // Don't decode text if we dont know what mode we are in.
         if (CAPTION_CLEAR == frame->state.mod) {
-            return LIBCAPTION_OK;
+            frame->status = LIBCAPTION_OK;
+            return frame->status;
         }
 
-        status = caption_frame_decode_text (frame,cc_data);
+        frame->status = caption_frame_decode_text (frame,cc_data);
 
         // If we are in paint on mode, display immiditally
-        if (1 == status && (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod)) {
-            status = LIBCAPTION_READY;
+        if (LIBCAPTION_OK == frame->status && (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod)) {
+            frame->status = LIBCAPTION_READY;
         }
     } else if (eia608_is_preamble (cc_data)) {
-        status = caption_frame_decode_preamble (frame,cc_data);
+        frame->status = caption_frame_decode_preamble (frame,cc_data);
     } else if (eia608_is_midrowchange (cc_data)) {
-        status = caption_frame_decode_midrowchange (frame,cc_data);
+        frame->status = caption_frame_decode_midrowchange (frame,cc_data);
     }
 
-    return status;
+    return frame->status;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -401,27 +402,31 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data)
+size_t caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data)
 {
     int r, c, x, s, uln;
+    size_t size = 0;
     eia608_style_t sty;
 
     data[0] = 0;
 
     for (r = 0 ; r < SCREEN_ROWS ; ++r) {
         for (c = 0, x = 0 ; c < SCREEN_COLS ; ++c) {
-            const char* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
+            const utf8_char_t* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
 
             if (0 < (s = (int) utf8_char_copy (data,chr))) {
-                ++x; data += s;
+                ++x, data += s; size += s;
             }
         }
 
         if (x) {
-            strcpy ( (char*) data,"\r\n");
-            data += 2;
+            utf8_char_copy (data,"\r");
+            utf8_char_copy (data,"\n");
+            data += 2; size += 2;
         }
     }
+
+    return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
 size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf)

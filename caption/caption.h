@@ -77,11 +77,11 @@ typedef struct  {
 // timestamp and duration are in seconds
 typedef struct {
     double timestamp;
-    double duration;
     xds_t xds;
     caption_frame_state_t state;
     caption_frame_buffer_t front;
     caption_frame_buffer_t back;
+    libcaption_stauts_t status;
 } caption_frame_t;
 
 // typedef enum {
@@ -115,12 +115,7 @@ const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int
 /*! \brief
     \param
 */
-
-/*! \brief
-    \param
-*/
 libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double timestamp);
-
 /*! \brief
     \param
 */
@@ -129,7 +124,7 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data);
     \param
 */
 #define CAPTION_FRAME_TEXT_BYTES (((2+SCREEN_ROWS)*SCREEN_COLS*4)+1)
-void caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data);
+size_t caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data);
 /*! \brief
     \param
 */

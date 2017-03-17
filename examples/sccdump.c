@@ -22,8 +22,6 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "scc.h"
-#include "srt.h"
-#include "caption.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,31 +29,22 @@ int main (int argc, char** argv)
 {
     scc_t* scc = NULL;
     size_t scc_size = 0;
-    caption_frame_t frame;
-    srt_t* srt = 0, *head = 0;
     utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[1], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
 
-    caption_frame_init (&frame);
+
     scc_data += scc_to_608 (&scc,scc_data);
 
     while (scc->cc_size) {
-        for (int i = 0 ; i < scc->cc_size ; ++i) {
-            // eia608_dump (scc->cc_data[i]);
+        fprintf (stderr,"Timestamp: %f\n", scc->timestamp);
 
-            if (LIBCAPTION_READY == caption_frame_decode (&frame, scc->cc_data[i], scc->timestamp)) {
-                srt = srt_from_caption_frame (&frame,srt,&head);
-                // fprintf (stderr,"-----------------\n");
-                // srt_dump (srt);
-                // fprintf (stderr,"-----------------\n");
-            }
+        for (int i = 0 ; i < scc->cc_size ; ++i) {
+            eia608_dump (scc->cc_data[i]);
         }
 
         scc_data += scc_to_608 (&scc,scc_data);
     }
 
-    srt_dump (head);
-    srt_free (head);
     free (scc_data_ptr);
     return EXIT_SUCCESS;
 }

@@ -130,7 +130,6 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
 
         // should we trim here?
         srt_t* srt = srt_new (text,text_size,str_pts,prev,&head);
-        srt->duration = end_pts - str_pts;
         prev = srt;
     }
 
@@ -146,7 +145,7 @@ int srt_to_caption_frame (srt_t* srt, caption_frame_t* frame)
 srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev, srt_t** head)
 {
     // CRLF per row, plus an extra at the end
-    srt_t* srt = srt_new (0, 2+CAPTION_FRAME_TEXT_BYTES, frame->timestamp, prev, head);
+    srt_t* srt = srt_new (NULL, 2+CAPTION_FRAME_TEXT_BYTES, frame->timestamp, prev, head);
     utf8_char_t* data = srt_data (srt);
 
     caption_frame_to_text (frame,data);
