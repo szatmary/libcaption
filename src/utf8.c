@@ -53,6 +53,16 @@ size_t utf8_char_length (const utf8_char_t* c)
     return 0;
 }
 
+int utf8_char_whitespace (const utf8_char_t* c)
+{
+    // 0x7F is DEL
+    if (c[0] > 0 && (c[0] <= ' '|| c[0] == 0x7F)) {
+        return 1;
+    }
+
+    return 0;
+}
+
 // returns length of the string in bytes
 // size is number of charcter to count (0 to count until NULL term)
 size_t utf8_string_length (const utf8_char_t* data, utf8_size_t size)

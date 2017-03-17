@@ -404,24 +404,25 @@ int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data)
 ////////////////////////////////////////////////////////////////////////////////
 size_t caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data)
 {
-    int r, c, x, s, uln;
-    size_t size = 0;
+    int r, c, x, uln;
+    size_t s, size = 0;
     eia608_style_t sty;
 
     data[0] = 0;
 
     for (r = 0 ; r < SCREEN_ROWS ; ++r) {
         for (c = 0, x = 0 ; c < SCREEN_COLS ; ++c) {
-            const utf8_char_t* chr  = caption_frame_read_char (frame, r, c, &sty, &uln);
+            const utf8_char_t* chr = caption_frame_read_char (frame, r, c, &sty, &uln);
 
-            if (0 < (s = (int) utf8_char_copy (data,chr))) {
+            if (0 < utf8_char_length (chr) && (0 < x || ! utf8_char_whitespace (chr))) {
+                s = utf8_char_copy (data,chr);
                 ++x, data += s; size += s;
             }
         }
 
         if (x) {
-            utf8_char_copy (data,"\r");
-            utf8_char_copy (data,"\n");
+            utf8_char_copy (data+0,"\r");
+            utf8_char_copy (data+1,"\n");
             data += 2; size += 2;
         }
     }

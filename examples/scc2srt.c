@@ -45,9 +45,6 @@ int main (int argc, char** argv)
 
             if (LIBCAPTION_READY == caption_frame_decode (&frame, scc->cc_data[i], scc->timestamp)) {
                 srt = srt_from_caption_frame (&frame,srt,&head);
-                // fprintf (stderr,"-----------------\n");
-                // srt_dump (srt);
-                // fprintf (stderr,"-----------------\n");
             }
         }
 

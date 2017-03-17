@@ -53,6 +53,13 @@ size_t utf8_char_length (const utf8_char_t* c);
 /*! \brief
     \param
 
+    returns 1 if first charcter is white space
+*/
+int utf8_char_whitespace (const utf8_char_t* c);
+
+/*! \brief
+    \param
+
     returns length of the string in bytes
     size is number of charcter to count (0 to count until NULL term)
 */
@@ -92,7 +99,7 @@ utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size);
 /*! \brief
     \param
 
-    returns number of new lins in teh string
+    returns number of new lines in the string
 */
 int utf8_line_count (const utf8_char_t* data);
 
