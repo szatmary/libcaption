@@ -29,6 +29,7 @@
 
 int main (int argc, char** argv)
 {
+    int i;
     scc_t* scc = NULL;
     size_t scc_size = 0;
     caption_frame_t frame;
@@ -40,7 +41,7 @@ int main (int argc, char** argv)
     scc_data += scc_to_608 (&scc,scc_data);
 
     while (scc->cc_size) {
-        for (int i = 0 ; i < scc->cc_size ; ++i) {
+        for (i = 0 ; i < scc->cc_size ; ++i) {
             // eia608_dump (scc->cc_data[i]);
 
             if (LIBCAPTION_READY == caption_frame_decode (&frame, scc->cc_data[i], scc->timestamp)) {
