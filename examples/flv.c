@@ -54,8 +54,7 @@ int flvtag_reserve (flvtag_t* tag, uint32_t size)
 FILE* flv_open_read (const char* flv)
 {
     if (0 == flv || 0 == strcmp ("-",flv)) {
-        freopen (NULL, "rb", stdin);
-        return stdin;
+        return freopen (NULL, "rb", stdin);
     }
 
     return fopen (flv,"rb");
@@ -64,8 +63,7 @@ FILE* flv_open_read (const char* flv)
 FILE* flv_open_write (const char* flv)
 {
     if (0 == flv || 0 == strcmp ("-",flv)) {
-        freopen (NULL, "wb", stdout);
-        return stdout;
+        return freopen (NULL, "wb", stdout);
     }
 
     return fopen (flv,"wb");

@@ -117,20 +117,21 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
         // Caption text starts here
         const utf8_char_t* text = data;
         size_t text_size = 0;
-        // printf ("time: '(%f --> %f)\n",srt.srt_time, srt.end_time);
+
+        line_length = 0;
 
         do {
+            text_size += line_length;
             line_length = utf8_line_length (data);
             trimmed_length = utf8_trimmed_length (data,line_length);
             // printf ("cap (%d): '%.*s'\n", line_length, (int) trimmed_length, data);
             data += line_length;
             size -= line_length;
-            text_size += line_length;
         } while (trimmed_length);
 
         // should we trim here?
         srt_t* srt = srt_new (text,text_size,str_pts,prev,&head);
-        prev = srt;
+        prev = srt; srt->duration = end_pts - str_pts;
     }
 
     return head;

@@ -194,7 +194,7 @@ utf8_char_t* utf8_load_text_file (const char* path, size_t* size)
         if (0 == (*size) || file_size <= (*size)) {
             (*size) = 0;
             data = (utf8_char_t*) malloc (1+file_size);
-            data[file_size] = 0;
+            memset (data,'\0',file_size);
 
             if (data) {
                 utf8_char_t* pos = data;
@@ -210,5 +210,6 @@ utf8_char_t* utf8_load_text_file (const char* path, size_t* size)
         }
     }
 
+    data[*size] = 0;
     return data;
 }

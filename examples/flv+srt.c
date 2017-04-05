@@ -36,19 +36,11 @@
 srt_t* srt_from_file (const char* path)
 {
     srt_t* head = 0;
-    size_t read, totl = 0;
-    FILE* file = fopen (path,"r");
 
-    if (file) {
-        char* srt_data = malloc (MAX_SRT_SIZE);
-        size_t srt_size = 0;
-        size_t size = MAX_SRT_SIZE;
-        char* data = srt_data;
+    size_t srt_size = 0;
+    utf8_char_t* srt_data = utf8_load_text_file (path, &srt_size);
 
-        while (0 < (read = fread (data,1,size,file))) {
-            totl += read; data += read; size -= read; srt_size += read;
-        }
-
+    if (srt_size&&srt_data) {
         head = srt_parse (srt_data,srt_size);
         free (srt_data);
     }
@@ -59,11 +51,11 @@ srt_t* srt_from_file (const char* path)
 int main (int argc, char** argv)
 {
     flvtag_t tag;
-    double clear_timestamp = 0;
+    double timestamp, clear_timestamp = 0;
+    int has_audio, has_video;
     FILE* flv = flv_open_read (argv[1]);
     FILE* out = flv_open_write (argv[3]);
 
-    int has_audio, has_video;
     flvtag_init (&tag);
 
     if (!flv_read_header (flv,&has_audio,&has_video)) {
@@ -83,24 +75,28 @@ int main (int argc, char** argv)
 
     while (flv_read_tag (flv,&tag)) {
         // TODO handle B frames better
-        double timestamp = flvtag_pts_seconds (&tag);
 
-        if (srt && timestamp >= srt->timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-            fprintf (stderr,"%0.02f, %0.02f: %s\n", srt->timestamp, srt->duration, srt_data (srt));
-            flvtag_addcaption_text (&tag, srt_data (srt));
-            srt = srt->next;
-            clear_timestamp = srt->timestamp + srt->duration;
-        } else if (timestamp >= clear_timestamp) {
-            fprintf (stderr,"%0.02f: [CAPTIONS CLEARED]\n", timestamp);
-            flvtag_addcaption_text (&tag, NULL);
-            clear_timestamp = timestamp + CLEAR_TIMEOUT;
+        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
+            timestamp = flvtag_pts_seconds (&tag);
+
+            if (srt && timestamp >= srt->timestamp) {
+                fprintf (stderr,"T: %0.02f (%0.02fs):\n%s\n", srt->timestamp, srt->duration, srt_data (srt));
+                clear_timestamp = srt->timestamp + srt->duration;
+                flvtag_addcaption_text (&tag, srt_data (srt));
+                srt = srt->next;
+            } else if (timestamp >= clear_timestamp) {
+                fprintf (stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
+                flvtag_addcaption_text (&tag, NULL);
+                clear_timestamp = timestamp + CLEAR_TIMEOUT;
+            }
         }
 
         flv_write_tag (out,&tag);
-        // Write tag out here
     }
 
     srt_free (head);
     flvtag_free (&tag);
+    flv_close (flv);
+    flv_close (out);
     return EXIT_SUCCESS;
 }
