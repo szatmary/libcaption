@@ -30,7 +30,6 @@
 // #include "sei.h"
 
 #define MAX_SRT_SIZE (10*1024*1024)
-#define CLEAR_TIMEOUT 6.0 // seconds
 
 // TODO replace this with utf8_load_text_file
 srt_t* srt_from_file (const char* path)
@@ -79,15 +78,15 @@ int main (int argc, char** argv)
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             timestamp = flvtag_pts_seconds (&tag);
 
-            if (srt && timestamp >= srt->timestamp) {
+            if (srt && srt->timestamp <= timestamp) {
                 fprintf (stderr,"T: %0.02f (%0.02fs):\n%s\n", srt->timestamp, srt->duration, srt_data (srt));
                 clear_timestamp = srt->timestamp + srt->duration;
                 flvtag_addcaption_text (&tag, srt_data (srt));
                 srt = srt->next;
-            } else if (timestamp >= clear_timestamp) {
+            } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
                 fprintf (stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
                 flvtag_addcaption_text (&tag, NULL);
-                clear_timestamp = timestamp + CLEAR_TIMEOUT;
+                clear_timestamp = -1;
             }
         }
 

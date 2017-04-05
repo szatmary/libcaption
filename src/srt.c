@@ -40,7 +40,10 @@ srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* p
 
     if (prev) {
         prev->next = srt;
-        prev->duration = timestamp - prev->timestamp;
+
+        if (0>=prev->duration) {
+            prev->duration = timestamp - prev->timestamp;
+        }
     }
 
     if (head && 0 == (*head)) {
