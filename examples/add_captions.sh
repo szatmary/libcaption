@@ -21,7 +21,7 @@ echo "Video=$VIDEO"
 echo "Captions=$SRT"
 echo "Outfile=$OUTFILE"
 
-ffmpeg -i $VIDEO -codec copy -f flv - | ./flv+scc - $SRT - | ffmpeg -i - -codec copy -y $OUTFILE
+ffmpeg -i $VIDEO -codec copy -f flv - | ./flv+srt - $SRT - | ffmpeg -i - -codec copy -y $OUTFILE
 # ffmpeg -i $VIDEO -threads 0 -vcodec libx264 -profile:v main -preset:v medium \
 # -r 30 -g 60 -keyint_min 60 -sc_threshold 0 -b:v 4000k -maxrate 4000k \
 # -bufsize 4000k -filter:v scale="trunc(oh*a/2)*2:720" \
