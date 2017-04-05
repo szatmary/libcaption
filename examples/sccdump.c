@@ -27,6 +27,7 @@
 
 int main (int argc, char** argv)
 {
+    int i;
     scc_t* scc = NULL;
     size_t scc_size = 0;
     utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[1], &scc_size);
@@ -38,7 +39,7 @@ int main (int argc, char** argv)
     while (scc->cc_size) {
         fprintf (stderr,"Timestamp: %f\n", scc->timestamp);
 
-        for (int i = 0 ; i < scc->cc_size ; ++i) {
+        for (i = 0 ; i < scc->cc_size ; ++i) {
             eia608_dump (scc->cc_data[i]);
         }
 
