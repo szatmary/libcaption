@@ -63,6 +63,7 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
 
     cea708->country = (itu_t_t35_country_code_t) (data[0]);
     cea708->provider = (itu_t_t35_provider_code_t) ( (data[1] <<8) | data[2]);
+    cea708->user_identifier = 0;
     cea708->atsc1_data_user_data_type_code = 0;
     data += 3; size -= 3;
 
@@ -71,8 +72,6 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
 
         cea708->user_identifier = ( (data[0]<<24) | (data[1]<<16) | (data[2]<<8) |data[3]);
         data += 4; size -= 4;
-    } else {
-        cea708->user_identifier = 0;
     }
 
     // Im not sure what this extra byt is. It sonly seesm to come up in onCaptionInfo
@@ -108,9 +107,9 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
     if (3 * cea708->user_data.cc_count>size) { goto error; }
 
     for (i = 0 ; i < (int) cea708->user_data.cc_count ; ++i) {
-        cea708->user_data.cc_data[i].marker_bits = (0xF8&data[0]) >>3;
-        cea708->user_data.cc_data[i].cc_valid    = (0x04&data[0]) >>2;
-        cea708->user_data.cc_data[i].cc_type     = (0x03&data[0]) >>0;
+        cea708->user_data.cc_data[i].marker_bits = data[0]>>3;
+        cea708->user_data.cc_data[i].cc_valid    = data[0]>>2;
+        cea708->user_data.cc_data[i].cc_type     = data[0]>>0;
         cea708->user_data.cc_data[i].cc_data     = data[1]<<8|data[2];
         data += 3; size -= 3;
     }
@@ -195,7 +194,9 @@ void cea708_dump (cea708_t* cea708)
 
     fprintf (stderr,"itu_t_t35_country_code_t %d\n",cea708->country);
     fprintf (stderr,"itu_t_t35_provider_code_t %d\n",cea708->provider);
-    fprintf (stderr,"user_identifier %04X\n",cea708->user_identifier);
+    fprintf (stderr,"user_identifier %c%c%c%c\n",
+             (cea708->user_identifier>>24) &0xFF, (cea708->user_identifier>>16) &0xFF,
+             (cea708->user_identifier>>8) &0xFF,cea708->user_identifier&0xFF);
     fprintf (stderr,"atsc1_data_user_data_type_code %d\n",cea708->atsc1_data_user_data_type_code);
     fprintf (stderr,"directv_user_data_length %d\n",cea708->directv_user_data_length);
     fprintf (stderr,"user_data.process_em_data_flag %d\n",cea708->user_data.process_em_data_flag);
