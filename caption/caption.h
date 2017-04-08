@@ -46,11 +46,11 @@ typedef enum {
     LIBCAPTION_READY = 2
 } libcaption_stauts_t;
 
-
-/*! \brief
-    \param
-*/
-static inline libcaption_stauts_t libcaption_status_update (libcaption_stauts_t old_stat, libcaption_stauts_t new_stat) { return (LIBCAPTION_ERROR == old_stat || LIBCAPTION_ERROR == new_stat) ? LIBCAPTION_ERROR : (LIBCAPTION_READY == old_stat) ? LIBCAPTION_READY : new_stat;  }
+static inline libcaption_stauts_t libcaption_status_update (libcaption_stauts_t old_stat, libcaption_stauts_t new_stat)
+{
+    return (LIBCAPTION_ERROR == old_stat || LIBCAPTION_ERROR == new_stat) ? LIBCAPTION_ERROR
+           : (LIBCAPTION_READY == old_stat) ? LIBCAPTION_READY : new_stat;
+}
 
 #define SCREEN_ROWS 15
 #define SCREEN_COLS 32

@@ -68,7 +68,9 @@ int main (int argc, char** argv)
                     if (LIBCAPTION_READY == sei_to_caption_frame (&sei,&frame)) {
                         // caption_frame_dump (&frame);
                         srt = srt_from_caption_frame (&frame,srt,&head);
-                     }
+                    }
+
+                    sei_free (&sei);
                 }
             }
         }

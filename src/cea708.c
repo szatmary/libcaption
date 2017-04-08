@@ -219,24 +219,16 @@ libcaption_stauts_t cea708_to_caption_frame (caption_frame_t* frame, cea708_t* c
     int i, count = cea708_cc_count (&cea708->user_data);
     libcaption_stauts_t status = LIBCAPTION_OK;
 
-    if ('G')
-
+    if (GA94==cea708->user_identifier) {
         for (i = 0 ; i < count ; ++i) {
             cea708_cc_type_t type; int valid;
             uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
 
             if (valid && cc_type_ntsc_cc_field_1 == type) {
-                switch (libcaption_status_update (status,caption_frame_decode (frame,cc_data, pts))) {
-                case LIBCAPTION_ERROR:
-                    return LIBCAPTION_ERROR;
-
-                case LIBCAPTION_READY:
-                    status = LIBCAPTION_READY;
-
-                default: break;
-                }
+                status = libcaption_status_update (status,caption_frame_decode (frame,cc_data, pts));
             }
         }
+    }
 
     return status;
 }
