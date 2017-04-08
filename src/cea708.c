@@ -23,6 +23,7 @@
 /**********************************************************************************************/
 #include "cea708.h"
 #include <memory.h>
+#include <stdio.h>
 
 int cea708_cc_count (user_data_t* data)
 {
@@ -42,7 +43,7 @@ int cea708_init (cea708_t* cea708)
     memset (cea708,0,sizeof (cea708_t));
     cea708->country = country_united_states;
     cea708->provider = t35_provider_atsc;
-    cea708->user_identifier = ('G'<<24) | ('A'<<16) | ('9'<<8) | ('4');
+    cea708->user_identifier = GA94;
     cea708->atsc1_data_user_data_type_code = 3; //what does 3 mean here?
     cea708->directv_user_data_length = 0;
     ///////////
@@ -57,33 +58,46 @@ int cea708_init (cea708_t* cea708)
 int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
 {
     int i;
+
+    if (3>size) { goto error; }
+
     cea708->country = (itu_t_t35_country_code_t) (data[0]);
     cea708->provider = (itu_t_t35_provider_code_t) ( (data[1] <<8) | data[2]);
     cea708->atsc1_data_user_data_type_code = 0;
-    cea708->user_identifier = 0;
     data += 3; size -= 3;
 
     if (t35_provider_atsc == cea708->provider) {
-        // GA94
-        cea708->user_identifier = (data[0] <<24) | (data[1] <<16) | (data[2] <<8) | data[3];
+        if (4>size) { goto error; }
+
+        cea708->user_identifier = ( (data[0]<<24) | (data[1]<<16) | (data[2]<<8) |data[3]);
         data += 4; size -= 4;
+    } else {
+        cea708->user_identifier = 0;
     }
 
     // Im not sure what this extra byt is. It sonly seesm to come up in onCaptionInfo
     // where country and provider are zero
     if (0 == cea708->provider) {
+        if (1>size) { goto error; }
+
         data += 1; size -= 1;
     } else if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
+        if (1>size) { goto error; }
+
         cea708->atsc1_data_user_data_type_code = data[0];
         data += 1; size -= 1;
     }
 
     if (t35_provider_direct_tv == cea708->provider) {
+        if (1>size) { goto error; }
+
         cea708->directv_user_data_length = data[0];
         data += 1; size -= 1;
     }
 
     // TODO I believe this is condational on the above.
+    if (2>size)  { goto error; }
+
     cea708->user_data.process_em_data_flag = !! (data[0]&0x80);
     cea708->user_data.process_cc_data_flag = !! (data[0]&0x40);
     cea708->user_data.additional_data_flag = !! (data[0]&0x20);
@@ -91,20 +105,20 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
     cea708->user_data.em_data              = data[1];
     data += 2; size -= 2;
 
-    if (size < 3 * cea708->user_data.cc_count) {
-        cea708_init (cea708);
-        return 0;
-    }
+    if (3 * cea708->user_data.cc_count>size) { goto error; }
 
     for (i = 0 ; i < (int) cea708->user_data.cc_count ; ++i) {
-        cea708->user_data.cc_data[i].marker_bits = data[0]>>3;
-        cea708->user_data.cc_data[i].cc_valid    = data[0]>>2;
-        cea708->user_data.cc_data[i].cc_type     = data[0]>>0;
+        cea708->user_data.cc_data[i].marker_bits = (0xF8&data[0]) >>3;
+        cea708->user_data.cc_data[i].cc_valid    = (0x04&data[0]) >>2;
+        cea708->user_data.cc_data[i].cc_type     = (0x03&data[0]) >>0;
         cea708->user_data.cc_data[i].cc_data     = data[1]<<8|data[2];
         data += 3; size -= 3;
     }
 
-    return 1;
+    return LIBCAPTION_OK;
+error:
+    cea708_init (cea708);
+    return LIBCAPTION_ERROR;
 }
 
 int cea708_add_cc_data (cea708_t* cea708, int valid, cea708_cc_type_t type, uint16_t cc_data)
@@ -131,10 +145,10 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size)
 
     if (t35_provider_atsc == cea708->provider) {
 
-        data[0] = cea708->user_identifier >> 24;
-        data[1] = cea708->user_identifier >> 16;
-        data[2] = cea708->user_identifier >> 8;
-        data[3] = cea708->user_identifier >> 0;
+        data[0] = cea708->user_identifier>>24;
+        data[1] = cea708->user_identifier>>16;
+        data[2] = cea708->user_identifier>>8;
+        data[3] = cea708->user_identifier;
         total += 4; data += 4; size -= 4;
     }
 
@@ -179,6 +193,17 @@ void cea708_dump (cea708_t* cea708)
 {
     int i;
 
+    fprintf (stderr,"itu_t_t35_country_code_t %d\n",cea708->country);
+    fprintf (stderr,"itu_t_t35_provider_code_t %d\n",cea708->provider);
+    fprintf (stderr,"user_identifier %04X\n",cea708->user_identifier);
+    fprintf (stderr,"atsc1_data_user_data_type_code %d\n",cea708->atsc1_data_user_data_type_code);
+    fprintf (stderr,"directv_user_data_length %d\n",cea708->directv_user_data_length);
+    fprintf (stderr,"user_data.process_em_data_flag %d\n",cea708->user_data.process_em_data_flag);
+    fprintf (stderr,"user_data.process_cc_data_flag %d\n",cea708->user_data.process_cc_data_flag);
+    fprintf (stderr,"user_data.additional_data_flag %d\n",cea708->user_data.additional_data_flag);
+    fprintf (stderr,"user_data.cc_count %d\n",cea708->user_data.cc_count);
+    fprintf (stderr,"user_data.em_data %d\n",cea708->user_data.em_data);
+
     for (i = 0 ; i < (int) cea708->user_data.cc_count ; ++i) {
         cea708_cc_type_t type; int valid;
         uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
@@ -194,14 +219,24 @@ libcaption_stauts_t cea708_to_caption_frame (caption_frame_t* frame, cea708_t* c
     int i, count = cea708_cc_count (&cea708->user_data);
     libcaption_stauts_t status = LIBCAPTION_OK;
 
-    for (i = 0 ; i < count ; ++i) {
-        cea708_cc_type_t type; int valid;
-        uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
+    if ('G')
 
-        if (valid && cc_type_ntsc_cc_field_1 == type) {
-            status = libcaption_status_update (status,caption_frame_decode (frame,cc_data, pts));
+        for (i = 0 ; i < count ; ++i) {
+            cea708_cc_type_t type; int valid;
+            uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);
+
+            if (valid && cc_type_ntsc_cc_field_1 == type) {
+                switch (libcaption_status_update (status,caption_frame_decode (frame,cc_data, pts))) {
+                case LIBCAPTION_ERROR:
+                    return LIBCAPTION_ERROR;
+
+                case LIBCAPTION_READY:
+                    status = LIBCAPTION_READY;
+
+                default: break;
+                }
+            }
         }
-    }
 
     return status;
 }
