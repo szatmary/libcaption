@@ -83,6 +83,10 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
     size_t line_length = 0, trimmed_length = 0;
     int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
 
+    if (!data||!size) {
+        return 0;
+    }
+
     for (;;) {
         line_length = 0;
 
