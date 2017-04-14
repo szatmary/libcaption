@@ -127,6 +127,7 @@ int main (int argc, char** argv)
             old_srt = new_srt;
             nxt_srt = new_srt;
             offset = timestamp;
+            clear_timestamp = timestamp;
         }
 
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
