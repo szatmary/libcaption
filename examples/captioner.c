@@ -89,10 +89,12 @@ int main (int argc, char** argv)
                 if (n == (ssize_t)-1) {
                     if (errno == EINTR) {
                         continue;
-                    } else {
+                    }
+                    else {
                         break;
                     }
-                } else if (n != sizeof ev) {
+                }
+                else if (n != sizeof ev) {
                     errno = EIO;
                     break;
                 }
@@ -104,7 +106,8 @@ int main (int argc, char** argv)
                     fprintf (stderr,"='%s'\n", text);
                     flvtag_addcaption (&tag, text);
                     memset (text,0,MAX_CAP_LENGTH+1);
-                } else if (0 != c && len < MAX_CAP_LENGTH) {
+                }
+                else if (0 != c && len < MAX_CAP_LENGTH) {
                     text[len] = c;
                 }
             }

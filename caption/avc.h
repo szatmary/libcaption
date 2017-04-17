@@ -157,7 +157,8 @@ static inline int sei_decode_cea708 (sei_message_t* msg, cea708_t* cea708)
 {
     if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
         return cea708_parse (sei_message_data (msg), sei_message_size (msg), cea708);
-    } else {
+    }
+    else {
         return 0;
     }
 }

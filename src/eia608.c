@@ -66,7 +66,8 @@ int eia608_parse_preamble (uint16_t cc_data, int* row, int* col, eia608_style_t*
     if (0x0010 & cc_data) {
         (*style) = eia608_style_white;
         (*col) = 4* ( (0x000E & cc_data) >> 1);
-    } else {
+    }
+    else {
         (*style) = (0x000E & cc_data) >> 1;
         (*col) = 0;
     }
@@ -92,7 +93,8 @@ eia608_control_t eia608_parse_control (uint16_t cc_data, int* cc)
     if (0x0200&cc_data) {
         (*cc) = (cc_data&0x0800?0x01:0x00);
         return (eia608_control_t) (0x177F & cc_data);
-    } else {
+    }
+    else {
         (*cc) = (cc_data&0x0800?0x01:0x00) | (cc_data&0x0100?0x02:0x00);
         return (eia608_control_t) (0x167F & cc_data);
     }
@@ -105,7 +107,8 @@ uint16_t eia608_control_command (eia608_control_t cmd, int cc)
 
     if (eia608_tab_offset_0 == (eia608_control_t) (cmd&0xFFC0)) {
         return (eia608_control_t) eia608_parity (cmd|c);
-    } else {
+    }
+    else {
         return (eia608_control_t) eia608_parity (cmd|c|f);
     }
 }
@@ -209,29 +212,38 @@ void eia608_dump (uint16_t cc_data)
 
     if (!eia608_parity_varify (cc_data)) {
         text = "parity failed";
-    } else if (0 == eia608_parity_strip (cc_data)) {
+    }
+    else if (0 == eia608_parity_strip (cc_data)) {
         text = "pad";
-    } else if (eia608_is_basicna (cc_data)) {
+    }
+    else if (eia608_is_basicna (cc_data)) {
         text = "basicna";
         eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
-    } else if (eia608_is_specialna (cc_data)) {
+    }
+    else if (eia608_is_specialna (cc_data)) {
         text = "specialna";
         eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
-    } else if (eia608_is_westeu (cc_data)) {
+    }
+    else if (eia608_is_westeu (cc_data)) {
         text = "westeu";
         eia608_to_utf8 (cc_data,&chan,&char1[0],&char2[0]);
-    } else if (eia608_is_xds (cc_data)) {
+    }
+    else if (eia608_is_xds (cc_data)) {
         text = "xds";
-    } else if (eia608_is_midrowchange (cc_data)) {
+    }
+    else if (eia608_is_midrowchange (cc_data)) {
         text = "midrowchange";
-    } else if (eia608_is_norpak (cc_data)) {
+    }
+    else if (eia608_is_norpak (cc_data)) {
         text = "norpak";
-    } else if (eia608_is_preamble (cc_data)) {
+    }
+    else if (eia608_is_preamble (cc_data)) {
         text = "preamble";
         eia608_parse_preamble (cc_data, &row, &col, &style, &chan, &underline);
         fprintf (stderr,"preamble %d %d %d %d %d\n", row, col, style, chan, underline);
 
-    } else if (eia608_is_control (cc_data)) {
+    }
+    else if (eia608_is_control (cc_data)) {
         switch (eia608_parse_control (cc_data,&chan)) {
 
         default: text = "unknown_control"; break;
@@ -274,7 +286,8 @@ void eia608_dump (uint16_t cc_data)
 
         case eia608_control_end_of_caption: text = "eia608_control_end_of_caption"; break;
         }
-    } else {
+    }
+    else {
         text = "unhandled";
     }
 

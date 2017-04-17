@@ -43,7 +43,8 @@ int main (int argc, char** argv)
 
     if (!flv_read_header (flv,&has_audio,&has_video)) {
         fprintf (stderr,"'%s' Not an flv file\n", path);
-    } else {
+    }
+    else {
         fprintf (stderr,"Reading from '%s'\n", path);
     }
 

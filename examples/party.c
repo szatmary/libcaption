@@ -101,11 +101,14 @@ int main (int argc, char** argv)
 
             if (CAPTION_METHOD == CAPTION_METHOD_SEI_708) {
                 flvtag_addcaption_text (&tag, partyDudes);
-            } else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
+            }
+            else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
                 write_amfcaptions_708 (out,nextParty,partyDudes);
-            } else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
+            }
+            else if (CAPTION_METHOD == CAPTION_METHOD_AMF_708) {
                 write_amfcaptions_utf8 (out, nextParty, partyDudes);
-            } else {
+            }
+            else {
                 fprintf (stderr,"Unknnow method\n");
                 return EXIT_FAILURE;
 

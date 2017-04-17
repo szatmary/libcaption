@@ -135,13 +135,16 @@ size_t utf8_line_length (const utf8_char_t* data)
         if ('\r' == data[len]) {
             if ('\n' == data[len+1]) {
                 return len + 2; // windows
-            } else {
+            }
+            else {
                 return len + 1; // unix
             }
-        } else if ('\n' == data[len]) {
+        }
+        else if ('\n' == data[len]) {
             if ('\r' == data[len+1]) {
                 return len + 2; // riscos
-            } else {
+            }
+            else {
                 return len + 1; // macos
             }
         }
@@ -176,7 +179,8 @@ int utf8_line_count (const utf8_char_t* data)
     do {
         len = utf8_line_length (data);
         data += len; ++count;
-    } while (0<len);
+    }
+    while (0<len);
 
     return count-1;
 }

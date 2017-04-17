@@ -92,7 +92,8 @@ srt_t* srt_from_fd (int fd)
 
             g_srt_data[g_srt_size] = c;
             g_srt_size += 1;
-        } else {
+        }
+        else {
             return 0;
         }
     }
@@ -141,7 +142,8 @@ int main (int argc, char** argv)
                 clear_timestamp = (offset+nxt_srt->timestamp) + nxt_srt->duration;
                 flvtag_addcaption_text (&tag, srt_data (nxt_srt));
                 nxt_srt = nxt_srt->next;
-            } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
+            }
+            else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
                 fprintf (stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
                 flvtag_addcaption_text (&tag, NULL);
                 clear_timestamp = -1;
