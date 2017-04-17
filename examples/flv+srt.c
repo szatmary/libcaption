@@ -85,6 +85,11 @@ srt_t* srt_from_fd (int fd)
         }
 
         if (1 == ret) {
+            if (g_srt_size >= MAX_SRT_SIZE-1) {
+                fprintf (stderr, "Warning MAX_SRT_SIZE reached. Clearing buffer\n");
+                g_srt_size = 0;
+            }
+
             g_srt_data[g_srt_size] = c;
             g_srt_size += 1;
         } else {
