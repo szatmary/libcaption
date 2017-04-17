@@ -215,7 +215,8 @@ int main (int argc, const char** arg)
 
                 if (code1 == code2) {
                     // printf ("%s " BIN " == " BIN " (0x%04x == 0x%04x)\n", &char1[0], BIND (code1), BIND (code2),code1,code2);
-                } else {
+                }
+                else {
                     printf ("%s %s " BIN " != " BIN " (0x%04x != 0x%04x)\n", &char1[0], &char2[0], BIND (code1), BIND (code2),code1,code2);
                 }
             }
@@ -231,7 +232,8 @@ int main (int argc, const char** arg)
 
                 if (code1 == code2) {
                     // printf ("%s " BIN " == " BIN " (0x%04x == 0x%04x)\n", &char1[0], BIND (code1), BIND (code2),code1,code2);
-                } else {
+                }
+                else {
                     printf ("%s " BIN " != " BIN " (0x%04x != 0x%04x)\n", &char1[0], BIND (code1), BIND (code2),code1,code2);
                 }
             }

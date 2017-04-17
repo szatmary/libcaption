@@ -52,7 +52,8 @@ srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* p
 
     if (data) {
         memcpy (dest, data, size);
-    } else {
+    }
+    else {
         memset (dest, 0, size);
     }
 
@@ -96,7 +97,8 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
             line_length = utf8_line_length (data);
             trimmed_length = utf8_trimmed_length (data,line_length);
             // Skip empty lines
-        } while (0 < line_length && 0 == trimmed_length);
+        }
+        while (0 < line_length && 0 == trimmed_length);
 
         // linelength cant be zero before EOF
         if (0 == line_length) {
@@ -134,7 +136,8 @@ srt_t* srt_parse (const utf8_char_t* data, size_t size)
             // printf ("cap (%d): '%.*s'\n", line_length, (int) trimmed_length, data);
             data += line_length;
             size -= line_length;
-        } while (trimmed_length);
+        }
+        while (trimmed_length);
 
         // should we trim here?
         srt_t* srt = srt_new (text,text_size,str_pts,prev,&head);

@@ -65,7 +65,8 @@ int ts_parse_packet (ts_t* ts, const uint8_t* data)
         }
 
         ts->pmtpid = ( (data[i + 10] & 0x1F) << 8) | data[i + 11];
-    } else if (pid == ts->pmtpid) {
+    }
+    else if (pid == ts->pmtpid) {
         // PMT
         if (payload_present) {
             // Skip the payload.
@@ -93,7 +94,8 @@ int ts_parse_packet (ts_t* ts, const uint8_t* data)
                 descriptor_loop_length -= 5 + esinfo_length;
             }
         }
-    } else if (payload_present && pid == ts->avcpid) {
+    }
+    else if (payload_present && pid == ts->avcpid) {
         if (pusi) {
             // int data_alignment = !! (data[i + 6] & 0x04);
             int has_pts = !! (data[i + 7] & 0x80);

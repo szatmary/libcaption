@@ -62,9 +62,11 @@ static caption_frame_buffer_t* frame_write_buffer (caption_frame_t* frame)
 {
     if (CAPTION_POP_ON == frame->state.mod) {
         return &frame->back;
-    } else if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
+    }
+    else if (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod) {
         return &frame->front;
-    } else {
+    }
+    else {
         return 0;
     }
 }
@@ -159,7 +161,8 @@ libcaption_stauts_t eia608_write_char (caption_frame_t* frame, char* c)
             SCREEN_ROWS <= frame->state.row || 0 > frame->state.row ||
             SCREEN_COLS <= frame->state.col || 0 > frame->state.col) {
         // NO-OP
-    } else if (caption_frame_write_char (frame,frame->state.row,frame->state.col,frame->state.sty,frame->state.uln, c)) {
+    }
+    else if (caption_frame_write_char (frame,frame->state.row,frame->state.col,frame->state.sty,frame->state.uln, c)) {
         frame->state.col += 1;
     }
 
@@ -337,13 +340,16 @@ libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_da
 
     if (frame->xds.state) {
         frame->status = xds_decode (&frame->xds,cc_data);
-    } else if (eia608_is_xds (cc_data)) {
+    }
+    else if (eia608_is_xds (cc_data)) {
         frame->status = xds_decode (&frame->xds,cc_data);
-    } else if (eia608_is_control (cc_data)) {
+    }
+    else if (eia608_is_control (cc_data)) {
         frame->status = caption_frame_decode_control (frame,cc_data);
-    } else if (eia608_is_basicna (cc_data) ||
-               eia608_is_specialna (cc_data) ||
-               eia608_is_westeu (cc_data)) {
+    }
+    else if (eia608_is_basicna (cc_data) ||
+             eia608_is_specialna (cc_data) ||
+             eia608_is_westeu (cc_data)) {
 
         // Don't decode text if we dont know what mode we are in.
         if (CAPTION_CLEAR == frame->state.mod) {
@@ -357,9 +363,11 @@ libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_da
         if (LIBCAPTION_OK == frame->status && (CAPTION_PAINT_ON == frame->state.mod || CAPTION_ROLL_UP == frame->state.mod)) {
             frame->status = LIBCAPTION_READY;
         }
-    } else if (eia608_is_preamble (cc_data)) {
+    }
+    else if (eia608_is_preamble (cc_data)) {
         frame->status = caption_frame_decode_preamble (frame,cc_data);
-    } else if (eia608_is_midrowchange (cc_data)) {
+    }
+    else if (eia608_is_midrowchange (cc_data)) {
         frame->status = caption_frame_decode_midrowchange (frame,cc_data);
     }
 

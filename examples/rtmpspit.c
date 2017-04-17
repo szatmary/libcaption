@@ -42,7 +42,8 @@ int MyRTMP_Write (RTMP* r, const char* buf, int size)
                     || pkt->m_packetType == RTMP_PACKET_TYPE_VIDEO) &&
                     !pkt->m_nTimeStamp) || pkt->m_packetType == RTMP_PACKET_TYPE_INFO) {
                 pkt->m_headerType = RTMP_PACKET_SIZE_LARGE;
-            } else {
+            }
+            else {
                 pkt->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
             }
 
@@ -52,7 +53,8 @@ int MyRTMP_Write (RTMP* r, const char* buf, int size)
             }
 
             enc = pkt->m_body;
-        } else {
+        }
+        else {
             enc = pkt->m_body + pkt->m_nBytesRead;
         }
 

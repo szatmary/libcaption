@@ -80,7 +80,8 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
         if (1>size) { goto error; }
 
         data += 1; size -= 1;
-    } else if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
+    }
+    else if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
         if (1>size) { goto error; }
 
         cea708->atsc1_data_user_data_type_code = data[0];
