@@ -85,6 +85,11 @@ srt_t* srt_from_fd (int fd)
         }
 
         if (1 == ret) {
+            if (g_srt_size >= MAX_SRT_SIZE-1) {
+                fprintf (stderr, "Warning MAX_SRT_SIZE reached. Clearing buffer\n");
+                g_srt_size = 0;
+            }
+
             g_srt_data[g_srt_size] = c;
             g_srt_size += 1;
         } else {
@@ -96,7 +101,7 @@ srt_t* srt_from_fd (int fd)
 int main (int argc, char** argv)
 {
     flvtag_t tag;
-    srt_t* old_srt, *nxt_srt = 0;
+    srt_t* old_srt = 0, *nxt_srt = 0;
     double timestamp, offset, clear_timestamp = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read (argv[1]);
@@ -127,6 +132,7 @@ int main (int argc, char** argv)
             old_srt = new_srt;
             nxt_srt = new_srt;
             offset = timestamp;
+            clear_timestamp = timestamp;
         }
 
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
