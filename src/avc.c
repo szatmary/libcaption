@@ -295,6 +295,7 @@ uint8_t* sei_render_alloc (sei_t* sei, size_t* size)
 int sei_parse_nalu (sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
 {
     assert (0<=cts); // cant present before decode
+    sei_init (sei);
     sei->dts = dts;
     sei->cts = cts;
     int ret = 0;
