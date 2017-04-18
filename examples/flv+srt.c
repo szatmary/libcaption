@@ -101,7 +101,7 @@ srt_t* srt_from_fd (int fd)
 int main (int argc, char** argv)
 {
     flvtag_t tag;
-    srt_t* old_srt, *nxt_srt = 0;
+    srt_t* old_srt = 0, *nxt_srt = 0;
     double timestamp, offset, clear_timestamp = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read (argv[1]);
