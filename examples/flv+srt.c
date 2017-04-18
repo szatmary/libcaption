@@ -72,8 +72,8 @@ size_t g_srt_size = 0;
 utf8_char_t g_srt_data[MAX_SRT_SIZE];
 srt_t* srt_from_fd (int fd)
 {
-    char c;
     int eof;
+    uint8_t c;
 
     for (;;) {
         int ret = fd_read (fd,&c,1,&eof);
