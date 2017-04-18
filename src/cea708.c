@@ -147,7 +147,7 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size)
         data[0] = cea708->user_identifier>>24;
         data[1] = cea708->user_identifier>>16;
         data[2] = cea708->user_identifier>>8;
-        data[3] = cea708->user_identifier;
+        data[3] = cea708->user_identifier>>0;
         total += 4; data += 4; size -= 4;
     }
 
@@ -220,7 +220,7 @@ libcaption_stauts_t cea708_to_caption_frame (caption_frame_t* frame, cea708_t* c
     int i, count = cea708_cc_count (&cea708->user_data);
     libcaption_stauts_t status = LIBCAPTION_OK;
 
-    if (GA94==cea708->user_identifier) {
+    if (GA94 == cea708->user_identifier) {
         for (i = 0 ; i < count ; ++i) {
             cea708_cc_type_t type; int valid;
             uint16_t cc_data = cea708_cc_data (&cea708->user_data, i, &valid, &type);

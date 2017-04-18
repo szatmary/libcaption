@@ -24,13 +24,13 @@
 #include "flv.h"
 #include "srt.h"
 #include "avc.h"
-#include <stdio.h>
 
 #define LENGTH_SIZE 4
 int main (int argc, char** argv)
 {
     const char* path = argv[1];
 
+    sei_t sei;
     flvtag_t tag;
     srt_t* srt = 0, *head = 0;
     int i, has_audio, has_video;
@@ -51,8 +51,6 @@ int main (int argc, char** argv)
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
             ssize_t  size = flvtag_payload_size (&tag);
             uint8_t* data = flvtag_payload_data (&tag);
-            double dts = flvtag_dts_seconds (&tag);
-            double cts = flvtag_cts_seconds (&tag);
 
             while (0<size) {
                 ssize_t  nalu_size = (data[0]<<24) | (data[1]<<16) | (data[2]<<8) | data[3];
@@ -62,15 +60,26 @@ int main (int argc, char** argv)
                 size -= nalu_size + LENGTH_SIZE;
 
                 if (6 == nalu_type) {
-                    sei_t sei;
-                    sei_parse_nalu (&sei, nalu_data, nalu_size, dts, cts);
+                    sei_init (&sei);
+                    sei_parse_nalu (&sei, nalu_data, nalu_size, flvtag_dts_seconds (&tag), flvtag_cts_seconds (&tag));
 
-                    if (LIBCAPTION_READY == sei_to_caption_frame (&sei,&frame)) {
-                        // caption_frame_dump (&frame);
-                        srt = srt_from_caption_frame (&frame,srt,&head);
-                    }
+                    cea708_t cea708;
+                    sei_message_t* msg;
+                    cea708_init (&cea708);
 
+                    // for (msg = sei_message_head (&sei) ; msg ; msg = sei_message_next (msg)) {
+                    //     if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
+                    //         cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
+                    //         cea708_dump (&cea708);
+                    //     }
+                    // }
+
+                    // sei_dump(&sei);
+                    sei_to_caption_frame (&sei,&frame);
                     sei_free (&sei);
+
+                    // caption_frame_dump (&frame);
+                    srt = srt_from_caption_frame (&frame,srt,&head);
                 }
             }
         }
