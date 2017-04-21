@@ -95,8 +95,8 @@ endif()
 #add_executable(test_captions unit_tests/test_sei.c )
 #target_link_libraries(test_captions caption)
 
-install (TARGETS caption DESTINATION lib EXPORT caption-targets)
-install (FILES ${CAPTION_HEADERS} DESTINATION include/caption)
+install (TARGETS caption DESTINATION lib)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/caption DESTINATION include)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
