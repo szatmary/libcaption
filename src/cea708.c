@@ -44,9 +44,8 @@ int cea708_init (cea708_t* cea708)
     cea708->country = country_united_states;
     cea708->provider = t35_provider_atsc;
     cea708->user_identifier = GA94;
-    cea708->atsc1_data_user_data_type_code = 3; //what does 3 mean here?
+    cea708->user_data_type_code = 3;
     cea708->directv_user_data_length = 0;
-    ///////////
     cea708->user_data.process_em_data_flag = 0;
     cea708->user_data.process_cc_data_flag = 1;
     cea708->user_data.additional_data_flag = 0;
@@ -64,7 +63,7 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
     cea708->country = (itu_t_t35_country_code_t) (data[0]);
     cea708->provider = (itu_t_t35_provider_code_t) ( (data[1] <<8) | data[2]);
     cea708->user_identifier = 0;
-    cea708->atsc1_data_user_data_type_code = 0;
+    cea708->user_data_type_code = 0;
     data += 3; size -= 3;
 
     if (t35_provider_atsc == cea708->provider) {
@@ -74,16 +73,16 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
         data += 4; size -= 4;
     }
 
-    // Im not sure what this extra byt is. It sonly seesm to come up in onCaptionInfo
     // where country and provider are zero
-    if (0 == cea708->provider) {
+    // Im not sure what this extra byte is. It sonly seesm to come up in onCaptionInfo
+    if (0 == cea708->provider && 0 == cea708->country) {
         if (1>size) { goto error; }
 
         data += 1; size -= 1;
     } else if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
         if (1>size) { goto error; }
 
-        cea708->atsc1_data_user_data_type_code = data[0];
+        cea708->user_data_type_code = data[0];
         data += 1; size -= 1;
     }
 
@@ -94,29 +93,37 @@ int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708)
         data += 1; size -= 1;
     }
 
-    // TODO I believe this is condational on the above.
-    if (2>size)  { goto error; }
+    memset (&cea708->user_data,0,sizeof (user_data_t));
 
-    cea708->user_data.process_em_data_flag = !! (data[0]&0x80);
-    cea708->user_data.process_cc_data_flag = !! (data[0]&0x40);
-    cea708->user_data.additional_data_flag = !! (data[0]&0x20);
-    cea708->user_data.cc_count             = (data[0]&0x1F);
-    cea708->user_data.em_data              = data[1];
-    data += 2; size -= 2;
+    if (3 == cea708->user_data_type_code) {
+        if (2>size)  { goto error; }
 
-    if (3 * cea708->user_data.cc_count>size) { goto error; }
+        cea708->user_data.process_em_data_flag = !! (data[0]&0x80);
+        cea708->user_data.process_cc_data_flag = !! (data[0]&0x40);
+        cea708->user_data.additional_data_flag = !! (data[0]&0x20);
+        cea708->user_data.cc_count             = (data[0]&0x1F);
+        cea708->user_data.em_data              = data[1];
+        data += 2; size -= 2;
 
-    for (i = 0 ; i < (int) cea708->user_data.cc_count ; ++i) {
-        cea708->user_data.cc_data[i].marker_bits = data[0]>>3;
-        cea708->user_data.cc_data[i].cc_valid    = data[0]>>2;
-        cea708->user_data.cc_data[i].cc_type     = data[0]>>0;
-        cea708->user_data.cc_data[i].cc_data     = data[1]<<8|data[2];
-        data += 3; size -= 3;
+        for (i = 0 ; i < (int) cea708->user_data.cc_count ; ++i) {
+            if (3>size)  { goto error; }
+
+            cea708->user_data.cc_data[i].marker_bits = data[0]>>3;
+            cea708->user_data.cc_data[i].cc_valid    = data[0]>>2;
+            cea708->user_data.cc_data[i].cc_type     = data[0]>>0;
+            cea708->user_data.cc_data[i].cc_data     = data[1]<<8|data[2];
+            data += 3; size -= 3;
+        }
+    } else if (4 == cea708->user_data_type_code) {
+        // additional_CEA_608_data
+    } else if (5 == cea708->user_data_type_code) {
+        // luma_PAM_data
+    } else {
+        // ATSC_reserved_user_data
     }
 
     return LIBCAPTION_OK;
 error:
-    cea708_init (cea708);
     return LIBCAPTION_ERROR;
 }
 
@@ -152,7 +159,7 @@ int cea708_render (cea708_t* cea708, uint8_t* data, size_t size)
     }
 
     if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
-        data[0] = cea708->atsc1_data_user_data_type_code;
+        data[0] = cea708->user_data_type_code;
         total += 1; data += 1; size -= 1;
     }
 
@@ -197,7 +204,7 @@ void cea708_dump (cea708_t* cea708)
     fprintf (stderr,"user_identifier %c%c%c%c\n",
              (cea708->user_identifier>>24) &0xFF, (cea708->user_identifier>>16) &0xFF,
              (cea708->user_identifier>>8) &0xFF,cea708->user_identifier&0xFF);
-    fprintf (stderr,"atsc1_data_user_data_type_code %d\n",cea708->atsc1_data_user_data_type_code);
+    fprintf (stderr,"user_data_type_code %d\n",cea708->user_data_type_code);
     fprintf (stderr,"directv_user_data_length %d\n",cea708->directv_user_data_length);
     fprintf (stderr,"user_data.process_em_data_flag %d\n",cea708->user_data.process_em_data_flag);
     fprintf (stderr,"user_data.process_cc_data_flag %d\n",cea708->user_data.process_cc_data_flag);

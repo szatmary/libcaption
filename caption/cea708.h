@@ -81,7 +81,7 @@ typedef struct {
     itu_t_t35_country_code_t country;
     itu_t_t35_provider_code_t provider;
     uint32_t user_identifier;
-    uint8_t atsc1_data_user_data_type_code;
+    uint8_t user_data_type_code;
     uint8_t directv_user_data_length;
     user_data_t user_data;
 } cea708_t;

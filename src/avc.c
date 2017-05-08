@@ -217,11 +217,12 @@ void sei_dump_messages (sei_message_t* head)
         fprintf (stderr,"\n");
 
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type (msg)) {
-            cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708);
-            cea708_dump (&cea708);
+            if (LIBCAPTION_OK != cea708_parse (sei_message_data (msg), sei_message_size (msg), &cea708)) {
+                fprintf (stderr,"cea708_parse error\n");
+            } else {
+                cea708_dump (&cea708);
+            }
         }
-
-
     }
 }
 
