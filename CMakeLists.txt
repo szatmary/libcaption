@@ -14,14 +14,14 @@ else()
 endif()
 
 # Don't need to prefix local includes with "caption/*"
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/caption)
+include_directories(${PROJECT_SOURCE_DIR}/caption)
 
 option(ENABLE_RE2C "Use RE2C to generate eia608.c" ON)
-set(eia608_from_utf8_c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c)
-set(eia608_from_utf8_c_cached ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
+set(eia608_from_utf8_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c)
+set(eia608_from_utf8_c_cached ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
 if(ENABLE_RE2C)
   find_program(RE2C re2c)
-  set(eia608_from_utf8_re2c ${CMAKE_SOURCE_DIR}/src/eia608_from_utf8.re2c)
+  set(eia608_from_utf8_re2c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.re2c)
   if(RE2C)
     message(STATUS "Found re2c: ${RE2C}")
 
