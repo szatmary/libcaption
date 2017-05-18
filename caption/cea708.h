@@ -57,15 +57,15 @@ typedef struct {
 /*! \brief
     \param
 */
-cc_data_t cea708_encode_cc_data (int cc_valid, cea708_cc_type_t type, uint16_t cc_data);
+cc_data_t cea708_encode_cc_data(int cc_valid, cea708_cc_type_t type, uint16_t cc_data);
 /*! \brief
     \param
 */
-int cea708_cc_count (user_data_t* data);
+int cea708_cc_count(user_data_t* data);
 /*! \brief
     \param
 */
-uint16_t cea708_cc_data (user_data_t* data, int index, int* valid, cea708_cc_type_t* type);
+uint16_t cea708_cc_data(user_data_t* data, int index, int* valid, cea708_cc_type_t* type);
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
@@ -86,33 +86,33 @@ typedef struct {
     user_data_t user_data;
 } cea708_t;
 
-const static int32_t GA94 = ( ('G'<<24) | ('A'<<16) | ('9'<<8) |'4');
-const static int32_t DTG1 = ( ('D'<<24) | ('T'<<16) | ('G'<<8) |'1');
+const static int32_t GA94 = (('G' << 24) | ('A' << 16) | ('9' << 8) | '4');
+const static int32_t DTG1 = (('D' << 24) | ('T' << 16) | ('G' << 8) | '1');
 
 /*! \brief
     \param
 */
-int cea708_init (cea708_t* cea708); // will confgure using HLS compatiable defaults
+int cea708_init(cea708_t* cea708); // will confgure using HLS compatiable defaults
 /*! \brief
     \param
 */
-int cea708_parse (uint8_t* data, size_t size, cea708_t* cea708);
+int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708);
 /*! \brief
     \param
 */
-libcaption_stauts_t cea708_to_caption_frame (caption_frame_t* frame, cea708_t* cea708, double pts);
+libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* cea708, double pts);
 /*! \brief
     \param
 */
-int cea708_add_cc_data (cea708_t* cea708, int valid, cea708_cc_type_t type, uint16_t cc_data);
+int cea708_add_cc_data(cea708_t* cea708, int valid, cea708_cc_type_t type, uint16_t cc_data);
 /*! \brief
     \param
 */
-int cea708_render (cea708_t* cea708, uint8_t* data, size_t size);
+int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
 /*! \brief
     \param
 */
-void cea708_dump (cea708_t* cea708);
+void cea708_dump(cea708_t* cea708);
 #ifdef __cplusplus
 }
 #endif

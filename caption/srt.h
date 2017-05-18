@@ -27,8 +27,8 @@
 extern "C" {
 #endif
 
-#include "eia608.h"
 #include "caption.h"
+#include "eia608.h"
 
 // timestamp and duration are in seconds
 typedef struct _srt_t {
@@ -38,54 +38,51 @@ typedef struct _srt_t {
     size_t aloc;
 } srt_t;
 
-
-
-
 /*! \brief
     \param
 */
-srt_t* srt_new (const utf8_char_t* data, size_t size, double timestamp, srt_t* prev, srt_t** head);
+srt_t* srt_new(const utf8_char_t* data, size_t size, double timestamp, srt_t* prev, srt_t** head);
 /*! \brief
     \param
 */
-srt_t* srt_free_head (srt_t* head);
+srt_t* srt_free_head(srt_t* head);
 // returns the head of the link list. must bee freed when done
 /*! \brief
     \param
 */
-srt_t* srt_parse (const utf8_char_t* data, size_t size);
+srt_t* srt_parse(const utf8_char_t* data, size_t size);
 /*! \brief
     \param
 */
-void srt_free (srt_t* srt);
+void srt_free(srt_t* srt);
 
 /*! \brief
     \param
 */
-static inline srt_t* srt_next (srt_t* srt) { return srt->next; }
+static inline srt_t* srt_next(srt_t* srt) { return srt->next; }
 /*! \brief
     \param
 */
-static inline utf8_char_t* srt_data (srt_t* srt) { return (utf8_char_t*) (srt) + sizeof (srt_t); }
+static inline utf8_char_t* srt_data(srt_t* srt) { return (utf8_char_t*)(srt) + sizeof(srt_t); }
 // This only converts teh surrent SRT, It does not walk the list
 /*! \brief
     \param
 */
-int srt_to_caption_frame (srt_t* srt, caption_frame_t* frame);
+int srt_to_caption_frame(srt_t* srt, caption_frame_t* frame);
 
 // returns teh new srt. Head is not tracher internally.
 /*! \brief
     \param
 */
-srt_t* srt_from_caption_frame (caption_frame_t* frame, srt_t* prev, srt_t** head);
+srt_t* srt_from_caption_frame(caption_frame_t* frame, srt_t* prev, srt_t** head);
 /*! \brief
     \param
 */
-void srt_dump (srt_t* srt);
+void srt_dump(srt_t* srt);
 /*! \brief
     \param
 */
-void vtt_dump (srt_t* srt);
+void vtt_dump(srt_t* srt);
 
 #ifdef __cplusplus
 }

@@ -21,36 +21,36 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <linux/input.h>
-#include <string.h>
-#include <stdio.h>
 #include "caption.h"
 #include "flv.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 char charcode[] = {
-    0,   0, '1', '2', '3', '4', '5', '6',  '7', '8', '9',  '0', '-', '=',   0,   0,
-    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',  'O', 'P', '[',  ']','\n',   0, 'A', 'S',
-    'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`',   0, '\\', 'Z', 'X', 'C', 'V',
-    'B', 'N', 'M', ',', '.', '/',   0, '*',    0, ' ',   0,    0,   0,   0,   0,   0,
+    0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 0, 0,
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n', 0, 'A', 'S',
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V',
+    'B', 'N', 'M', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0,
 };
 
-int data_ready (int fd)
+int data_ready(int fd)
 {
     fd_set set;
-    struct timeval timeout = {0,0};
-    FD_ZERO (&set);
-    FD_SET (fd,&set);
-    int cnt = select (fd+1, &set, 0, 0, &timeout);
-    FD_ZERO (&set);
+    struct timeval timeout = { 0, 0 };
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+    int cnt = select(fd + 1, &set, 0, 0, &timeout);
+    FD_ZERO(&set);
     return (0 < cnt);
 }
 
-#define MAX_CAP_LENGTH (SCREEN_ROWS*SCREEN_COLS)
-int main (int argc, char** argv)
+#define MAX_CAP_LENGTH (SCREEN_ROWS * SCREEN_COLS)
+int main(int argc, char** argv)
 {
     int fd;
     ssize_t n;
@@ -58,33 +58,33 @@ int main (int argc, char** argv)
     struct input_event ev;
     int has_audio, has_video;
     const char* dev = argv[1];
-    char text[MAX_CAP_LENGTH+1];
-    memset (text,0,MAX_CAP_LENGTH+1);
+    char text[MAX_CAP_LENGTH + 1];
+    memset(text, 0, MAX_CAP_LENGTH + 1);
 
-    FILE* flv = flv_open_read ("-");
-    FILE* out = flv_open_write ("-");
-    fd = open (dev, O_RDONLY);
+    FILE* flv = flv_open_read("-");
+    FILE* out = flv_open_write("-");
+    fd = open(dev, O_RDONLY);
 
     if (fd == -1) {
-        fprintf (stderr, "Cannot open %s: %s.\n", dev, strerror (errno));
+        fprintf(stderr, "Cannot open %s: %s.\n", dev, strerror(errno));
         return EXIT_FAILURE;
     }
 
-    if (!flv_read_header (flv,&has_audio,&has_video)) {
-        fprintf (stderr,"%s is not an flv file\n", argv[1]);
+    if (!flv_read_header(flv, &has_audio, &has_video)) {
+        fprintf(stderr, "%s is not an flv file\n", argv[1]);
         return EXIT_FAILURE;
     }
 
-    if (!flv_write_header (out,has_audio,has_video)) {
+    if (!flv_write_header(out, has_audio, has_video)) {
         return EXIT_FAILURE;
     }
 
-    flvtag_init (&tag);
+    flvtag_init(&tag);
 
-    while (flv_read_tag (flv,&tag)) {
-        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-            if (data_ready (fd)) {
-                n = read (fd, &ev, sizeof ev);
+    while (flv_read_tag(flv, &tag)) {
+        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
+            if (data_ready(fd)) {
+                n = read(fd, &ev, sizeof ev);
 
                 if (n == (ssize_t)-1) {
                     if (errno == EINTR) {
@@ -97,20 +97,20 @@ int main (int argc, char** argv)
                     break;
                 }
 
-                int len = strlen (text);
+                int len = strlen(text);
                 char c = (EV_KEY == ev.type && 1 == ev.value && ev.code < 64) ? charcode[ev.code] : 0;
 
                 if (0 < len && '\n' == c) {
-                    fprintf (stderr,"='%s'\n", text);
-                    flvtag_addcaption (&tag, text);
-                    memset (text,0,MAX_CAP_LENGTH+1);
+                    fprintf(stderr, "='%s'\n", text);
+                    flvtag_addcaption(&tag, text);
+                    memset(text, 0, MAX_CAP_LENGTH + 1);
                 } else if (0 != c && len < MAX_CAP_LENGTH) {
                     text[len] = c;
                 }
             }
         }
 
-        flv_write_tag (out,&tag);
+        flv_write_tag(out, &tag);
     }
 
     return EXIT_SUCCESS;

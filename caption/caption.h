@@ -27,9 +27,9 @@
 extern "C" {
 #endif
 
+#include "eia608.h"
 #include "utf8.h"
 #include "xds.h"
-#include "eia608.h"
 
 // ssize_t is POSIX and does not exist on Windows
 #if defined(_MSC_VER)
@@ -46,10 +46,10 @@ typedef enum {
     LIBCAPTION_READY = 2
 } libcaption_stauts_t;
 
-static inline libcaption_stauts_t libcaption_status_update (libcaption_stauts_t old_stat, libcaption_stauts_t new_stat)
+static inline libcaption_stauts_t libcaption_status_update(libcaption_stauts_t old_stat, libcaption_stauts_t new_stat)
 {
     return (LIBCAPTION_ERROR == old_stat || LIBCAPTION_ERROR == new_stat) ? LIBCAPTION_ERROR
-           : (LIBCAPTION_READY == old_stat) ? LIBCAPTION_READY : new_stat;
+                                                                          : (LIBCAPTION_READY == old_stat) ? LIBCAPTION_READY : new_stat;
 }
 
 #define SCREEN_ROWS 15
@@ -58,15 +58,14 @@ static inline libcaption_stauts_t libcaption_status_update (libcaption_stauts_t 
 typedef struct {
     unsigned int uln : 1; //< underline
     unsigned int sty : 3; //< style
-    utf8_char_t data[5];  //< 4 byte utf8 values plus null term
-}  caption_frame_cell_t;
+    utf8_char_t data[5]; //< 4 byte utf8 values plus null term
+} caption_frame_cell_t;
 
 typedef struct {
     caption_frame_cell_t cell[SCREEN_ROWS][SCREEN_COLS];
 } caption_frame_buffer_t;
 
-
-typedef struct  {
+typedef struct {
     unsigned int uln : 1; //< underline
     unsigned int sty : 3; //< style
     unsigned int mod : 3; //< current mode
@@ -93,12 +92,11 @@ typedef struct {
 // } eia608_display_mode_t;
 // eia608_display_mode_t caption_frame_mode (caption_frame_t* frame);
 
-
 /*!
     \brief Initializes an allocated caption_frame_t instance
     \param frame Pointer to prealocated caption_frame_t object
 */
-void caption_frame_init (caption_frame_t* frame);
+void caption_frame_init(caption_frame_t* frame);
 /*! \brief Writes a single charcter to a caption_frame_t object
     \param frame A pointer to an allocted and initialized caption_frame_t object
     \param row Row position to write charcter, must be between 0 and SCREEN_ROWS-1
@@ -107,35 +105,35 @@ void caption_frame_init (caption_frame_t* frame);
     \param underline Set underline attribute, 0 = off any other value = on
     \param c pointer to a single valid utf8 charcter. Bytes are automatically determined, and a NULL terminator is not required
 */
-int caption_frame_write_char (caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const utf8_char_t* c);
+int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const utf8_char_t* c);
 /*! \brief
     \param
 */
-const utf8_char_t* caption_frame_read_char (caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline);
+const utf8_char_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline);
 /*! \brief
     \param
 */
-libcaption_stauts_t caption_frame_decode (caption_frame_t* frame, uint16_t cc_data, double timestamp);
+libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_data, double timestamp);
 /*! \brief
     \param
 */
-int caption_frame_from_text (caption_frame_t* frame, const utf8_char_t* data);
+int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data);
 /*! \brief
     \param
 */
-#define CAPTION_FRAME_TEXT_BYTES (((2+SCREEN_ROWS)*SCREEN_COLS*4)+1)
-size_t caption_frame_to_text (caption_frame_t* frame, utf8_char_t* data);
+#define CAPTION_FRAME_TEXT_BYTES (((2 + SCREEN_ROWS) * SCREEN_COLS * 4) + 1)
+size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data);
 /*! \brief
     \param
 */
 #define CAPTION_FRAME_DUMP_BUF_SIZE 4096
-size_t caption_frame_dump_buffer (caption_frame_t* frame, utf8_char_t* buf);
-void caption_frame_dump (caption_frame_t* frame);
+size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf);
+void caption_frame_dump(caption_frame_t* frame);
 /*! \brief
     \param
 */
 #define CAPTION_FRAME_JSON_BUF_SIZE 32768
-size_t caption_frame_json (caption_frame_t* frame, utf8_char_t* buf);
+size_t caption_frame_json(caption_frame_t* frame, utf8_char_t* buf);
 
 #ifdef __cplusplus
 }

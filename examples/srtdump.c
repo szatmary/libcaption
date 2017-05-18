@@ -21,28 +21,30 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
+#include "avc.h"
+#include "srt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "srt.h"
-#include "avc.h"
 // #include "sei.h"
 
-#define MAX_SRT_SIZE (10*1024*1024)
+#define MAX_SRT_SIZE (10 * 1024 * 1024)
 #define MAX_READ_SIZE 4096
 
-size_t read_file (FILE* file, utf8_char_t* data, size_t size)
+size_t read_file(FILE* file, utf8_char_t* data, size_t size)
 {
     size_t read, totl = 0;
 
-    while (0 < (read = fread (data,1,MAX_READ_SIZE<size?MAX_READ_SIZE:size,file))) {
-        totl += read; data += read; size -= read;
+    while (0 < (read = fread(data, 1, MAX_READ_SIZE < size ? MAX_READ_SIZE : size, file))) {
+        totl += read;
+        data += read;
+        size -= read;
     }
 
     return totl;
 }
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     srt_t* srt;
     caption_frame_t frame;
@@ -51,21 +53,21 @@ int main (int argc, char** argv)
         return 0;
     }
 
-    FILE* file = fopen (argv[1],"r");
+    FILE* file = fopen(argv[1], "r");
 
-    if (! file) {
+    if (!file) {
         return 0;
     }
 
-    utf8_char_t* data = (utf8_char_t*) malloc (MAX_SRT_SIZE);
-    size_t size = read_file (file,data,MAX_SRT_SIZE);
-    srt_t* head = srt_parse (data,size);
+    utf8_char_t* data = (utf8_char_t*)malloc(MAX_SRT_SIZE);
+    size_t size = read_file(file, data, MAX_SRT_SIZE);
+    srt_t* head = srt_parse(data, size);
 
-    for (srt = head ; srt ; srt = srt->next) {
-        caption_frame_init (&frame);
-        srt_to_caption_frame (srt,&frame);
-        caption_frame_dump (&frame);
+    for (srt = head; srt; srt = srt->next) {
+        caption_frame_init(&frame);
+        srt_to_caption_frame(srt, &frame);
+        caption_frame_dump(&frame);
     }
 
-    srt_free (head);
+    srt_free(head);
 }

@@ -27,8 +27,8 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 // These types exist to make the code more self dcoumenting
 // utf8_char_t point is a null teminate string of utf8 encodecd chars
@@ -42,20 +42,20 @@ typedef size_t utf8_size_t;
 
     Skiped continuation bytes
 */
-const utf8_char_t* utf8_char_next (const char* s);
+const utf8_char_t* utf8_char_next(const char* s);
 /*! \brief
     \param
 
     returnes the length of the char in bytes
 */
-size_t utf8_char_length (const utf8_char_t* c);
+size_t utf8_char_length(const utf8_char_t* c);
 
 /*! \brief
     \param
 
     returns 1 if first charcter is white space
 */
-int utf8_char_whitespace (const utf8_char_t* c);
+int utf8_char_whitespace(const utf8_char_t* c);
 
 /*! \brief
     \param
@@ -63,11 +63,11 @@ int utf8_char_whitespace (const utf8_char_t* c);
     returns length of the string in bytes
     size is number of charcter to count (0 to count until NULL term)
 */
-size_t utf8_string_length (const utf8_char_t* data, utf8_size_t size);
+size_t utf8_string_length(const utf8_char_t* data, utf8_size_t size);
 /*! \brief
     \param
 */
-size_t utf8_char_copy (utf8_char_t* dst, const utf8_char_t* src);
+size_t utf8_char_copy(utf8_char_t* dst, const utf8_char_t* src);
 
 /*! \brief
     \param
@@ -75,42 +75,42 @@ size_t utf8_char_copy (utf8_char_t* dst, const utf8_char_t* src);
     returnes the number of utf8 charcters in a string givne the numbe of bytes
     to coutn until the a null terminator, pass 0 for size
 */
-utf8_size_t utf8_char_count (const char* data, size_t size);
+utf8_size_t utf8_char_count(const char* data, size_t size);
 /*! \brief
     \param
 
     returnes the length of the line in bytes triming not printable charcters at the end
 */
-size_t utf8_trimmed_length (const utf8_char_t* data, size_t size);
+size_t utf8_trimmed_length(const utf8_char_t* data, size_t size);
 /*! \brief
     \param
 
     returns the length in bytes of the line including the new line charcter(s)
     auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-size_t utf8_line_length (const utf8_char_t* data);
+size_t utf8_line_length(const utf8_char_t* data);
 /*! \brief
     \param
 
     returns number of chars to include before split
 */
-utf8_size_t utf8_wrap_length (const utf8_char_t* data, utf8_size_t size);
+utf8_size_t utf8_wrap_length(const utf8_char_t* data, utf8_size_t size);
 
 /*! \brief
     \param
 
     returns number of new lines in the string
 */
-int utf8_line_count (const utf8_char_t* data);
+int utf8_line_count(const utf8_char_t* data);
 
 /*! \brief
     \param
     size in/out. In the the max seize, out is the size read;
     returns number of new lins in teh string
 */
-#define UFTF_DEFAULT_MAX_FILE_SIZE = (50*1024*1024);
+#define UFTF_DEFAULT_MAX_FILE_SIZE = (50 * 1024 * 1024);
 
-utf8_char_t* utf8_load_text_file (const char* path, size_t* size);
+utf8_char_t* utf8_load_text_file(const char* path, size_t* size);
 
 #ifdef __cplusplus
 }

@@ -21,29 +21,29 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "ts.h"
-#include "srt.h"
 #include "avc.h"
+#include "srt.h"
+#include "ts.h"
 #include <stdio.h>
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     const char* path = argv[1];
 
     ts_t ts;
     sei_t sei;
     avcnalu_t nalu;
-    srt_t* srt = 0, *head = 0;
+    srt_t *srt = 0, *head = 0;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
-    ts_init (&ts);
-    avcnalu_init (&nalu);
-    caption_frame_init (&frame);
+    ts_init(&ts);
+    avcnalu_init(&nalu);
+    caption_frame_init(&frame);
 
-    FILE* file = fopen (path,"rb+");
+    FILE* file = fopen(path, "rb+");
 
-    while (TS_PACKET_SIZE == fread (&pkt[0],1,TS_PACKET_SIZE, file)) {
-        switch (ts_parse_packet (&ts,&pkt[0])) {
+    while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
+        switch (ts_parse_packet(&ts, &pkt[0])) {
         case LIBCAPTION_OK:
             // fprintf (stderr,"read ts packet\n");
             break;
@@ -53,35 +53,35 @@ int main (int argc, char** argv)
             while (ts.size) {
                 // fprintf (stderr,"ts.size %d (%02X%02X%02X%02X)\n",ts.size, ts.data[0], ts.data[1], ts.data[2], ts.data[3]);
 
-                switch (avcnalu_parse_annexb (&nalu, &ts.data, &ts.size)) {
+                switch (avcnalu_parse_annexb(&nalu, &ts.data, &ts.size)) {
                 case LIBCAPTION_OK:
                     break;
 
                 case LIBCAPTION_ERROR:
                     // fprintf (stderr,"LIBCAPTION_ERROR == avcnalu_parse_annexb()\n");
-                    avcnalu_init (&nalu);
+                    avcnalu_init(&nalu);
                     break;
 
                 case LIBCAPTION_READY: {
 
-                    if (6 == avcnalu_type (&nalu)) {
+                    if (6 == avcnalu_type(&nalu)) {
                         // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
-                        sei_init (&sei);
-                        sei_parse_avcnalu (&sei, &nalu, ts_dts_seconds (&ts), ts_cts_seconds (&ts));
+                        sei_init(&sei);
+                        sei_parse_avcnalu(&sei, &nalu, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
 
                         // sei_dump (&sei);
 
-                        if (LIBCAPTION_READY == sei_to_caption_frame (&sei,&frame)) {
+                        if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
                             // caption_frame_dump (&frame);
-                            srt = srt_from_caption_frame (&frame,srt,&head);
+                            srt = srt_from_caption_frame(&frame, srt, &head);
 
                             // srt_dump (srt);
                         }
 
-                        sei_free (&sei);
+                        sei_free(&sei);
                     }
 
-                    avcnalu_init (&nalu);
+                    avcnalu_init(&nalu);
                 } break;
                 }
             }
@@ -91,11 +91,10 @@ int main (int argc, char** argv)
             // fprintf (stderr,"read ts packet ERROR\n");
             break;
         }
-
     }
 
-    srt_dump (head);
-    srt_free (head);
+    srt_dump(head);
+    srt_free(head);
 
     return 1;
 }

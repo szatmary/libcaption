@@ -27,8 +27,8 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 typedef struct {
     int state;
@@ -39,8 +39,8 @@ typedef struct {
     uint8_t checksum;
 } xds_t;
 
-void xds_init (xds_t* xds);
-int xds_decode (xds_t* xds, uint16_t cc);
+void xds_init(xds_t* xds);
+int xds_decode(xds_t* xds, uint16_t cc);
 
 #ifdef __cplusplus
 }

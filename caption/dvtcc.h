@@ -14,8 +14,6 @@ struct dtvcc_packet_t {
 
 // static inline size_t dvtvcc_packet_size_bytes(const struct dtvcc_packet_t *dvtcc) { return dvtcc->packet_size*2-1;}
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

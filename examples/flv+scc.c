@@ -25,44 +25,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     flvtag_t tag;
     scc_t* scc = NULL;
     size_t scc_size = 0;
     double clear_timestamp = 0;
-    FILE* flv = flv_open_read (argv[1]);
-    utf8_char_t* scc_data_ptr = utf8_load_text_file (argv[2], &scc_size);
+    FILE* flv = flv_open_read(argv[1]);
+    utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[2], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
-    FILE* out = flv_open_write (argv[3]);
+    FILE* out = flv_open_write(argv[3]);
 
     int has_audio, has_video;
-    flvtag_init (&tag);
+    flvtag_init(&tag);
 
-    if (!flv_read_header (flv,&has_audio,&has_video)) {
-        fprintf (stderr,"%s is not an flv file\n", argv[1]);
+    if (!flv_read_header(flv, &has_audio, &has_video)) {
+        fprintf(stderr, "%s is not an flv file\n", argv[1]);
         return EXIT_FAILURE;
     }
 
-    flv_write_header (out,has_audio,has_video);
+    flv_write_header(out, has_audio, has_video);
 
     // read the first scc
-    scc_data += scc_to_608 (&scc,scc_data);
+    scc_data += scc_to_608(&scc, scc_data);
 
-    while (flv_read_tag (flv,&tag)) {
-        double timestamp = flvtag_pts_seconds (&tag);
+    while (flv_read_tag(flv, &tag)) {
+        double timestamp = flvtag_pts_seconds(&tag);
 
-        if (scc && scc->cc_size && scc->timestamp < timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype (&tag)) {
-            fprintf (stderr,"%0.02f cc_size %d\n", scc->timestamp, scc->cc_size);
-            flvtag_addcaption_scc (&tag, scc);
+        if (scc && scc->cc_size && scc->timestamp < timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
+            fprintf(stderr, "%0.02f cc_size %d\n", scc->timestamp, scc->cc_size);
+            flvtag_addcaption_scc(&tag, scc);
             // read next scc
-            scc_data += scc_to_608 (&scc,scc_data);
+            scc_data += scc_to_608(&scc, scc_data);
         }
 
-        flv_write_tag (out,&tag);
+        flv_write_tag(out, &tag);
     }
 
-    free (scc_data_ptr);
-    flvtag_free (&tag);
+    free(scc_data_ptr);
+    flvtag_free(&tag);
     return EXIT_SUCCESS;
 }
