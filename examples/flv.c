@@ -39,6 +39,13 @@ void flvtag_free(flvtag_t* tag)
     flvtag_init(tag);
 }
 
+void flvtag_swap(flvtag_t* tag1, flvtag_t* tag2)
+{
+    flvtag_t tag3 = (*tag1);
+    (*tag1) = (*tag2);
+    (*tag2) = tag3;
+}
+
 int flvtag_reserve(flvtag_t* tag, uint32_t size)
 {
     size += FLV_TAG_HEADER_SIZE + FLV_TAG_FOOTER_SIZE;
@@ -308,16 +315,26 @@ int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_char_t*
 
 int flvtag_avcwritenal(flvtag_t* tag, uint8_t* data, size_t size)
 {
-    uint32_t flvsize = flvtag_size(tag);
-    flvtag_reserve(tag, flvsize + LENGTH_SIZE + size);
-    uint8_t* payload = tag->data + FLV_TAG_HEADER_SIZE + flvsize;
-    payload[0] = size >> 24; // nalu size
-    payload[1] = size >> 16;
-    payload[2] = size >> 8;
-    payload[3] = size >> 0;
-    memcpy(&payload[LENGTH_SIZE], data, size);
-    flvtag_updatesize(tag, flvsize + LENGTH_SIZE + size);
+    if (0 < size) {
+        uint32_t flvsize = flvtag_size(tag);
+        flvtag_reserve(tag, flvsize + LENGTH_SIZE + size);
+        uint8_t* payload = tag->data + FLV_TAG_HEADER_SIZE + flvsize;
+        payload[0] = size >> 24; // nalu size
+        payload[1] = size >> 16;
+        payload[2] = size >> 8;
+        payload[3] = size >> 0;
+        memcpy(&payload[LENGTH_SIZE], data, size);
+        flvtag_updatesize(tag, flvsize + LENGTH_SIZE + size);
+    }
+    return 1;
+}
 
+int flvtag_avcwritesei(flvtag_t* tag, sei_t* sei)
+{
+    uint8_t* sei_data = malloc(sei_render_size(sei));
+    size_t sei_size = sei_render(sei, sei_data);
+    flvtag_avcwritenal(tag, sei_data, sei_size);
+    free(sei_data);
     return 1;
 }
 
@@ -327,11 +344,13 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
         return 0;
     }
 
-    uint8_t* sei_data = malloc(sei_render_size(sei));
-    size_t sei_size = sei_render(sei, sei_data);
+    sei_t new_sei;
+    sei_init(&new_sei);
+    sei_cat(&new_sei, sei, 1);
 
     flvtag_t new_tag;
     flvtag_initavc(&new_tag, flvtag_dts(tag), flvtag_cts(tag), flvtag_frametype(tag));
+
     uint8_t* data = flvtag_payload_data(tag);
     ssize_t size = flvtag_payload_size(tag);
 
@@ -342,26 +361,25 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
         data += LENGTH_SIZE + nalu_size;
         size -= LENGTH_SIZE + nalu_size;
 
-        if (0 < sei_size && 7 != nalu_type && 8 != nalu_type && 9 != nalu_type) {
-            // fprintf (stderr,"Wrote SEI %d '%d'\n\n", sei_size, sei_data[3]);
-            flvtag_avcwritenal(&new_tag, sei_data, sei_size);
-            sei_size = 0;
+        if (6 == nalu_type) {
+            sei_cat(&new_sei, sei, 0); // copy non itu_t_t35 sei messages
+        } else if (new_sei.head && 7 != nalu_type && 8 != nalu_type && 9 != nalu_type) {
+            flvtag_avcwritesei(&new_tag, &new_sei);
+            flvtag_avcwritenal(&new_tag, nalu_data, nalu_size);
+            sei_free(&new_sei);
+        } else {
+            flvtag_avcwritenal(&new_tag, nalu_data, nalu_size);
         }
-
-        flvtag_avcwritenal(&new_tag, nalu_data, nalu_size);
     }
 
-    // On the off chance we have an empty frame,
-    // We still wish to append the sei
-    if (0 < sei_size) {
-        // fprintf (stderr,"Wrote SEI %d\n\n", sei_size);
-        flvtag_avcwritenal(&new_tag, sei_data, sei_size);
-        sei_size = 0;
+    // On the off chance we have an empty frame, we still wish to write the sei
+    if (new_sei.head) {
+        flvtag_avcwritesei(&new_tag, &new_sei);
+        sei_free(&new_sei);
     }
 
-    free(tag->data);
-    tag->data = new_tag.data;
-    tag->aloc = new_tag.aloc;
+    flvtag_swap(tag, &new_tag);
+    flvtag_free(&new_tag);
     return 1;
 }
 

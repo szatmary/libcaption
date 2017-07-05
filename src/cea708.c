@@ -48,6 +48,7 @@ int cea708_init(cea708_t* cea708)
     cea708->user_data.process_em_data_flag = 0;
     cea708->user_data.process_cc_data_flag = 1;
     cea708->user_data.additional_data_flag = 0;
+    cea708->user_data.em_data = 0xFF;
     cea708->user_data.cc_count = 0;
     return 1;
 }
@@ -218,7 +219,7 @@ int cea708_render(cea708_t* cea708, uint8_t* data, size_t size)
         size -= 3;
     }
 
-    data[0] = 0xFF;
+    data[0] = 0xFF; //marker bits
     return (int)(total + 1);
 }
 

@@ -90,6 +90,14 @@ void sei_free(sei_t* sei);
 /*! \brief
     \param
 */
+void sei_cat(sei_t* to, sei_t* from, int itu_t_t35);
+/*! \brief
+    \param
+*/
+void sei_message_append(sei_t* sei, sei_message_t* msg);
+/*! \brief
+    \param
+*/
 static inline double sei_dts(sei_t* sei) { return sei->dts; }
 static inline double sei_cts(sei_t* sei) { return sei->cts; }
 static inline double sei_pts(sei_t* sei) { return sei->dts + sei->cts; }

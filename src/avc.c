@@ -188,6 +188,20 @@ void sei_message_append(sei_t* sei, sei_message_t* msg)
     }
 }
 
+void sei_cat(sei_t* to, sei_t* from, int itu_t_t35)
+{
+    if (!to || !from) {
+        return;
+    }
+
+    sei_message_t* msg = NULL;
+    for (msg = sei_message_head(from); msg; msg = sei_message_next(msg)) {
+        if (itu_t_t35 || sei_type_user_data_registered_itu_t_t35 != msg->type) {
+            sei_message_append(to, sei_message_copy(msg));
+        }
+    }
+}
+
 void sei_free(sei_t* sei)
 {
     sei_message_t* tail;
@@ -239,9 +253,12 @@ void sei_dump_messages(sei_message_t* head)
 ////////////////////////////////////////////////////////////////////////////////
 size_t sei_render_size(sei_t* sei)
 {
+    if (!sei || !sei->head) {
+        return 0;
+    }
+
     size_t size = 2; // nalu_type + stop bit
     sei_message_t* msg;
-
     for (msg = sei_message_head(sei); msg; msg = sei_message_next(msg)) {
         size += 1 + (msg->type / 255);
         size += 1 + (msg->size / 255);
@@ -254,6 +271,10 @@ size_t sei_render_size(sei_t* sei)
 // we can safely assume sei_render_size() bytes have been allocated for data
 size_t sei_render(sei_t* sei, uint8_t* data)
 {
+    if (!sei || !sei->head) {
+        return 0;
+    }
+
     size_t escaped_size, size = 2; // nalu_type + stop bit
     sei_message_t* msg;
     (*data) = 6;
@@ -550,10 +571,12 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 {
     cea708_t cea708;
     cea708_init(&cea708); // set up a new popon frame
-    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
+    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
+    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
+    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_display_memory, DEFAULT_CHANNEL));
-    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
+    cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_display_memory, DEFAULT_CHANNEL));
     sei_append_708(sei, &cea708);
     return LIBCAPTION_OK;
 }
