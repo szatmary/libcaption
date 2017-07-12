@@ -36,7 +36,7 @@ void caption_frame_buffer_clear(caption_frame_buffer_t* buff)
 void caption_frame_state_clear(caption_frame_t* frame)
 {
     frame->timestamp = -1;
-    frame->state = (caption_frame_state_t){ 0, 0, 0, 0, 0, 0, 0 }; // clear global state
+    frame->state = (caption_frame_state_t){ 0, 0, 0, 0, SCREEN_ROWS - 1, 0, 0 }; // clear global state
 }
 
 void caption_frame_init(caption_frame_t* frame)
@@ -55,6 +55,10 @@ void caption_frame_init(caption_frame_t* frame)
 // Helpers
 static caption_frame_cell_t* frame_buffer_cell(caption_frame_buffer_t* buff, int row, int col)
 {
+    if (!buff || 0 > row || SCREEN_ROWS <= row || 0 > col || SCREEN_COLS <= col) {
+        return 0;
+    }
+
     return &buff->cell[row][col];
 }
 
@@ -71,14 +75,8 @@ static caption_frame_buffer_t* frame_write_buffer(caption_frame_t* frame)
 
 static caption_frame_cell_t* frame_cell(caption_frame_t* frame, int row, int col)
 {
-    return frame_buffer_cell(&frame->front, row, col);
+    return frame_buffer_cell(frame_write_buffer(frame), row, col);
 }
-
-static caption_frame_cell_t* frame_cell_get(caption_frame_t* frame)
-{
-    return frame_cell(frame, frame->state.row, frame->state.col);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 uint16_t _eia608_from_utf8(const char* s); // function is in eia608.c.re2c
 int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c)
@@ -91,7 +89,7 @@ int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_st
 
     caption_frame_cell_t* cell = frame_buffer_cell(buff, row, col);
 
-    if (utf8_char_copy(&cell->data[0], c)) {
+    if (cell && utf8_char_copy(&cell->data[0], c)) {
         cell->uln = underline;
         cell->sty = style;
         return 1;
@@ -132,9 +130,8 @@ const utf8_char_t* caption_frame_read_char(caption_frame_t* frame, int row, int 
 libcaption_stauts_t caption_frame_carriage_return(caption_frame_t* frame)
 {
     caption_frame_buffer_t* buff = frame_write_buffer(frame);
-
-    if (!buff) {
-        return LIBCAPTION_OK;
+    if (!buff || 0 > frame->state.row || SCREEN_ROWS <= frame->state.row) {
+        return LIBCAPTION_ERROR;
     }
 
     int r = frame->state.row - (frame->state.rup - 1);
@@ -149,7 +146,9 @@ libcaption_stauts_t caption_frame_carriage_return(caption_frame_t* frame)
         memcpy(dst, src, sizeof(caption_frame_cell_t) * SCREEN_COLS);
     }
 
-    memset(frame_buffer_cell(buff, SCREEN_ROWS - 1, 0), 0, sizeof(caption_frame_cell_t) * SCREEN_COLS);
+    frame->state.col = 0;
+    caption_frame_cell_t* cell = frame_buffer_cell(buff, SCREEN_ROWS - 1, 0);
+    memset(cell, 0, sizeof(caption_frame_cell_t) * SCREEN_COLS);
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////

@@ -70,7 +70,8 @@ typedef struct {
     unsigned int sty : 3; //< style
     unsigned int mod : 3; //< current mode
     unsigned int rup : 2; //< roll-up line count minus 1
-    uint16_t row, col, cc_data;
+    int8_t row, col;
+    uint16_t cc_data;
 } caption_frame_state_t;
 
 // timestamp and duration are in seconds
