@@ -253,6 +253,8 @@ void cea708_dump(cea708_t* cea708)
 
         if (valid && cc_type_ntsc_cc_field_1 == type) {
             eia608_dump(cc_data);
+        } else {
+            fprintf(stderr, "user_data.cc_data[%d] cc_valid: %s, cc_type: %d, cc_data: %04x\n", i, cea708->user_data.cc_data[i].cc_valid ? "true" : "false", cea708->user_data.cc_data[i].cc_type, cea708->user_data.cc_data[i].cc_data);
         }
     }
 }

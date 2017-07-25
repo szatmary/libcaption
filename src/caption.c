@@ -448,7 +448,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
 
         for (c = 0; c < SCREEN_COLS; ++c) {
             caption_frame_cell_t* cell = frame_cell(frame, r, c);
-            bytes = utf8_char_copy(buf, (0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
+            bytes = utf8_char_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
             total += bytes;
             buf += bytes;
         }
