@@ -485,7 +485,7 @@ size_t caption_frame_json(caption_frame_t* frame, utf8_char_t* buf)
         for (c = 0; c < SCREEN_COLS; ++c) {
             caption_frame_cell_t* cell = frame_cell(frame, r, c);
 
-            if (0 != cell->data[0]) {
+            if (cell && 0 != cell->data[0]) {
                 const char* data = ('"' == cell->data[0]) ? "\\\"" : (const char*)&cell->data[0]; //escape quote
                 bytes = sprintf(buf, "%s\n{\"row\":%d,\"col\":%d,\"char\":\"%s\",\"style\":\"%s\"}",
                     (0 < count ? "," : ""), r, c, data, eia608_style_map[cell->sty]);
