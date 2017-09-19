@@ -402,7 +402,6 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
     size_t s, size = 0;
     eia608_style_t sty;
 
-    utf8_char_t* x = data;
     data[0] = 0;
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
@@ -423,8 +422,6 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
             }
         }
     }
-
-    fprintf(stderr, "'%s'\n", x);
 
     return size;
 }
