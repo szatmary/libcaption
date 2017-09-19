@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(libcaption)
-set(CMAKE_CXX_FLAGS "-Wall -O3")
+set(CMAKE_C_FLAGS "-Wall -O3")
 add_definitions(-D__STDC_CONSTANT_MACROS)
 if (WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)

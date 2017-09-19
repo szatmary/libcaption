@@ -31,8 +31,8 @@ extern "C" {
 #include "utf8.h"
 ////////////////////////////////////////////////////////////////////////////////
 // Parity
-#define EIA608_BX(B, X) (((B) >> X) & 0x01)
-#define EIA608_BP(B) ((B)&0x7F) | ((EIA608_BX((B), 0) ^ EIA608_BX(B, 1) ^ EIA608_BX((B), 2) ^ EIA608_BX((B), 3) ^ EIA608_BX((B), 4) ^ EIA608_BX((B), 5) ^ EIA608_BX((B), 6) ^ (0x01)) << 7)
+#define EIA608_BX(B, X) (((B) << (X)) & 0x80)
+#define EIA608_BP(B) ((B)&0x7F) | (0x80 ^ EIA608_BX((B), 1) ^ EIA608_BX((B), 2) ^ EIA608_BX((B), 3) ^ EIA608_BX((B), 4) ^ EIA608_BX((B), 5) ^ EIA608_BX((B), 6) ^ EIA608_BX((B), 7))
 #define EIA608_B2(B) EIA608_BP((B) + 0), EIA608_BP((B) + 1), EIA608_BP((B) + 2), EIA608_BP((B) + 3), EIA608_BP((B) + 4), EIA608_BP((B) + 5), EIA608_BP((B) + 6), EIA608_BP((B) + 7)
 #define EIA608_B1(B) EIA608_B2((B) + 0), EIA608_B2((B) + 8), EIA608_B2((B) + 16), EIA608_B2((B) + 24), EIA608_B2((B) + 32), EIA608_B2((B) + 40), EIA608_B2((B) + 48), EIA608_B2((B) + 56)
 

@@ -209,9 +209,7 @@ int cea708_render(cea708_t* cea708, uint8_t* data, size_t size)
     size -= 2;
 
     for (i = 0; i < (int)cea708->user_data.cc_count; ++i) {
-        data[0] = (cea708->user_data.cc_data[i].marker_bits << 3)
-            | (data[0] = cea708->user_data.cc_data[i].cc_valid << 2)
-            | (data[0] = cea708->user_data.cc_data[i].cc_type);
+        data[0] = (cea708->user_data.cc_data[i].marker_bits << 3) | (cea708->user_data.cc_data[i].cc_valid << 2) | cea708->user_data.cc_data[i].cc_type;
         data[1] = cea708->user_data.cc_data[i].cc_data >> 8;
         data[2] = cea708->user_data.cc_data[i].cc_data >> 0;
         total += 3;

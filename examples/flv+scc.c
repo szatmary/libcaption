@@ -30,7 +30,6 @@ int main(int argc, char** argv)
     flvtag_t tag;
     scc_t* scc = NULL;
     size_t scc_size = 0;
-    double clear_timestamp = 0;
     FILE* flv = flv_open_read(argv[1]);
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[2], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;

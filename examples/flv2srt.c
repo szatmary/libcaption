@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     sei_t sei;
     flvtag_t tag;
     srt_t *srt = 0, *head = 0;
-    int i, has_audio, has_video;
+    int has_audio, has_video;
     caption_frame_t frame;
 
     flvtag_init(&tag);
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
                 if (6 == nalu_type) {
                     sei_init(&sei);
                     sei_parse_nalu(&sei, nalu_data, nalu_size, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
-                    // sei_dump (&sei);
+                    // sei_dump(&sei);
 
                     if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
                         srt = srt_from_caption_frame(&frame, srt, &head);

@@ -27,13 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-const utf8_char_t* utf8_char_next(const char* s)
+const utf8_char_t* utf8_char_next(const utf8_char_t* c)
 {
-    if (0x80 == (s[0] & 0xC0)) {
-        ++s;
-    }
-
-    return s;
+    const utf8_char_t* n = c + utf8_char_length(c);
+    return n == c ? 0 : n;
 }
 
 // returnes the length of the char in bytes

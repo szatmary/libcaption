@@ -33,9 +33,9 @@
 srt_t* appennd_caption(const utf8_char_t* data, srt_t* prev, srt_t** head)
 {
 
-    int r, c, chan = 0;
+    int r;
     ssize_t size = (ssize_t)strlen(data);
-    size_t char_count, char_length, line_length = 0, trimmed_length = 0;
+    size_t char_count, line_length = 0, trimmed_length = 0;
 
     for (r = 0; 0 < size && SCREEN_ROWS > r; ++r) {
         line_length = utf8_line_length(data);

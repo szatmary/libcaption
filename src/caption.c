@@ -363,7 +363,7 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 ////////////////////////////////////////////////////////////////////////////////
 int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data)
 {
-    int r, c, chan = 0;
+    int r, c;
     ssize_t size = (ssize_t)strlen(data);
     size_t char_count, char_length, line_length = 0, trimmed_length = 0;
     caption_frame_init(frame);
@@ -398,30 +398,33 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data)
 ////////////////////////////////////////////////////////////////////////////////
 size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
 {
-    int r, c, x, uln;
+    int r, c, uln, a, b = 0;
     size_t s, size = 0;
     eia608_style_t sty;
 
+    utf8_char_t* x = data;
     data[0] = 0;
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
-        for (c = 0, x = 0; c < SCREEN_COLS; ++c) {
+        a = b, b = 0;
+        for (c = 0; c < SCREEN_COLS; ++c) {
             const utf8_char_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
 
-            if (0 < utf8_char_length(chr) && (0 < x || !utf8_char_whitespace(chr))) {
+            if (0 < utf8_char_length(chr) && (0 < b || !utf8_char_whitespace(chr))) {
+                if (0 < a) {
+                    // insert a new line if necessary
+                    utf8_char_copy(data + 0, "\r");
+                    utf8_char_copy(data + 1, "\n");
+                    data += 2, size += 2, a = 0;
+                }
+
                 s = utf8_char_copy(data, chr);
-                ++x, data += s;
-                size += s;
+                data += s, size += s, ++b;
             }
         }
-
-        if (x) {
-            utf8_char_copy(data + 0, "\r");
-            utf8_char_copy(data + 1, "\n");
-            data += 2;
-            size += 2;
-        }
     }
+
+    fprintf(stderr, "'%s'\n", x);
 
     return size;
 }
@@ -467,7 +470,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
 void caption_frame_dump(caption_frame_t* frame)
 {
     utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
-    size_t size = caption_frame_dump_buffer(frame, buff);
+    caption_frame_dump_buffer(frame, buff);
     fprintf(stderr, "%s\n", buff);
 }
 

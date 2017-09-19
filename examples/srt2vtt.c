@@ -44,10 +44,6 @@ size_t read_file(FILE* file, utf8_char_t* data, size_t size)
 
 int main(int argc, char** argv)
 {
-    srt_t* srt;
-    caption_frame_t frame;
-    char frame_buf[CAPTION_FRAME_DUMP_BUF_SIZE];
-
     if (argc < 2) {
         return 0;
     }

@@ -42,7 +42,8 @@ typedef size_t utf8_size_t;
 
     Skiped continuation bytes
 */
-const utf8_char_t* utf8_char_next(const char* s);
+
+const utf8_char_t* utf8_char_next(const utf8_char_t* c);
 /*! \brief
     \param
 

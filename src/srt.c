@@ -75,7 +75,6 @@ void srt_free(srt_t* srt)
 #define SRTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
 srt_t* srt_parse(const utf8_char_t* data, size_t size)
 {
-    int counter;
     srt_t *head = 0, *prev = 0;
     double str_pts = 0, end_pts = 0;
     size_t line_length = 0, trimmed_length = 0;
@@ -101,8 +100,6 @@ srt_t* srt_parse(const utf8_char_t* data, size_t size)
             break;
         }
 
-        counter = atoi(data);
-        // printf ("counter (%d): '%.*s'\n", line_length, (int) line_length, data);
         data += line_length;
         size -= line_length;
 
@@ -156,9 +153,6 @@ srt_t* srt_from_caption_frame(caption_frame_t* frame, srt_t* prev, srt_t** head)
     utf8_char_t* data = srt_data(srt);
 
     caption_frame_to_text(frame, data);
-    // srt requires an extra new line
-    strcat((char*)data, "\r\n");
-
     return srt;
 }
 
@@ -185,12 +179,12 @@ static void _dump(srt_t* head, char type)
         _crack_time(srt->timestamp + srt->duration, &hh2, &mm2, &ss2, &ms2);
 
         if ('s' == type) {
-            printf("%02d\r\n%d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\r\n%s\r\n", i,
+            printf("%02d\r\n%d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\r\n%s\r\n\r\n", i,
                 hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2, srt_data(srt));
         }
 
         else if ('v' == type) {
-            printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d\r\n%s\r\n",
+            printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d\r\n%s\r\n\r\n",
                 hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2, srt_data(srt));
         }
     }
