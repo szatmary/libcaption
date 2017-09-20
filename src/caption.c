@@ -398,27 +398,26 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data)
 ////////////////////////////////////////////////////////////////////////////////
 size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
 {
-    int r, c, uln, a, b = 0;
+    int r, c, uln, crlf = 0, count = 0;
     size_t s, size = 0;
     eia608_style_t sty;
 
     data[0] = 0;
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
-        a = b, b = 0;
+        crlf += count, count = 0;
         for (c = 0; c < SCREEN_COLS; ++c) {
             const utf8_char_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
 
-            if (0 < utf8_char_length(chr) && (0 < b || !utf8_char_whitespace(chr))) {
-                if (0 < a) {
-                    // insert a new line if necessary
-                    utf8_char_copy(data + 0, "\r");
-                    utf8_char_copy(data + 1, "\n");
-                    data += 2, size += 2, a = 0;
+            // dont start a new line until we encounter at least one printable character
+            if (0 < utf8_char_length(chr) && (0 < count || !utf8_char_whitespace(chr))) {
+                if (0 < crlf) {
+                    memcpy(data, "\r\n", 2);
+                    data += 2, size += 2, crlf = 0;
                 }
 
                 s = utf8_char_copy(data, chr);
-                data += s, size += s, ++b;
+                data += s, size += s, ++count;
             }
         }
     }

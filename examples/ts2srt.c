@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 
     FILE* file = fopen(path, "rb+");
 
+    // This fread 188 bytes at a time is VERY slow. Need to rewrite that
     while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
         switch (ts_parse_packet(&ts, &pkt[0])) {
         case LIBCAPTION_OK:
