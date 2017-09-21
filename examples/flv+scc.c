@@ -30,10 +30,31 @@ int main(int argc, char** argv)
     flvtag_t tag;
     scc_t* scc = NULL;
     size_t scc_size = 0;
+
+    if (4 > argc) {
+        fprintf(stderr, "Usage: %s input.flv input.scc output.flv\nuse '-' for stdin or stdout\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
     FILE* flv = flv_open_read(argv[1]);
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[2], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
     FILE* out = flv_open_write(argv[3]);
+
+    if (!flv) {
+        fprintf(stderr, "Falule to open input flv '%s'\n", argv[1]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!scc_data) {
+        fprintf(stderr, "Falule to open input scc '%s'\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!out) {
+        fprintf(stderr, "Falule to open output flv '%s'\n", argv[3]);
+        exit(EXIT_FAILURE);
+    }
 
     int has_audio, has_video;
     flvtag_init(&tag);
@@ -52,9 +73,7 @@ int main(int argc, char** argv)
         double timestamp = flvtag_pts_seconds(&tag);
 
         if (scc && scc->cc_size && scc->timestamp < timestamp && flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
-            fprintf(stderr, "%0.02f cc_size %d\n", scc->timestamp, scc->cc_size);
             flvtag_addcaption_scc(&tag, scc);
-            // read next scc
             scc_data += scc_to_608(&scc, scc_data);
         }
 

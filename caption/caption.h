@@ -98,6 +98,10 @@ typedef struct {
     \param frame Pointer to prealocated caption_frame_t object
 */
 void caption_frame_init(caption_frame_t* frame);
+/*! \brief
+    \param
+*/
+inline double caption_frame_timestamp(caption_frame_t* frame) { return frame->timestamp; }
 /*! \brief Writes a single charcter to a caption_frame_t object
     \param frame A pointer to an allocted and initialized caption_frame_t object
     \param row Row position to write charcter, must be between 0 and SCREEN_ROWS-1
@@ -122,7 +126,7 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data);
 /*! \brief
     \param
 */
-#define CAPTION_FRAME_TEXT_BYTES (((2 + SCREEN_ROWS) * SCREEN_COLS * 4) + 1)
+#define CAPTION_FRAME_TEXT_BYTES (4 * ((SCREEN_COLS + 2) * SCREEN_ROWS) + 1)
 size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data);
 /*! \brief
     \param

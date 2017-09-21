@@ -421,7 +421,7 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
     }
 
     if (LIBCAPTION_READY == status) {
-        frame->timestamp = sei->dts + sei->cts;
+        frame->timestamp = sei_pts(sei);
     }
 
     return status;
@@ -556,7 +556,6 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
             sei_append_708(sei, &cea708);
         }
 
-        eia608_dump(scc->cc_data[i]);
         cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, scc->cc_data[i]);
     }
 

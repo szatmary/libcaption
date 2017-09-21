@@ -206,13 +206,13 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame);
 /*! \brief
     \param
 */
-static inline libcaption_stauts_t nalu_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double pts, double dts)
+static inline libcaption_stauts_t avcnalu_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
 {
     sei_t sei;
     libcaption_stauts_t err = LIBCAPTION_ERROR;
 
     sei_init(&sei);
-    sei_parse_nalu(&sei, data, size, pts, dts);
+    sei_parse_nalu(&sei, data, size, dts, cts);
     err = sei_to_caption_frame(&sei, frame);
     sei_free(&sei);
 
