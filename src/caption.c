@@ -166,6 +166,7 @@ libcaption_stauts_t eia608_write_char(caption_frame_t* frame, char* c)
 libcaption_stauts_t caption_frame_end(caption_frame_t* frame)
 {
     memcpy(&frame->front, &frame->back, sizeof(caption_frame_buffer_t));
+    caption_frame_buffer_clear(&frame->back); // This is required
     return LIBCAPTION_READY;
 }
 
@@ -251,7 +252,6 @@ libcaption_stauts_t caption_frame_decode_control(caption_frame_t* frame, uint16_
             caption_frame_write_char(frame, frame->state.row, c, eia608_style_white, 0, EIA608_CHAR_NULL);
         }
     }
-
         return LIBCAPTION_READY;
 
     // POP ON
@@ -432,34 +432,44 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
     bytes = sprintf(buf, "   row: %d\tcol: %d\n   mode: %s\troll-up: %d\n",
         frame->state.row, frame->state.col,
         eia608_mode_map[frame->state.mod], frame->state.rup ? 1 + frame->state.rup : 0);
-    total += bytes;
-    buf += bytes;
-    bytes = sprintf(buf, "   00000000001111111111222222222233\n   01234567890123456789012345678901\n  %s--------------------------------%s\n",
+    total += bytes, buf += bytes;
+    bytes = sprintf(buf, "   00000000001111111111222222222233\t   00000000001111111111222222222233\n"
+                         "   01234567890123456789012345678901\t   01234567890123456789012345678901\n"
+                         "  %s--------------------------------%s\t  %s--------------------------------%s\n",
+        EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT, EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT,
         EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_RIGHT, EIA608_CHAR_BOX_DRAWINGS_LIGHT_DOWN_AND_LEFT);
     total += bytes;
     buf += bytes;
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
         bytes = sprintf(buf, "%02d%s", r, EIA608_CHAR_VERTICAL_LINE);
-        total += bytes;
-        buf += bytes;
+        total += bytes, buf += bytes;
 
+        // front buffer
         for (c = 0; c < SCREEN_COLS; ++c) {
-            caption_frame_cell_t* cell = frame_cell(frame, r, c);
+            caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, r, c);
             bytes = utf8_char_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
-            total += bytes;
-            buf += bytes;
+            total += bytes, buf += bytes;
+        }
+
+        bytes = sprintf(buf, "%s\t%02d%s", EIA608_CHAR_VERTICAL_LINE, r, EIA608_CHAR_VERTICAL_LINE);
+        total += bytes, buf += bytes;
+
+        // back buffer
+        for (c = 0; c < SCREEN_COLS; ++c) {
+            caption_frame_cell_t* cell = frame_buffer_cell(&frame->back, r, c);
+            bytes = utf8_char_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
+            total += bytes, buf += bytes;
         }
 
         bytes = sprintf(buf, "%s\n", EIA608_CHAR_VERTICAL_LINE);
-        total += bytes;
-        buf += bytes;
+        total += bytes, buf += bytes;
     }
 
-    bytes = sprintf(buf, "  %s--------------------------------%s\n",
+    bytes = sprintf(buf, "  %s--------------------------------%s\t  %s--------------------------------%s\n",
+        EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT,
         EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_RIGHT, EIA608_CHAR_BOX_DRAWINGS_LIGHT_UP_AND_LEFT);
-    total += bytes;
-    buf += bytes;
+    total += bytes, buf += bytes;
     return total;
 }
 

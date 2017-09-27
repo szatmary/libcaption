@@ -68,6 +68,7 @@ int main(int argc, char** argv)
                         srt = srt_from_caption_frame(&frame, srt, &head);
                     }
 
+                    // caption_frame_dump(&frame);
                     sei_free(&sei);
                 }
             }
