@@ -52,10 +52,9 @@ scc_t* scc_free(scc_t* scc)
     return NULL;
 }
 
-#define FRAME_RATE_30 (1 / 30.0)
-double scc_time_to_timestamp(int hh, int mm, int ss, int ff, double fps)
+double scc_time_to_timestamp(int hh, int mm, int ss, int ff)
 {
-    return ((hh * 3600.0) + (mm * 60.0) + ss) + (ff * fps);
+    return (hh * 3600.0) + (mm * 60.0) + ss + (ff * (1 / 29.97));
 }
 
 // 00:00:25:16  9420 9440 aeae ae79 ef75 2068 6176 e520 79ef 75f2 20f2 ef62 eff4 e9e3 732c 2061 6e64 2049 94fe 9723 ea75 73f4 20f7 616e f420 f4ef 2062 e520 61f7 e573 ef6d e520 e96e 2073 7061 e3e5 ae80 942c 8080 8080 942f
@@ -104,7 +103,7 @@ size_t scc_to_608(scc_t** scc, const utf8_char_t* data)
         llen = utf8_trimmed_length(data, llen);
         int max_cc_count = 1 + (llen / 5);
         (*scc) = scc_relloc((*scc), max_cc_count * 1.5);
-        (*scc)->timestamp = scc_time_to_timestamp(hh, mm, ss, ff, FRAME_RATE_30);
+        (*scc)->timestamp = scc_time_to_timestamp(hh, mm, ss, ff);
         (*scc)->cc_size = 0;
 
         while ((*scc)->cc_size < max_cc_count && 1 == sscanf(data, "%04x", &cc_data)) {
