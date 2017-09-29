@@ -68,7 +68,7 @@ int utf8_char_whitespace(const utf8_char_t* c)
     }
 
     // EIA608_CHAR_NO_BREAK_SPACE TODO other utf8 spaces
-    if (0xC2 == (unsigned)c[0] && 0xA0 == (unsigned)c[1]) {
+    if (0xC2 == (unsigned char)c[0] && 0xA0 == (unsigned char)c[1]) {
         return 1;
     }
 

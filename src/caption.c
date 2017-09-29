@@ -72,11 +72,6 @@ static caption_frame_buffer_t* frame_write_buffer(caption_frame_t* frame)
         return 0;
     }
 }
-
-static caption_frame_cell_t* frame_cell(caption_frame_t* frame, int row, int col)
-{
-    return frame_buffer_cell(frame_write_buffer(frame), row, col);
-}
 ////////////////////////////////////////////////////////////////////////////////
 uint16_t _eia608_from_utf8(const char* s); // function is in eia608.c.re2c
 int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c)
@@ -100,7 +95,7 @@ int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_st
 
 const utf8_char_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
 {
-    caption_frame_cell_t* cell = frame_cell(frame, row, col);
+    caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, row, col);
 
     if (!cell) {
         if (style) {
@@ -401,18 +396,16 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
     int r, c, uln, crlf = 0, count = 0;
     size_t s, size = 0;
     eia608_style_t sty;
-
-    data[0] = 0;
+    (*data) = '\0';
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
         crlf += count, count = 0;
         for (c = 0; c < SCREEN_COLS; ++c) {
             const utf8_char_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
-
             // dont start a new line until we encounter at least one printable character
             if (0 < utf8_char_length(chr) && (0 < count || !utf8_char_whitespace(chr))) {
                 if (0 < crlf) {
-                    memcpy(data, "\r\n", 2);
+                    memcpy(data, "\r\n\0", 3);
                     data += 2, size += 2, crlf = 0;
                 }
 
@@ -491,7 +484,7 @@ size_t caption_frame_json(caption_frame_t* frame, utf8_char_t* buf)
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
         for (c = 0; c < SCREEN_COLS; ++c) {
-            caption_frame_cell_t* cell = frame_cell(frame, r, c);
+            caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, r, c);
 
             if (cell && 0 != cell->data[0]) {
                 const char* data = ('"' == cell->data[0]) ? "\\\"" : (const char*)&cell->data[0]; //escape quote
