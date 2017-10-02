@@ -63,7 +63,12 @@ size_t utf8_char_length(const utf8_char_t* c)
 int utf8_char_whitespace(const utf8_char_t* c)
 {
     // 0x7F is DEL
-    if ((c[0] >= 0 && c[0] <= ' ') || c[0] == 0x7F) {
+    if (!c || (c[0] >= 0 && c[0] <= ' ') || c[0] == 0x7F) {
+        return 1;
+    }
+
+    // EIA608_CHAR_NO_BREAK_SPACE TODO other utf8 spaces
+    if (0xC2 == (unsigned char)c[0] && 0xA0 == (unsigned char)c[1]) {
         return 1;
     }
 

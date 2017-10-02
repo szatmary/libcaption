@@ -21,6 +21,7 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
+#include "caption.h"
 #include "scc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,9 +31,11 @@ int main(int argc, char** argv)
     int i;
     scc_t* scc = NULL;
     size_t scc_size = 0;
+    caption_frame_t frame;
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[1], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
 
+    caption_frame_init(&frame);
     scc_data += scc_to_608(&scc, scc_data);
 
     while (scc->cc_size) {
@@ -40,6 +43,9 @@ int main(int argc, char** argv)
 
         for (i = 0; i < scc->cc_size; ++i) {
             eia608_dump(scc->cc_data[i]);
+            if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
+                caption_frame_dump(&frame);
+            }
         }
 
         scc_data += scc_to_608(&scc, scc_data);

@@ -52,14 +52,12 @@ scc_t* scc_free(scc_t* scc)
     return NULL;
 }
 
-#define FRAME_RATE_30 (1 / 30.0)
-double scc_time_to_timestamp(int hh, int mm, int ss, int ff, double fps)
+double scc_time_to_timestamp(int hh, int mm, int ss, int ff)
 {
-    return ((hh * 3600.0) + (mm * 60.0) + ss) + (ff * fps);
+    return (hh * 3600.0) + (mm * 60.0) + ss + (ff / 29.97);
 }
 
 // 00:00:25:16  9420 9440 aeae ae79 ef75 2068 6176 e520 79ef 75f2 20f2 ef62 eff4 e9e3 732c 2061 6e64 2049 94fe 9723 ea75 73f4 20f7 616e f420 f4ef 2062 e520 61f7 e573 ef6d e520 e96e 2073 7061 e3e5 ae80 942c 8080 8080 942f
-
 size_t scc_to_608(scc_t** scc, const utf8_char_t* data)
 {
     size_t llen, size = 0;
@@ -75,8 +73,7 @@ size_t scc_to_608(scc_t** scc, const utf8_char_t* data)
 
     // skip 'Scenarist_SCC V1.0' header
     if (2 == sscanf(data, "Scenarist_SCC V%1d.%1d", &v1, &v2)) {
-        data += 18;
-        size += 18;
+        data += 18, size += 18;
 
         if (1 != v1 || 0 != v2) {
             return 0;
@@ -95,23 +92,20 @@ size_t scc_to_608(scc_t** scc, const utf8_char_t* data)
         size += llen;
     }
 
-    // TODO if ';' use 29.79 fps, if ':' use 30 fls
     if (4 == sscanf(data, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) {
-        data += 12;
-        size += 12;
+        data += 12, size += 12;
         // Get length of the remaining charcters
         llen = utf8_line_length(data);
         llen = utf8_trimmed_length(data, llen);
         int max_cc_count = 1 + (llen / 5);
         (*scc) = scc_relloc((*scc), max_cc_count * 1.5);
-        (*scc)->timestamp = scc_time_to_timestamp(hh, mm, ss, ff, FRAME_RATE_30);
+        (*scc)->timestamp = scc_time_to_timestamp(hh, mm, ss, ff);
         (*scc)->cc_size = 0;
 
         while ((*scc)->cc_size < max_cc_count && 1 == sscanf(data, "%04x", &cc_data)) {
             (*scc)->cc_data[(*scc)->cc_size] = (uint16_t)cc_data;
             (*scc)->cc_size += 1;
-            data += 5;
-            size += 5;
+            data += 5, size += 5;
         }
     }
 
