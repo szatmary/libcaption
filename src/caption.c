@@ -469,33 +469,3 @@ void caption_frame_dump(caption_frame_t* frame)
     caption_frame_dump_buffer(frame, buff);
     fprintf(stderr, "%s\n", buff);
 }
-
-size_t caption_frame_json(caption_frame_t* frame, utf8_char_t* buf)
-{
-    size_t bytes, total = 0;
-    int r, c, count = 0;
-    bytes = sprintf(buf, "{\"format\":\"eia608\",\"mode\":\"%s\",\"rollUp\":%d,\"data\":[",
-        eia608_mode_map[frame->state.mod], frame->state.rup ? 1 + frame->state.rup : 0);
-    total += bytes;
-    buf += bytes;
-
-    for (r = 0; r < SCREEN_ROWS; ++r) {
-        for (c = 0; c < SCREEN_COLS; ++c) {
-            caption_frame_cell_t* cell = frame_cell(frame, r, c);
-
-            if (cell && 0 != cell->data[0]) {
-                const char* data = ('"' == cell->data[0]) ? "\\\"" : (const char*)&cell->data[0]; //escape quote
-                bytes = sprintf(buf, "%s\n{\"row\":%d,\"col\":%d,\"char\":\"%s\",\"style\":\"%s\"}",
-                    (0 < count ? "," : ""), r, c, data, eia608_style_map[cell->sty]);
-                total += bytes;
-                buf += bytes;
-                ++count;
-            }
-        }
-    }
-
-    bytes = sprintf(buf, "\n]}\n");
-    total += bytes;
-    buf += bytes;
-    return total;
-}

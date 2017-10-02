@@ -134,11 +134,6 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data);
 #define CAPTION_FRAME_DUMP_BUF_SIZE 4096
 size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf);
 void caption_frame_dump(caption_frame_t* frame);
-/*! \brief
-    \param
-*/
-#define CAPTION_FRAME_JSON_BUF_SIZE 32768
-size_t caption_frame_json(caption_frame_t* frame, utf8_char_t* buf);
 
 #ifdef __cplusplus
 }
