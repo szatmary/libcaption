@@ -43,9 +43,9 @@ on playback. But caption parsing with out of order frames behaviour is currently
 ## Build Directions
 # Mac Os/Linux
 Install build dependencies (git, cmake, a compiler such as xcode, gcc or clang and optionally re2c and ffmpeg)
-run `cmake . && make`
-or to compile without re2c `cmake -DENABLE_RE2C=OFF . && make`
-finally `sudo make install` to install
+* run `cmake . && make`
+* or to compile without re2c `cmake -DENABLE_RE2C=OFF . && make`
+* finally `sudo make install` to install
 # Windows
 I have never tested libcaption in windows. It is written in pure C with no dependencies,
 so there is no reason it would not work.
