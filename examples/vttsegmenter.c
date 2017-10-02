@@ -74,8 +74,8 @@ int main(int argc, char** argv)
     utf8_char_t* data = (utf8_char_t*)malloc(MAX_VTT_SIZE);
     size_t size = read_file(file, data, MAX_VTT_SIZE);
     printf("First chars: %.*s\n", 6, data);
-    vtt_t* head = vtt_parse(data, size);
-    if (head == NULL) {
+    vtt = vtt_parse(data, size);
+    if (vtt == NULL) {
         printf("Failed to parse vtt\n");
         return 0;
     }
@@ -84,13 +84,13 @@ int main(int argc, char** argv)
         printf("Segment: %d\n", i);
     }
 
-    for (vtt = head; vtt; vtt = vtt->next) {
-        printf("timestamp: %lf\n", vtt->timestamp);
+    for (vtt_cue_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
+        printf("timestamp: %lf\n", cue->timestamp);
         caption_frame_init(&frame);
-        vtt_to_caption_frame(vtt, &frame);
+        vtt_cue_to_caption_frame(cue, &frame);
         caption_frame_dump(&frame);
     }
     printf("Done\n");
 
-    vtt_free(head);
+    vtt_free(vtt);
 }

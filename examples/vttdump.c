@@ -46,7 +46,6 @@ size_t read_file(FILE* file, utf8_char_t* data, size_t size)
 
 int main(int argc, char** argv)
 {
-    vtt_t* vtt;
     caption_frame_t frame;
 
     if (argc < 2) {
@@ -61,13 +60,13 @@ int main(int argc, char** argv)
 
     utf8_char_t* data = (utf8_char_t*)malloc(MAX_VTT_SIZE);
     size_t size = read_file(file, data, MAX_VTT_SIZE);
-    vtt_t* head = vtt_parse(data, size);
+    vtt_t* vtt = vtt_parse(data, size);
 
-    for (vtt = head; vtt; vtt = vtt->next) {
+    for (vtt_cue_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
         caption_frame_init(&frame);
-        vtt_to_caption_frame(vtt, &frame);
+        vtt_cue_to_caption_frame(cue, &frame);
         caption_frame_dump(&frame);
     }
 
-    vtt_free(head);
+    vtt_free(vtt);
 }
