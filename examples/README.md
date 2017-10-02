@@ -11,11 +11,11 @@ reading/writing flv file will pass through any non AVC tags unmodified
 
 # Tools
 All tools accept flv as either a file path, or via stdio. use `-` to specify stdin/stdout
-- flv2srt - reads a 608/708 captioned flv file and writes an srt file.
-- flv+srt - encodes an srt file to 608/708 into pop-on captions and combines it with an existing flv, resulting in a new file
-- flv+scc - same as flv+srt, but accepts an scc as input. However pin on/rool up is available as it is already encoded in the scc.
-- scc2srt - converts an scc file to a srt file
-- ts2srt - same as flv2srt, but reads from a mpeg2 transport stream
+- `flv2srt` - reads a 608/708 captioned flv file and writes an srt file.
+- `flv+srt` - encodes an srt file to 608/708 into pop-on captions and combines it with an existing flv, resulting in a new file
+- `flv+scc` - same as flv+srt, but accepts an scc as input. However pin on/rool up is available as it is already encoded in the scc.
+- `scc2srt` - converts an scc file to a srt file
+- `ts2srt` - same as flv2srt, but reads from a mpeg2 transport stream
 
 - add_captions - A shell script that utilizes ffmpeg to remux files to/from flv to simplify captioning
 non flv file. This tool is not installed by `make install`, and serves primarily as an example.
@@ -23,11 +23,16 @@ Copy it and modify it to fit your needs.
 
 # Usage
 - Adding captions to an flv file:
-flv+srt in.file in.srt out.flv
+
+`flv+srt in.file in.srt out.flv`
+
 - Alternatively,
-flv+srt in.file in.srt - >out.flv
+
+`flv+srt in.file in.srt - >out.flv`
+
 - To caption a non-flv file
-ffmpeg -i in.mp4 -codec copy -f flv - | flv+srt - in.srt - | ffmpeg -i - -codec copy out.mp4
+
+`ffmpeg -i in.mp4 -codec copy -f flv - | flv+srt - in.srt - | ffmpeg -i - -codec copy out.mp4`
 
 # Advanced Usage
 flv+srt is capable of reading an srt from a named pipe for the use in live captioning.
