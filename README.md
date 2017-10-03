@@ -26,7 +26,7 @@ H.264 utility functions are limited to wrapping the 708 payload into a SEI NALU.
 |SNA|®|°|½|¿|™|¢|£|♪|à|&nbsp;|è|â|ê|î|ô|û|
 |WES|Á|É|Ó|Ú|Ü|ü|‘|¡|*|'|—|©|℠|•|“|”|
 |WEF|À|Â|Ç|È|Ê|Ë|ë|Î|Ï|ï|Ô|Ù|ù|Û|«|»|
-|WEP|Ã|ã|Í|Ì|ì|Ò|ò|Õ|õ|{|}|\|^|_|&#124;|~|
+|WEP|Ã|ã|Í|Ì|ì|Ò|ò|Õ|õ|{|}|&#92;|^|_|&#124;|~|
 |WEG|Ä|ä|Ö|ö|ß|¥|¤|¦|Å|å|Ø|ø|┌|┐|└|┘|
 
 * BNA = Basic North American character set
