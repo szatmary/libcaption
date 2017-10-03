@@ -194,21 +194,17 @@ void parse_timestamps(const utf8_char_t* line, double *start_pts, double *end_pt
     *start_pts = -1;
     *cue_settings = NULL;
 
-    fprintf(stderr, "Matches: %d\n", matches);
     if (matches >= 1) {
         *start_pts = parse_timestamp(start_str);
-        fprintf(stderr, "Start pts: %lf\n", *start_pts);
     }
     if (matches >= 2) {
         *end_pts = parse_timestamp(end_str);
-        fprintf(stderr, "End pts: %lf\n", *end_pts);
     }
     if ((matches == 3) && (strlen(cue_str) > 0)) {
         int cue_size = strlen(cue_str);
-        fprintf(stderr, "Cues: %d %s\n", cue_size, *cue_settings);
         *cue_settings = malloc(cue_size + 1);
         strncpy(*cue_settings, cue_str, cue_size);
-        *cue_settings[cue_size] = '\0';
+        (*cue_settings)[cue_size] = '\0';
     }
 }
 

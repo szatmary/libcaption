@@ -224,6 +224,6 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size)
         }
     }
 
-    data[*size] = 0;
+    data[*size] = '\0';
     return data;
 }
