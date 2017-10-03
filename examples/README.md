@@ -24,11 +24,11 @@ Copy it and modify it to fit your needs.
 # Usage
 - Adding captions to an flv file:
 
-`flv+srt in.file in.srt out.flv`
+`flv+srt in.flv in.srt out.flv`
 
 - Alternatively,
 
-`flv+srt in.file in.srt - >out.flv`
+`flv+srt in.flv in.srt - >out.flv`
 
 - To caption a non-flv file
 
