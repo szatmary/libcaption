@@ -38,117 +38,58 @@ vtt_t *vtt_new() {
 void vtt_free(vtt_t* vtt)
 {
     while (vtt->region_head != NULL) {
-        vtt->region_head = vtt_region_free_head(vtt->region_head);
+        vtt->region_head = vtt_block_free_head(vtt->region_head);
     }
     while (vtt->style_head != NULL) {
-        vtt->style_head = vtt_style_free_head(vtt->style_head);
+        vtt->style_head = vtt_block_free_head(vtt->style_head);
     }
     while (vtt->cue_head != NULL) {
-        vtt->cue_head = vtt_cue_free_head(vtt->cue_head);
+        vtt->cue_head = vtt_block_free_head(vtt->cue_head);
     }
     free(vtt);
 }
 
-vtt_region_t *vtt_region_new(vtt_t* vtt, const utf8_char_t* data, size_t size)
+vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enum VTT_BLOCK_TYPE type)
 {
-    vtt_region_t* region = malloc(sizeof(vtt_region_t) + size + 1);
-    region->next = NULL;
-    region->id_size = 0;
-    region->region_id = NULL;
-    region->block_size = size;
-    
-    if (vtt->region_head == NULL) {
-        vtt->region_head = region;        
-    } else {
-        vtt->region_tail->next = region;
+    vtt_block_t* block = malloc(sizeof(vtt_block_t) + size + 1);
+    block->next = NULL;
+    block->type = type;
+    block->timestamp = 0.0;
+    block->duration = 0.0;
+    block->cue_settings = NULL;
+    block->cue_id = NULL;
+    block->text_size = size;
+
+    switch (type) {
+        case VTT_REGION:
+            if (vtt->region_head == NULL) {
+                vtt->region_head = block;
+            } else {
+                vtt->region_tail->next = block;
+            }
+            vtt->region_tail = block;
+            break;
+        case VTT_STYLE:
+            if (vtt->style_head == NULL) {
+                vtt->style_head = block;
+            } else {
+                vtt->style_tail->next = block;
+            }
+            vtt->style_tail = block;
+            break;
+        case VTT_CUE:
+            if (vtt->cue_head == NULL) {
+                vtt->cue_head = block;
+            } else {
+                vtt->cue_tail->next = block;
+            }
+            vtt->cue_tail = block;
+            break;
+        case VTT_NOTE:
+            break;
     }
-    vtt->region_tail = region;
 
-    utf8_char_t* dest = (utf8_char_t*)vtt_region_data(region);
-    if (data) {
-        memcpy(dest, data, size);
-    } else {
-        memset(dest, 0, size);
-    }
-    dest[size] = '\0';
-
-    return region;
-}
-
-void vtt_region_set_id(vtt_region_t* region, const utf8_char_t* data, size_t size)
-{
-    if (region->region_id != NULL) {
-        free(region->region_id);
-    }
-
-    region->id_size = size;
-    region->region_id = malloc(size + 1);
-    if (data) {
-        memcpy(region->region_id, data, size);
-    } else {
-        memset(region->region_id, 0, size);
-    }
-    region->region_id[size] = '\0';
-}
-
-vtt_region_t* vtt_region_free_head(vtt_region_t* region)
-{
-    vtt_region_t* next = region->next;
-    if (region->region_id != NULL) {
-        free(region->region_id);
-    }
-    free(region);
-    return next;
-}
-
-vtt_style_t *vtt_style_new(vtt_t* vtt, const utf8_char_t* data, size_t size)
-{
-    vtt_style_t* style = malloc(sizeof(vtt_style_t) + size + 1);
-    style->next = NULL;
-    if (vtt->style_head == NULL) {
-        vtt->style_head = style;
-    } else {
-        vtt->style_tail->next = style;
-    }
-    vtt->style_tail = style;
-
-    utf8_char_t* dest = (utf8_char_t*)vtt_style_data(style);
-    if (data) {
-        memcpy(dest, data, size);
-    } else {
-        memset(dest, 0, size);
-    }
-    dest[size] = '\0';
-
-    return style;
-}
-
-vtt_style_t* vtt_style_free_head(vtt_style_t* style)
-{
-    vtt_style_t* next = style->next;
-    free(style);
-    return next;
-}
-
-vtt_cue_t* vtt_cue_new(vtt_t* vtt, const utf8_char_t* data, size_t size)
-{
-    vtt_cue_t* cue = malloc(sizeof(vtt_cue_t) + size + 1);
-    cue->next = NULL;
-    cue->timestamp = 0.0;
-    cue->duration = 0.0;
-    cue->cue_settings = NULL;
-    cue->cue_id = NULL;
-    cue->region = NULL;
-    cue->text_size = size;
-
-    if (vtt->cue_head == NULL) {
-        vtt->cue_head = cue;
-    } else {
-        vtt->cue_tail->next = cue;
-    }
-    vtt->cue_tail = cue;
-
-    utf8_char_t* dest = (utf8_char_t*)vtt_cue_data(cue);    
+    utf8_char_t* dest = (utf8_char_t*)vtt_block_data(block);    
     if (data) {
         memcpy(dest, data, size);
     } else {
@@ -156,12 +97,12 @@ vtt_cue_t* vtt_cue_new(vtt_t* vtt, const utf8_char_t* data, size_t size)
     }
 
     dest[size] = '\0';
-    return cue;
+    return block;
 }
 
-vtt_cue_t* vtt_cue_free_head(vtt_cue_t* head)
+vtt_block_t* vtt_block_free_head(vtt_block_t* head)
 {
-    vtt_cue_t* next = head->next;
+    vtt_block_t* next = head->next;
     if (head->cue_id != NULL) {
         free(head->cue_id);
     }
@@ -172,14 +113,13 @@ vtt_cue_t* vtt_cue_free_head(vtt_cue_t* head)
     return next;
 }
 
-
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
 double parse_timestamp(const utf8_char_t *line) {
     int hh, mm, ss, ms;
-    if (sscanf(line, "%d:%2d:%2d.%3d", &hh, &mm, &ss, &ms) == 4) {
+    if (sscanf(line, "%d:%2d:%2d%*1[,.]%3d", &hh, &mm, &ss, &ms) == 4) {
         return VTTTIME2SECONDS(hh, mm, ss, ms);
     }
-    if (sscanf(line, "%2d:%2d.%3d", &mm, &ss, &ms) == 3) {
+    if (sscanf(line, "%2d:%2d%*1[,.]%3d", &mm, &ss, &ms) == 3) {
         return VTTTIME2SECONDS(0.0, mm, ss, ms);
     }
     return -1.0;
@@ -194,8 +134,11 @@ void parse_timestamps(const utf8_char_t* line, double *start_pts, double *end_pt
     *start_pts = -1;
     *cue_settings = NULL;
 
+    printf("Matches: %d\n", matches);
+
     if (matches >= 1) {
         *start_pts = parse_timestamp(start_str);
+        printf("Start pts: %f\n", *start_pts);
     }
     if (matches >= 2) {
         *end_pts = parse_timestamp(end_str);
@@ -261,7 +204,7 @@ vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
             parse_timestamps(data, &str_pts, &end_pts, &cue_settings);
             if (str_pts == -1) {
                 // Failed to parse timestamps
-                fprintf(stderr, "Bad timestamp\n");
+                fprintf(stderr, "Bad timestamp: %.*s\n", line_length, data);
                 return NULL;
             }
         } else {
@@ -298,30 +241,18 @@ vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
         } while (trimmed_length);
 
         // should we trim here?
-        // TODO: Add a notion of VTT type here (region, note, etc.)
-        switch (block_type) {
-            case VTT_REGION:
-                vtt_region_new(vtt, text, text_size);
-                // TODO: Set the region ID
-                break;
-            case VTT_STYLE:
-                vtt_style_new(vtt, text, text_size);
-                break;
-            case VTT_CUE:
-            {
-                vtt_cue_t* cue = vtt_cue_new(vtt, text, text_size);
-                cue->timestamp = str_pts;
-                cue->duration = end_pts - str_pts;
-                cue->cue_settings = cue_settings;
-                if (cue_id != NULL) {
-                    cue->cue_id = malloc(cue_id_length + 1);
-                    memcpy(cue->cue_id, cue_id, cue_id_length);
-                    cue->cue_id[cue_id_length] = '\0';
-                }
+
+        vtt_block_t* block = vtt_block_new(vtt, text, text_size, block_type);
+
+        if (block_type == VTT_CUE) {
+            block->timestamp = str_pts;
+            block->duration = end_pts - str_pts;
+            block->cue_settings = cue_settings;
+            if (cue_id != NULL) {
+                block->cue_id = malloc(cue_id_length + 1);
+                memcpy(block->cue_id, cue_id, cue_id_length);
+                block->cue_id[cue_id_length] = '\0';
             }
-                break;
-            case VTT_NOTE:
-                break;
         }
 
         cue_id = NULL;
@@ -330,60 +261,60 @@ vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
     return vtt;
 }
 
-int vtt_cue_to_caption_frame(vtt_cue_t* cue, caption_frame_t* frame)
+int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame)
 {
-    const char* data = vtt_cue_data(cue);
+    const char* data = vtt_block_data(cue);
     return caption_frame_from_text(frame, data);
 }
 
-vtt_cue_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt)
+vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt)
 {
     // CRLF per row, plus an extra at the end
-    vtt_cue_t* cue = vtt_cue_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES);
-    utf8_char_t* data = vtt_cue_data(cue);
+    vtt_block_t* cue = vtt_block_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
+    utf8_char_t* data = vtt_block_data(cue);
 
     caption_frame_to_text(frame, data);
     // vtt requires an extra new line
     strcat((char*)data, "\r\n");
-
+    // TODO: Set timestamps
     return cue;
-}
-
-static inline void _crack_time(double tt, int* hh, int* mm, int* ss, int* ms)
-{
-    (*ms) = (int)((int64_t)(tt * 1000) % 1000);
-    (*ss) = (int)((int64_t)(tt) % 60);
-    (*mm) = (int)((int64_t)(tt / (60)) % 60);
-    (*hh) = (int)((int64_t)(tt / (60 * 60)));
 }
 
 static void _dump(vtt_t* vtt)
 {
-    vtt_region_t* region;
-    vtt_style_t* style;
-    vtt_cue_t* cue;
+    vtt_block_t* block;
     printf("WEBVTT\r\n");
 
-    region = vtt->region_head;
-    while (region != NULL) {
-        printf("REGION\r\n%s\r\n", vtt_region_data(region));
-        region = region->next;
+    block = vtt->region_head;
+    while (block != NULL) {
+        printf("REGION\r\n%s\r\n", vtt_block_data(block));
+        block = block->next;
     }
 
-    style = vtt->style_head;
-    while (style != NULL) {
-        printf("STYLE\r\n%s\r\n", vtt_style_data(style));
-        style = style->next;
+    block = vtt->style_head;
+    while (block != NULL) {
+        printf("STYLE\r\n%s\r\n", vtt_block_data(block));
+        block = block->next;
     }
 
-    cue = vtt->cue_head;
-    while (cue != NULL) {
+    block = vtt->cue_head;
+    while (block != NULL) {
         int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
-        _crack_time(cue->timestamp, &hh1, &mm1, &ss1, &ms1);
-        _crack_time(cue->timestamp + cue->duration, &hh2, &mm2, &ss2, &ms2);
+        vtt_crack_time(block->timestamp, &hh1, &mm1, &ss1, &ms1);
+        vtt_crack_time(block->timestamp + block->duration, &hh2, &mm2, &ss2, &ms2);
 
-        printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d\r\n%s\r\n",
-            hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2, vtt_cue_data(cue));
+        if (block->cue_id != NULL) {
+            printf("%s\n", block->cue_id);
+        }
+
+        printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
+            hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
+        
+        if (block->cue_settings != NULL) {
+            printf(" %s", block->cue_settings);
+        }
+        
+        printf("\r\n%s\r\n", vtt_block_data(block));
     }
 }
 

@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     utf8_char_t* data = utf8_load_text_file(argv[1], &size);
     vtt_t* vtt = vtt_parse(data, size);
 
-    for (vtt_cue_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
+    for (vtt_block_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
         caption_frame_init(&frame);
         vtt_cue_to_caption_frame(cue, &frame);
         caption_frame_dump(&frame);
