@@ -33,12 +33,15 @@ int main(int argc, char** argv)
     ts_t ts;
     sei_t sei;
     avcnalu_t nalu;
-    srt_t *srt = 0, *head = 0;
+    srt_t *srt;
+    vtt_block_t *block;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
     ts_init(&ts);
     avcnalu_init(&nalu);
     caption_frame_init(&frame);
+
+    srt = srt_new();
 
     FILE* file = fopen(path, "rb+");
 
@@ -74,9 +77,7 @@ int main(int argc, char** argv)
 
                         if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
                             // caption_frame_dump(&frame);
-                            srt = srt_from_caption_frame(&frame, srt, &head);
-
-                            // srt_dump (srt);
+                            vtt_cue_from_caption_frame(&frame, srt);
                         }
 
                         sei_free(&sei);
@@ -94,8 +95,8 @@ int main(int argc, char** argv)
         }
     }
 
-    srt_dump(head);
-    srt_free(head);
+    srt_dump(srt);
+    srt_free(srt);
 
     return 1;
 }

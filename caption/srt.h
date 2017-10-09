@@ -29,19 +29,15 @@ extern "C" {
 
 #include "caption.h"
 #include "eia608.h"
+#include "vtt.h"
 
 // timestamp and duration are in seconds
-typedef struct _srt_t {
-    struct _srt_t* next;
-    double timestamp;
-    double duration;
-    size_t aloc;
-} srt_t;
+typedef vtt_t srt_t;
 
 /*! \brief
     \param
 */
-srt_t* srt_new(const utf8_char_t* data, size_t size, double timestamp, srt_t* prev, srt_t** head);
+srt_t* srt_new();
 /*! \brief
     \param
 */
@@ -59,25 +55,8 @@ void srt_free(srt_t* srt);
 /*! \brief
     \param
 */
-static inline srt_t* srt_next(srt_t* srt) { return srt->next; }
-/*! \brief
-    \param
-*/
-static inline utf8_char_t* srt_data(srt_t* srt) { return (utf8_char_t*)(srt) + sizeof(srt_t); }
-// This only converts teh surrent SRT, It does not walk the list
-/*! \brief
-    \param
-*/
-int srt_to_caption_frame(srt_t* srt, caption_frame_t* frame);
+static inline vtt_block_t* srt_next(vtt_block_t* srt) { return srt->next; }
 
-// returns teh new srt. Head is not tracher internally.
-/*! \brief
-    \param
-*/
-srt_t* srt_from_caption_frame(caption_frame_t* frame, srt_t* prev, srt_t** head);
-/*! \brief
-    \param
-*/
 void srt_dump(srt_t* srt);
 /*! \brief
     \param

@@ -30,9 +30,8 @@
 #include <string.h>
 
 #define SECONDS_PER_LINE 3.0
-srt_t* appennd_caption(const utf8_char_t* data, srt_t* prev, srt_t** head)
+void append_caption(const utf8_char_t* data, srt_t* srt)
 {
-
     int r;
     ssize_t size = (ssize_t)strlen(data);
     size_t char_count, line_length = 0, trimmed_length = 0;
@@ -49,27 +48,30 @@ srt_t* appennd_caption(const utf8_char_t* data, srt_t* prev, srt_t** head)
         }
 
         // fprintf (stderr,"%.*s\n", line_length, data);
-        prev = srt_new(data, line_length, prev ? prev->timestamp + SECONDS_PER_LINE : 0, prev, head);
+        double timestamp = srt->cue_tail ? srt->cue_tail->timestamp + SECONDS_PER_LINE : 0;
+        vtt_block_t *cue = vtt_block_new(srt, data, line_length, VTT_CUE);
+        cue->timestamp = timestamp;
+        cue->duration = SECONDS_PER_LINE;
 
         data += line_length;
         size -= (ssize_t)line_length;
     }
-
-    return prev;
 }
 
 int main(int argc, char** argv)
 {
     int i = 0;
     flvtag_t tag;
-    srt_t *head = 0, *tail = 0;
+    srt_t *srt = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read(argv[1]);
     FILE* out = flv_open_write(argv[2]);
     flvtag_init(&tag);
 
+    srt = srt_new();
+
     for (i = 0; wonderland[i][0]; ++i) {
-        tail = appennd_caption(wonderland[i], tail, &head);
+        append_caption(wonderland[i], srt);
     }
 
     if (!flv_read_header(flv, &has_audio, &has_video)) {
@@ -80,10 +82,10 @@ int main(int argc, char** argv)
     flv_write_header(out, has_audio, has_video);
 
     while (flv_read_tag(flv, &tag)) {
-        if (head && flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag) && head->timestamp <= flvtag_pts_seconds(&tag)) {
-            fprintf(stderr, "%f %s\n", flvtag_pts_seconds(&tag), srt_data(head));
-            flvtag_addcaption_text(&tag, srt_data(head));
-            head = srt_free_head(head);
+        if (srt->cue_head && flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag) && srt->cue_head->timestamp <= flvtag_pts_seconds(&tag)) {
+            fprintf(stderr, "%f %s\n", flvtag_pts_seconds(&tag), vtt_block_data(srt->cue_head));
+            flvtag_addcaption_text(&tag, vtt_block_data(srt->cue_head));
+            vtt_cue_free_head(srt);
         }
 
         flv_write_tag(out, &tag);

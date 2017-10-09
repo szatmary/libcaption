@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+vtt_block_t* vtt_block_free_head(vtt_block_t* head);
+
 vtt_t *vtt_new() {
     vtt_t *vtt = malloc(sizeof(vtt_t));
     vtt->region_head = NULL;
@@ -113,6 +115,27 @@ vtt_block_t* vtt_block_free_head(vtt_block_t* head)
     return next;
 }
 
+void vtt_cue_free_head(vtt_t* vtt) {
+    vtt->cue_head = vtt_block_free_head(vtt->cue_head);
+    if (vtt->cue_head == NULL) {
+        vtt->cue_tail = NULL;
+    }
+}
+
+void vtt_style_free_head(vtt_t* vtt) {
+    vtt->style_head = vtt_block_free_head(vtt->style_head);
+    if (vtt->style_head == NULL) {
+        vtt->style_tail = NULL;
+    }
+}
+
+void vtt_region_free_head(vtt_t* vtt) {
+    vtt->region_head = vtt_block_free_head(vtt->region_head);
+    if (vtt->region_head == NULL) {
+        vtt->region_tail = NULL;
+    }
+}
+
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
 double parse_timestamp(const utf8_char_t *line) {
     int hh, mm, ss, ms;
@@ -151,7 +174,12 @@ void parse_timestamps(const utf8_char_t* line, double *start_pts, double *end_pt
     }
 }
 
-vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
+vtt_t *vtt_parse(const utf8_char_t* data, size_t size)
+{
+    return _vtt_parse(data, size, 0);
+}
+
+vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
 {
     vtt_t *vtt = NULL;
     double str_pts = 0, end_pts = 0;
@@ -166,7 +194,7 @@ vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
     }
 
     // TODO: Support UTF-8 BOM?
-    if (strncmp(data, "WEBVTT", 6) != 0) {
+    if (!srt_mode && strncmp(data, "WEBVTT", 6) != 0) {
         // WebVTT files must start with WEBVTT
         fprintf(stderr, "Invalid webvtt header: %.*s\n", 6, data);
         return NULL;
@@ -204,7 +232,7 @@ vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
             parse_timestamps(data, &str_pts, &end_pts, &cue_settings);
             if (str_pts == -1) {
                 // Failed to parse timestamps
-                fprintf(stderr, "Bad timestamp: %.*s\n", line_length, data);
+                fprintf(stderr, "Bad timestamp: %.*s\n", (int)line_length, data);
                 return NULL;
             }
         } else {
@@ -283,7 +311,7 @@ vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt)
 static void _dump(vtt_t* vtt)
 {
     vtt_block_t* block;
-    printf("WEBVTT\r\n");
+    printf("WEBVTT\r\n\r\n");
 
     block = vtt->region_head;
     while (block != NULL) {

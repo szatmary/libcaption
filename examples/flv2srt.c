@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 
     sei_t sei;
     flvtag_t tag;
-    srt_t *srt = 0, *head = 0;
+    srt_t *srt = 0;
     int has_audio, has_video;
     caption_frame_t frame;
 
@@ -40,6 +40,7 @@ int main(int argc, char** argv)
     caption_frame_init(&frame);
 
     FILE* flv = flv_open_read(path);
+    srt = srt_new();
 
     if (!flv_read_header(flv, &has_audio, &has_video)) {
         fprintf(stderr, "'%s' Not an flv file\n", path);
@@ -65,7 +66,7 @@ int main(int argc, char** argv)
                     // sei_dump(&sei);
 
                     if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                        srt = srt_from_caption_frame(&frame, srt, &head);
+                        vtt_cue_from_caption_frame(&frame, srt);
                     }
 
                     // caption_frame_dump(&frame);
@@ -75,8 +76,8 @@ int main(int argc, char** argv)
         }
     }
 
-    srt_dump(head);
-    srt_free(head);
+    srt_dump(srt);
+    srt_free(srt);
 
     return 1;
 }

@@ -75,16 +75,32 @@ void vtt_free(vtt_t* vtt);
     \param
 */
 vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enum VTT_BLOCK_TYPE type);
+
 /*! \brief
     \param
 */
-vtt_block_t* vtt_block_free_head(vtt_block_t* head);
+void vtt_cue_free_head(vtt_t* vtt);
+
+/*! \brief
+    \param
+*/
+void vtt_style_free_head(vtt_t* vtt);
+
+/*! \brief
+    \param
+*/
+void vtt_region_free_head(vtt_t* vtt);
 
 // returns a vtt_t, containing linked lists of blocks. must be freed when done
 /*! \brief
     \param
 */
 vtt_t* vtt_parse(const utf8_char_t* data, size_t size);
+
+/*! \brief
+    \param
+*/
+vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode);
 
 /*! \brief
     \param
