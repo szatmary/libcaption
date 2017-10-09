@@ -14,7 +14,7 @@ endif()
 # Don't need to prefix local includes with "caption/*"
 include_directories(${PROJECT_SOURCE_DIR}/caption)
 
-option(ENABLE_RE2C "Use RE2C to generate eia608.c" ON)
+option(ENABLE_RE2C "Use RE2C to generate eia608.c" OFF)
 set(eia608_from_utf8_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c)
 set(eia608_from_utf8_c_cached ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
 if(ENABLE_RE2C)
@@ -31,7 +31,7 @@ if(ENABLE_RE2C)
 
     add_custom_target(re2c
       COMMAND ${CMAKE_COMMAND} -E remove ${eia608_from_utf8_c}
-      COMMAND ${RE2C} -bis --no-generation-date --no-version -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c}
+      COMMAND ${RE2C} -bis -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c}
       COMMAND ${CMAKE_COMMAND} -E copy ${eia608_from_utf8_c} ${eia608_from_utf8_c_cached}
       DEPENDS ${eia608_from_utf8_re2c}
       COMMENT "Generating ${eia608_from_utf8_re2c}")
