@@ -37,27 +37,15 @@ const utf8_char_t* utf8_char_next(const utf8_char_t* c)
 size_t utf8_char_length(const utf8_char_t* c)
 {
     // count null term as zero size
-    if (0x00 == c[0]) {
+    if (!c || 0x00 == c[0]) {
         return 0;
     }
 
-    if (0x00 == (c[0] & 0x80)) {
-        return 1;
-    }
+    static const size_t _utf8_char_length[] = {
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+    };
 
-    if (0xC0 == (c[0] & 0xE0)) {
-        return 2;
-    }
-
-    if (0xE0 == (c[0] & 0xF0)) {
-        return 3;
-    }
-
-    if (0xF0 == (c[0] & 0xF8)) {
-        return 4;
-    }
-
-    return 0;
+    return _utf8_char_length[(c[0] >> 3)&0x1F];
 }
 
 int utf8_char_whitespace(const utf8_char_t* c)
