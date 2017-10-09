@@ -66,7 +66,7 @@ int main(int argc, char** argv)
                     // sei_dump(&sei);
 
                     if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                        vtt_cue_from_caption_frame(&frame, srt);
+                        srt_cue_from_caption_frame(&frame, srt);
                     }
 
                     // caption_frame_dump(&frame);

@@ -79,7 +79,7 @@ srt_t* srt_from_fd(int fd)
         int ret = fd_read(fd, &c, 1, &eof);
 
         if (eof || (1 == ret && 0 == c)) {
-            srt_t* srt = vtt_parse(&g_srt_data[0], g_srt_size);
+            srt_t* srt = srt_parse(&g_srt_data[0], g_srt_size);
             g_srt_size = 0;
             return srt;
         }
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 {
     flvtag_t tag;
     srt_t *old_srt = NULL;
-    vtt_block_t *next_cue = NULL;
+    srt_cue_t *next_cue = NULL;
     double timestamp, offset = 0, clear_timestamp = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read(argv[1]);
@@ -140,9 +140,9 @@ int main(int argc, char** argv)
 
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
             if (next_cue && (offset + next_cue->timestamp) <= timestamp) {
-                fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + next_cue->timestamp), next_cue->duration, vtt_block_data(next_cue));
+                fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + next_cue->timestamp), next_cue->duration, srt_cue_data(next_cue));
                 clear_timestamp = (offset + next_cue->timestamp) + next_cue->duration;
-                flvtag_addcaption_text(&tag, vtt_block_data(next_cue));
+                flvtag_addcaption_text(&tag, srt_cue_data(next_cue));
                 next_cue = next_cue->next;
             } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
                 fprintf(stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);

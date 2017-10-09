@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 {
     srt_t* srt;
     caption_frame_t frame;
-    vtt_block_t* block;
+    srt_cue_t* cue;
 
     if (argc < 2) {
         return 0;
@@ -64,9 +64,9 @@ int main(int argc, char** argv)
     utf8_char_t* data = utf8_load_text_file(argv[1], &size);
     srt = srt_parse(data, size);
     
-    for (block = srt->cue_head; block; block = block->next) {
+    for (cue = srt->cue_head; cue; cue = cue->next) {
         caption_frame_init(&frame);
-        vtt_cue_to_caption_frame(block, &frame);
+        srt_cue_to_caption_frame(cue, &frame);
         caption_frame_dump(&frame);
     }
 

@@ -47,7 +47,7 @@ int main(int argc, char** argv)
             // eia608_dump (scc->cc_data[i]);
 
             if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
-                vtt_cue_from_caption_frame(&frame, srt);
+                srt_cue_from_caption_frame(&frame, srt);
             }
         }
 

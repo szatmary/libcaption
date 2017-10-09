@@ -49,7 +49,7 @@ void append_caption(const utf8_char_t* data, srt_t* srt)
 
         // fprintf (stderr,"%.*s\n", line_length, data);
         double timestamp = srt->cue_tail ? srt->cue_tail->timestamp + SECONDS_PER_LINE : 0;
-        vtt_block_t *cue = vtt_block_new(srt, data, line_length, VTT_CUE);
+        srt_cue_t *cue = srt_cue_new(srt, data, line_length);
         cue->timestamp = timestamp;
         cue->duration = SECONDS_PER_LINE;
 
@@ -83,9 +83,9 @@ int main(int argc, char** argv)
 
     while (flv_read_tag(flv, &tag)) {
         if (srt->cue_head && flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag) && srt->cue_head->timestamp <= flvtag_pts_seconds(&tag)) {
-            fprintf(stderr, "%f %s\n", flvtag_pts_seconds(&tag), vtt_block_data(srt->cue_head));
-            flvtag_addcaption_text(&tag, vtt_block_data(srt->cue_head));
-            vtt_cue_free_head(srt);
+            fprintf(stderr, "%f %s\n", flvtag_pts_seconds(&tag), srt_cue_data(srt->cue_head));
+            flvtag_addcaption_text(&tag, srt_cue_data(srt->cue_head));
+            srt_cue_free_head(srt);
         }
 
         flv_write_tag(out, &tag);

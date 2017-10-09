@@ -34,7 +34,6 @@ int main(int argc, char** argv)
     sei_t sei;
     avcnalu_t nalu;
     srt_t *srt;
-    vtt_block_t *block;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
     ts_init(&ts);
@@ -77,7 +76,7 @@ int main(int argc, char** argv)
 
                         if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
                             // caption_frame_dump(&frame);
-                            vtt_cue_from_caption_frame(&frame, srt);
+                            srt_cue_from_caption_frame(&frame, srt);
                         }
 
                         sei_free(&sei);
