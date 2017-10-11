@@ -33,27 +33,29 @@ int main(int argc, char** argv)
     scc_t* scc = NULL;
     size_t scc_size = 0;
     caption_frame_t frame;
-    srt_t *srt = 0, *head = 0;
+    srt_t *srt = 0;
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[1], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
 
     caption_frame_init(&frame);
     scc_data += scc_to_608(&scc, scc_data);
 
+    srt = srt_new();
+
     while (scc->cc_size) {
         for (i = 0; i < scc->cc_size; ++i) {
             // eia608_dump (scc->cc_data[i]);
 
             if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
-                srt = srt_from_caption_frame(&frame, srt, &head);
+                srt_cue_from_caption_frame(&frame, srt);
             }
         }
 
         scc_data += scc_to_608(&scc, scc_data);
     }
 
-    srt_dump(head);
-    srt_free(head);
+    srt_dump(srt);
+    srt_free(srt);
     free(scc_data_ptr);
     return EXIT_SUCCESS;
 }

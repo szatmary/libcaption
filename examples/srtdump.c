@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 {
     srt_t* srt;
     caption_frame_t frame;
+    srt_cue_t* cue;
 
     if (argc < 2) {
         return 0;
@@ -59,15 +60,15 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    utf8_char_t* data = (utf8_char_t*)malloc(MAX_SRT_SIZE);
-    size_t size = read_file(file, data, MAX_SRT_SIZE);
-    srt_t* head = srt_parse(data, size);
-
-    for (srt = head; srt; srt = srt->next) {
+    size_t size;
+    utf8_char_t* data = utf8_load_text_file(argv[1], &size);
+    srt = srt_parse(data, size);
+    
+    for (cue = srt->cue_head; cue; cue = cue->next) {
         caption_frame_init(&frame);
-        srt_to_caption_frame(srt, &frame);
+        srt_cue_to_caption_frame(cue, &frame);
         caption_frame_dump(&frame);
     }
 
-    srt_free(head);
+    srt_free(srt);
 }

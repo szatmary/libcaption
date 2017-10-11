@@ -1,3 +1,5 @@
+set(CMAKE_BUILD_TYPE Debug)
+
 add_executable(flv2srt flv2srt.c flv.c)
 target_link_libraries(flv2srt caption)
 install(TARGETS flv2srt DESTINATION bin)
@@ -30,6 +32,10 @@ add_executable(srtdump srtdump.c)
 target_link_libraries(srtdump caption)
 install(TARGETS srtdump DESTINATION bin)
 
+add_executable(vttdump vttdump.c)
+target_link_libraries(vttdump caption)
+install(TARGETS vttdump DESTINATION bin)
+
 add_executable(rollup rollup.c flv.c)
 target_link_libraries(rollup caption)
 install(TARGETS rollup DESTINATION bin)
@@ -37,6 +43,10 @@ install(TARGETS rollup DESTINATION bin)
 add_executable(party party.c flv.c)
 target_link_libraries(party caption)
 install(TARGETS party DESTINATION bin)
+
+add_executable(vttsegmenter vttsegmenter.c)
+target_link_libraries(vttsegmenter caption)
+install(TARGETS vttsegmenter DESTINATION bin)
 
 #add_executable(rtmpspit rtmpspit.c  flv.c)
 #target_link_libraries(rtmpspit caption rtmp)

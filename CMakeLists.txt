@@ -47,16 +47,17 @@ else()
 endif()
 
 set(CAPTION_SOURCES
-  src/utf8.c
-  src/srt.c
-  src/scc.c
   src/avc.c
-  src/xds.c
-  src/cea708.c
   src/caption.c
+  src/cea708.c
   src/eia608.c
   src/eia608_charmap.c
   src/eia608_from_utf8.c
+  src/scc.c
+  src/srt.c
+  src/utf8.c
+  src/vtt.c
+  src/xds.c
 )
 
 set(CAPTION_HEADERS
@@ -68,6 +69,7 @@ set(CAPTION_HEADERS
   caption/scc.h
   caption/srt.h
   caption/utf8.h
+  caption/vtt.h
   caption/xds.h
 )
 

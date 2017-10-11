@@ -22,62 +22,29 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "avc.h"
-#include "flv.h"
-#include "srt.h"
+#include "vtt.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define LENGTH_SIZE 4
 int main(int argc, char** argv)
 {
-    const char* path = argv[1];
-
-    sei_t sei;
-    flvtag_t tag;
-    srt_t *srt = 0;
-    int has_audio, has_video;
     caption_frame_t frame;
 
-    flvtag_init(&tag);
-    caption_frame_init(&frame);
-
-    FILE* flv = flv_open_read(path);
-    srt = srt_new();
-
-    if (!flv_read_header(flv, &has_audio, &has_video)) {
-        fprintf(stderr, "'%s' Not an flv file\n", path);
-    } else {
-        fprintf(stderr, "Reading from '%s'\n", path);
+    if (argc < 2) {
+        return 0;
     }
 
-    while (flv_read_tag(flv, &tag)) {
-        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
-            ssize_t size = flvtag_payload_size(&tag);
-            uint8_t* data = flvtag_payload_data(&tag);
+    size_t size;
+    utf8_char_t* data = utf8_load_text_file(argv[1], &size);
 
-            while (0 < size) {
-                ssize_t nalu_size = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-                uint8_t* nalu_data = &data[4];
-                uint8_t nalu_type = nalu_data[0] & 0x1F;
-                data += nalu_size + LENGTH_SIZE;
-                size -= nalu_size + LENGTH_SIZE;
+    vtt_t* vtt = vtt_parse(data, size);
 
-                if (6 == nalu_type) {
-                    sei_init(&sei);
-                    sei_parse_nalu(&sei, nalu_data, nalu_size, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
-                    // sei_dump(&sei);
-
-                    if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                        srt_cue_from_caption_frame(&frame, srt);
-                    }
-
-                    // caption_frame_dump(&frame);
-                    sei_free(&sei);
-                }
-            }
-        }
+    for (vtt_block_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
+        caption_frame_init(&frame);
+        vtt_cue_to_caption_frame(cue, &frame);
+        caption_frame_dump(&frame);
     }
 
-    srt_dump(srt);
-    srt_free(srt);
-
-    return 1;
+    vtt_free(vtt);
 }

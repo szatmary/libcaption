@@ -21,73 +21,123 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_SRT_H
-#define LIBCAPTION_SRT_H
+#ifndef LIBCAPTION_VTT_H
+#define LIBCAPTION_VTT_H
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "caption.h"
 #include "eia608.h"
-#include "vtt.h"
 
-// timestamp and duration are in seconds
-typedef vtt_t srt_t;
-typedef vtt_block_t srt_cue_t;
+enum VTT_BLOCK_TYPE {
+    VTT_REGION = 0,
+    VTT_STYLE = 1,
+    VTT_NOTE = 2,
+    VTT_CUE = 3
+};
 
-/*! \brief
-    \param
-*/
-srt_t* srt_new();
-/*! \brief
-    \param
-*/
-srt_t* srt_free_head(srt_t* head);
-// returns the head of the link list. must bee freed when done
-/*! \brief
-    \param
-*/
-srt_t* srt_parse(const utf8_char_t* data, size_t size);
-/*! \brief
-    \param
-*/
-void srt_free(srt_t* srt);
+// CUE represents a block of caption text
+typedef struct _vtt_block_t {
+    struct _vtt_block_t* next;
+    enum VTT_BLOCK_TYPE type;
+    // CUE-Only
+    double timestamp;
+    double duration; // -1.0 for no duration
+    char *cue_settings;
+    char *cue_id;
+    // Standard block data
+    size_t text_size;
+    char *block_text;
+} vtt_block_t;
 
-/*! \brief
-    \param
-*/
-static inline vtt_block_t* srt_next(vtt_block_t* srt) { return srt->next; }
-
-/*! \brief
-    \param
-*/
-static inline utf8_char_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_data(cue); }
-
-/*! \brief
-    \param
-*/
-static inline srt_cue_t* srt_cue_from_caption_frame(caption_frame_t* frame, srt_t *srt) { return vtt_cue_from_caption_frame(frame, srt); };
+// VTT files are a collection of REGION, STYLE and CUE blocks.
+// XXX: Comments (NOTE blocks) are ignored
+typedef struct _vtt_t {
+    vtt_block_t* region_head;
+    vtt_block_t* region_tail;
+    vtt_block_t* style_head;
+    vtt_block_t* style_tail;
+    vtt_block_t* cue_head;
+    vtt_block_t* cue_tail;
+} vtt_t;
 
 /*! \brief
     \param
 */
-static inline void srt_cue_free_head(srt_t* srt) { vtt_cue_free_head(srt); };
+vtt_t* vtt_new();
+/*! \brief
+    \param
+*/
+void vtt_free(vtt_t* vtt);
 
 /*! \brief
     \param
 */
-static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_char_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
+vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enum VTT_BLOCK_TYPE type);
 
 /*! \brief
     \param
 */
-static inline int srt_cue_to_caption_frame(srt_cue_t* cue, caption_frame_t* frame) { return vtt_cue_to_caption_frame(cue, frame); };
+void vtt_cue_free_head(vtt_t* vtt);
 
-void srt_dump(srt_t* srt);
 /*! \brief
     \param
 */
-void vtt_dump(srt_t* srt);
+void vtt_style_free_head(vtt_t* vtt);
+
+/*! \brief
+    \param
+*/
+void vtt_region_free_head(vtt_t* vtt);
+
+// returns a vtt_t, containing linked lists of blocks. must be freed when done
+/*! \brief
+    \param
+*/
+vtt_t* vtt_parse(const utf8_char_t* data, size_t size);
+
+/*! \brief
+    \param
+*/
+vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode);
+
+/*! \brief
+    \param
+*/
+static inline vtt_block_t* vtt_cue_next(vtt_block_t* block) { return block->next; }
+
+/*! \brief
+    \param
+*/
+static inline utf8_char_t* vtt_block_data(vtt_block_t* block) { return (utf8_char_t*)(block) + sizeof(vtt_block_t); }
+
+/*! \brief
+    \param
+*/
+static inline void vtt_crack_time(double tt, int* hh, int* mm, int* ss, int* ms)
+{
+    (*ms) = (int)((int64_t)(tt * 1000) % 1000);
+    (*ss) = (int)((int64_t)(tt) % 60);
+    (*mm) = (int)((int64_t)(tt / (60)) % 60);
+    (*hh) = (int)((int64_t)(tt / (60 * 60)));
+}
+
+// This only converts the current CUE, it does not walk the list
+/*! \brief
+    \param
+*/
+int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame);
+
+// returns the new cue
+/*! \brief
+    \param
+*/
+vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt);
+/*! \brief
+    \param
+*/
+void vtt_dump(vtt_t* vtt);
 
 #ifdef __cplusplus
 }

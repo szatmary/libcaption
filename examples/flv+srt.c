@@ -101,7 +101,8 @@ srt_t* srt_from_fd(int fd)
 int main(int argc, char** argv)
 {
     flvtag_t tag;
-    srt_t *old_srt = 0, *nxt_srt = 0;
+    srt_t *old_srt = NULL;
+    srt_cue_t *next_cue = NULL;
     double timestamp, offset = 0, clear_timestamp = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read(argv[1]);
@@ -123,24 +124,26 @@ int main(int argc, char** argv)
 
     while (flv_read_tag(flv, &tag)) {
 
-        srt_t* new_srt = srt_from_fd(fd);
+        srt_t* cur_srt = srt_from_fd(fd);
         timestamp = flvtag_pts_seconds(&tag);
 
-        if (new_srt) {
+        if (cur_srt) {
             fprintf(stderr, "Loaded new SRT at time %f\n", timestamp);
-            srt_free(old_srt);
-            old_srt = new_srt;
-            nxt_srt = new_srt;
+            if (old_srt != NULL) {
+                srt_free(old_srt);
+            }
+            old_srt = cur_srt;
             offset = timestamp;
             clear_timestamp = timestamp;
+            next_cue = cur_srt->cue_head;
         }
 
         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
-            if (nxt_srt && (offset + nxt_srt->timestamp) <= timestamp) {
-                fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + nxt_srt->timestamp), nxt_srt->duration, srt_data(nxt_srt));
-                clear_timestamp = (offset + nxt_srt->timestamp) + nxt_srt->duration;
-                flvtag_addcaption_text(&tag, srt_data(nxt_srt));
-                nxt_srt = nxt_srt->next;
+            if (next_cue && (offset + next_cue->timestamp) <= timestamp) {
+                fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + next_cue->timestamp), next_cue->duration, srt_cue_data(next_cue));
+                clear_timestamp = (offset + next_cue->timestamp) + next_cue->duration;
+                flvtag_addcaption_text(&tag, srt_cue_data(next_cue));
+                next_cue = next_cue->next;
             } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
                 fprintf(stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
                 flvtag_addcaption_text(&tag, NULL);
