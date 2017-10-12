@@ -303,14 +303,18 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame)
 
 vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
 {
+    if(vtt->cue_tail && 0 >= vtt->cue_tail->duration) {
+        vtt->cue_tail->duration = frame->timestamp - vtt->cue_tail->timestamp;
+    }
+
     // CRLF per row, plus an extra at the end
     vtt_block_t* cue = vtt_block_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
     utf8_char_t* data = vtt_block_data(cue);
 
     caption_frame_to_text(frame, data);
+    cue->timestamp = frame->timestamp;
     // vtt requires an extra new line
     strcat((char*)data, "\r\n");
-    // TODO: Set timestamps
     return cue;
 }
 
@@ -341,7 +345,7 @@ static void _dump(vtt_t* vtt)
             printf("%s\n", block->cue_id);
         }
 
-        printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
+        printf("%02d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
             hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
 
         if (block->cue_settings != NULL) {
