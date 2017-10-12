@@ -45,7 +45,7 @@ size_t utf8_char_length(const utf8_char_t* c)
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
     };
 
-    return _utf8_char_length[(c[0] >> 3)&0x1F];
+    return _utf8_char_length[(c[0] >> 3) & 0x1F];
 }
 
 int utf8_char_whitespace(const utf8_char_t* c)
