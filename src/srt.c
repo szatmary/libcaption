@@ -40,6 +40,7 @@ srt_t* srt_new(const utf8_char_t* data, size_t size, double timestamp, srt_t* pr
         prev->next = srt;
 
         if (0 >= prev->duration) {
+            // Don't modify the duration if it is already set
             prev->duration = timestamp - prev->timestamp;
         }
     }
@@ -63,6 +64,12 @@ srt_t* srt_free_head(srt_t* head)
     srt_t* next = head->next;
     free(head);
     return next;
+}
+
+srt_t* srt_free_tail(srt_t* prev)
+{
+    prev->next = srt_free_head(prev);
+    return prev;
 }
 
 void srt_free(srt_t* srt)
@@ -153,6 +160,18 @@ srt_t* srt_from_caption_frame(caption_frame_t* frame, srt_t* prev, srt_t** head)
     utf8_char_t* data = srt_data(srt);
 
     caption_frame_to_text(frame, data);
+    if (0 == utf8_trimmed_length(data, CAPTION_FRAME_TEXT_BYTES)) {
+        // If the string is blank (possibly due to a eia608_control_erase_display_memory)
+        // erase this cue and return the previous
+        srt_free_head(srt);
+        srt = prev;
+        if (!prev) {
+            (*head) = 0;
+        } else {
+            prev->next = 0;
+        }
+    }
+
     return srt;
 }
 

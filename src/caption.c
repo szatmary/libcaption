@@ -215,7 +215,7 @@ libcaption_stauts_t caption_frame_decode_control(caption_frame_t* frame, uint16_
 
     case eia608_control_erase_display_memory:
         caption_frame_buffer_clear(&frame->front);
-        return LIBCAPTION_OK;
+        return LIBCAPTION_READY;
 
     // ROLL-UP
     case eia608_control_roll_up_2:
@@ -422,8 +422,8 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
 {
     int r, c;
     size_t bytes, total = 0;
-    bytes = sprintf(buf, "   row: %d\tcol: %d\n   mode: %s\troll-up: %d\n",
-        frame->state.row, frame->state.col,
+    bytes = sprintf(buf, "   timestamp: %f row: %d\tcol: %d\n   mode: %s\troll-up: %d\n",
+        frame->timestamp, frame->state.row, frame->state.col,
         eia608_mode_map[frame->state.mod], frame->state.rup ? 1 + frame->state.rup : 0);
     total += bytes, buf += bytes;
     bytes = sprintf(buf, "   00000000001111111111222222222233\t   00000000001111111111222222222233\n"
