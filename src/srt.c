@@ -66,12 +66,6 @@ srt_t* srt_free_head(srt_t* head)
     return next;
 }
 
-srt_t* srt_free_tail(srt_t* prev)
-{
-    prev->next = srt_free_head(prev);
-    return prev;
-}
-
 void srt_free(srt_t* srt)
 {
     while (srt) {
