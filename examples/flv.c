@@ -163,7 +163,7 @@ int flvtag_updatesize(flvtag_t* tag, uint32_t size)
     tag->data[1] = size >> 16; // DataSize
     tag->data[2] = size >> 8; // DataSize
     tag->data[3] = size >> 0; // DataSize
-    size += 11;
+    size += FLV_TAG_HEADER_SIZE;
     tag->data[size + 0] = size >> 24; // PrevTagSize
     tag->data[size + 1] = size >> 16; // PrevTagSize
     tag->data[size + 2] = size >> 8; // PrevTagSize
@@ -308,6 +308,45 @@ int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_char_t*
     data[size + 2] = 0x09;
     flvtag_updatesize(tag, sizeof(onCaptionInfoUTF8) + size + 3);
 
+    return 1;
+}
+
+const char onTwitchExtentionInfo[] = { 0x02, 0x00, 0x15,
+    'o', 'n', 'T', 'w', 'i', 't', 'c', 'h', 'E', 'x', 't', 'e', 'n', 't', 'i', 'o', 'n', 'I', 'n', 'f', 'o',
+    0x08, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x09 };
+
+int flvtag_amftimedmetadata(flvtag_t* tag, uint32_t timestamp)
+{
+    flvtag_initamf(tag, timestamp);
+
+    flvtag_reserve(tag, sizeof(onTwitchExtentionInfo));
+    memcpy(flvtag_payload_data(tag), onTwitchExtentionInfo, sizeof(onTwitchExtentionInfo));
+    flvtag_updatesize(tag, sizeof(onTwitchExtentionInfo));
+
+    return 1;
+}
+
+int flvtag_amftimedmetadata_append(flvtag_t* tag, const utf8_char_t* guid, const utf8_char_t* json)
+{
+    size_t jsonl = strlen(json);
+    jsonl = jsonl < MAX_AMF_STRING ? jsonl : MAX_AMF_STRING;
+    size_t size = flvtag_payload_size(tag);
+    flvtag_reserve(tag, size + 2 + 36 + 3 + jsonl);
+    uint8_t* data = flvtag_payload_data(tag);
+
+    // increment count.
+    uint32_t count = (data[25] << 24) | (data[26] << 16) | (data[27] << 8) | data[28];
+    ++count, data[25] = count >> 24, data[26] = count >> 16, data[27] = count >> 8, data[28] = count;
+    // write guid
+    data[size - 3] = 0, data[size - 2] = 36;
+    memcpy(&data[size - 1], guid, 36);
+    // write payload
+    data[size + 35] = 2, data[size + 36] = jsonl << 16, data[size + 37] = jsonl;
+    memcpy(&data[size + 38], json, jsonl);
+    // update footer
+    data[size + 38 + jsonl] = 0, data[size + 39 + jsonl] = 0, data[size + 40 + jsonl] = 9;
+    flvtag_updatesize(tag, size + 41 + jsonl);
     return 1;
 }
 

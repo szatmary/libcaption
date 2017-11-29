@@ -140,4 +140,6 @@ int flvtag_amfcaption_708(flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
 ////////////////////////////////////////////////////////////////////////////////
 // This method is expermental, and not currently available on Twitch
 int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_char_t* text);
+int flvtag_amftimedmetadata(flvtag_t* tag, uint32_t timestamp);
+int flvtag_amftimedmetadata_append(flvtag_t* tag, const utf8_char_t* guid, const utf8_char_t* json);
 #endif

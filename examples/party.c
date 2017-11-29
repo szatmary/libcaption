@@ -23,6 +23,8 @@
 /**********************************************************************************************/
 #include "avc.h"
 #include "flv.h"
+// #include "hexdump.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +33,26 @@
 #define CAPTION_METHOD_AMF_708 1 // onCaptionInfo type = 708
 #define CAPTION_METHOD_AMF_UTF8 2 // onCaptionInfo type = utf8
 #define CAPTION_METHOD CAPTION_METHOD_SEI_708
+
+// t is time in miliseconds
+void get_kappaclock(double t, double p, double* x, double* y)
+{
+    static const double Tau = (2 * 3.14159265359);
+    t *= Tau;
+    (*x) = p * sin(t), (*y) = p * cos(t);
+}
+
+void get_kappaclock_json(double ts, char* str)
+{
+    double x1, x2, x3, y1, y2, y3;
+    get_kappaclock(fmod(ts, 60000.0), 0.85, &x1, &y1);
+    get_kappaclock(fmod(ts, 1000.0), 0.80, &x2, &y2);
+    get_kappaclock(fmod(ts, 60.0), 0.75, &x3, &y3);
+
+    sprintf(str, "{\"img\":[\"%s\",\"%s\",\"%s\"],\"x\":[%0.3f,%0.3f,%0.3f],\"y\":[%0.3f,%0.3f,%0.3f]}",
+        "https://static-cdn.jtvnw.net/emoticons/v1/58127/1.0", "https://static-cdn.jtvnw.net/emoticons/v1/1/1.0",
+        "https://static-cdn.jtvnw.net/emoticons/v1/25/1.0", x1, x2, x3, y1, y2, y3);
+}
 
 void get_dudes(char* str)
 {
@@ -75,16 +97,21 @@ void write_amfcaptions_utf8(FILE* out, uint32_t timestamp, const utf8_char_t* te
     flvtag_free(&tag);
 }
 
+#define KAPPA_CLOCK_GUID "3ab3c3a1-0358-4c67-b11c-76257ddb3597"
 int main(int argc, char** argv)
 {
     flvtag_t tag;
+    flvtag_t metatag;
+    double nextClock = 0;
     uint32_t nextParty = 1000;
     int has_audio, has_video;
     FILE* flv = flv_open_read(argv[1]);
     FILE* out = flv_open_write(argv[2]);
     char partyDudes[64];
+    char kappaClock[2048];
 
     flvtag_init(&tag);
+    flvtag_init(&metatag);
 
     if (!flv_read_header(flv, &has_audio, &has_video)) {
         fprintf(stderr, "%s is not an flv file\n", argv[1]);
@@ -95,7 +122,17 @@ int main(int argc, char** argv)
 
     while (flv_read_tag(flv, &tag)) {
 
-        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag) && nextParty <= flvtag_timestamp(&tag)) {
+        uint32_t timestamp = flvtag_timestamp(&tag);
+        while (nextClock < timestamp) {
+            get_kappaclock_json(nextClock, kappaClock);
+            flvtag_amftimedmetadata(&metatag, nextClock);
+            flvtag_amftimedmetadata_append(&metatag, KAPPA_CLOCK_GUID, kappaClock);
+            flv_write_tag(out, &metatag);
+            // hexdump(flvtag_raw_data(&metatag), flvtag_raw_size(&metatag));
+            nextClock += (1000 / 60.0);
+        }
+
+        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag) && nextParty <= timestamp) {
             get_dudes(partyDudes);
 
             if (CAPTION_METHOD == CAPTION_METHOD_SEI_708) {
