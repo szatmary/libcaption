@@ -35,7 +35,7 @@ target_link_libraries(rollup caption)
 install(TARGETS rollup DESTINATION bin)
 
 add_executable(party party.c flv.c)
-target_link_libraries(party caption)
+target_link_libraries(party caption m)
 install(TARGETS party DESTINATION bin)
 
 # assume having rtmpdump means you have librtmp
