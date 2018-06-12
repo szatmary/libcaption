@@ -488,7 +488,7 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
             continue;
         }
 
-        // Write preamble TODO if 0 == c use a eia608_row_style_pramble for effecny
+        // Write preamble
         if (0 < c) {
             int tab = c % 4;
             sei_encode_eia608(sei, &cea708, eia608_row_column_pramble(r, c, DEFAULT_CHANNEL, 0));
