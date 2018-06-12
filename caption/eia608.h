@@ -137,8 +137,11 @@ uint16_t eia608_row_column_pramble(int row, int col, int chan, int underline);
 /*! \brief
     \param
 */
-uint16_t eia608_row_style_pramble(int row, eia608_style_t style, int chan, int underline);
-
+uint16_t eia608_row_style_pramble(int row, int chan, eia608_style_t style, int underline);
+/*! \brief
+    \param
+*/
+uint16_t eia608_midrow_change(int chan, eia608_style_t style, int underline);
 ////////////////////////////////////////////////////////////////////////////////
 // control command
 typedef enum {
