@@ -47,7 +47,8 @@ static inline uint16_t eia608_row_pramble(int row, int chan, int x, int underlin
 }
 
 uint16_t eia608_row_column_pramble(int row, int col, int chan, int underline) { return eia608_row_pramble(row, chan, 0x10 | (col / 4), underline); }
-uint16_t eia608_row_style_pramble(int row, eia608_style_t style, int chan, int underline) { return eia608_row_pramble(row, chan, style, underline); }
+uint16_t eia608_row_style_pramble(int row, int chan, eia608_style_t style, int underline) { return eia608_row_pramble(row, chan, style, underline); }
+uint16_t eia608_midrow_change(int chan, eia608_style_t style, int underline) { return eia608_parity(0x1120 | ((chan << 11) & 0x0800) | ((style << 1) & 0x000E) | (underline & 0x0001)); }
 
 int eia608_parse_preamble(uint16_t cc_data, int* row, int* col, eia608_style_t* style, int* chan, int* underline)
 {

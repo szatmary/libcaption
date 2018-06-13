@@ -467,17 +467,20 @@ void sei_encode_eia608(sei_t* sei, cea708_t* cea708, uint16_t cc_data)
 libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
 {
     int r, c;
+    int unl, prev_unl;
     cea708_t cea708;
     const char* data;
     uint16_t prev_cc_data;
+    eia608_style_t styl, prev_styl;
 
     cea708_init(&cea708); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
 
     for (r = 0; r < SCREEN_ROWS; ++r) {
+        prev_unl = 0, prev_styl = eia608_style_white;
         // Calculate preamble
-        for (c = 0; c < SCREEN_COLS && 0 == *caption_frame_read_char(frame, r, c, 0, 0); ++c) {
+        for (c = 0; c < SCREEN_COLS && 0 == *caption_frame_read_char(frame, r, c, &styl, &unl); ++c) {
         }
 
         // This row is blank
@@ -486,17 +489,26 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
         }
 
         // Write preamble
-        sei_encode_eia608(sei, &cea708, eia608_row_column_pramble(r, c, DEFAULT_CHANNEL, 0));
-        int tab = c % 4;
-
-        if (tab) {
-            sei_encode_eia608(sei, &cea708, eia608_tab(tab, DEFAULT_CHANNEL));
+        if (0 < c || (0 == unl && eia608_style_white == styl)) {
+            int tab = c % 4;
+            sei_encode_eia608(sei, &cea708, eia608_row_column_pramble(r, c, DEFAULT_CHANNEL, 0));
+            if (tab) {
+                sei_encode_eia608(sei, &cea708, eia608_tab(tab, DEFAULT_CHANNEL));
+            }
+        } else {
+            sei_encode_eia608(sei, &cea708, eia608_row_style_pramble(r, DEFAULT_CHANNEL, styl, unl));
+            prev_unl = unl, prev_styl = styl;
         }
 
         // Write the row
         for (prev_cc_data = 0, data = caption_frame_read_char(frame, r, c, 0, 0);
-             (*data) && c < SCREEN_COLS; ++c, data = caption_frame_read_char(frame, r, c, 0, 0)) {
+             (*data) && c < SCREEN_COLS; ++c, data = caption_frame_read_char(frame, r, c, &styl, &unl)) {
             uint16_t cc_data = eia608_from_utf8_1(data, DEFAULT_CHANNEL);
+
+            if (unl != prev_unl || styl != prev_styl) {
+                sei_encode_eia608(sei, &cea708, eia608_midrow_change(DEFAULT_CHANNEL, styl, unl));
+                prev_unl = unl, prev_styl = styl;
+            }
 
             if (!cc_data) {
                 // We do't want to write bad data, so just ignore it.
