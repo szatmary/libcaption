@@ -22,8 +22,8 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "srt.h"
-#include "vtt.h"
 #include "utf8.h"
+#include "vtt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

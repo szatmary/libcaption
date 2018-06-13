@@ -329,25 +329,12 @@ uint8_t* sei_render_alloc(sei_t* sei, size_t* size)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
+int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
 {
-    assert(0 <= cts); // cant present before decode
     sei_init(sei);
     sei->dts = dts;
     sei->cts = cts;
     int ret = 0;
-
-    if (0 == data || 0 == size) {
-        return 0;
-    }
-
-    uint8_t nal_unit_type = (*data) & 0x1F;
-    ++data;
-    --size;
-
-    if (6 != nal_unit_type) {
-        return 0;
-    }
 
     // SEI may contain more than one payload
     while (1 < size) {
@@ -356,8 +343,7 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
 
         while (0 < size && 255 == (*data)) {
             payloadType += 255;
-            ++data;
-            --size;
+            ++data, --size;
         }
 
         if (0 == size) {
@@ -365,13 +351,11 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
         }
 
         payloadType += (*data);
-        ++data;
-        --size;
+        ++data, --size;
 
         while (0 < size && 255 == (*data)) {
             payloadSize += 255;
-            ++data;
-            --size;
+            ++data, --size;
         }
 
         if (0 == size) {
@@ -379,8 +363,7 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
         }
 
         payloadSize += (*data);
-        ++data;
-        --size;
+        ++data, --size;
 
         if (payloadSize) {
             sei_message_t* msg = sei_message_new((sei_msgtype_t)payloadType, 0, payloadSize);
@@ -403,6 +386,24 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
 error:
     sei_init(sei);
     return 0;
+}
+
+int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
+{
+    assert(0 <= cts); // cant present before decode
+
+    if (0 == data || 0 == size) {
+        return 0;
+    }
+
+    uint8_t nal_unit_type = (*data) & 0x1F;
+    ++data, --size;
+
+    if (6 != nal_unit_type) {
+        return 0;
+    }
+
+    return sei_parse(sei, data, size, dts, cts);
 }
 ////////////////////////////////////////////////////////////////////////////////
 libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
@@ -592,65 +593,17 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
-static int avc_is_start_code(const uint8_t* data, int size, int* len)
+static int avc_find_start_code_increnental(const uint8_t* data, int size, int prev_size)
 {
-    if (3 > size) {
-        return -1;
-    }
-
-    if (1 < data[2]) {
-        return 3;
-    }
-
-    if (0 != data[1]) {
-        return 2;
-    }
-
-    if (0 == data[0]) {
-        if (1 == data[2]) {
-            *len = 3;
-            return 0;
-        }
-
-        if (4 <= size && 1 == data[3]) {
-            *len = 4;
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-static int avc_find_start_code(const uint8_t* data, int size, int* len)
-{
-    int pos = 0;
-
-    for (;;) {
-        // is pos pointing to a start code?
-        int isc = avc_is_start_code(data + pos, size - pos, len);
-
-        if (0 < isc) {
-            pos += isc;
-        } else if (0 > isc) {
-            // No start code found
-            return isc;
-        } else {
-            // Start code found at pos
-            return pos;
-        }
-    }
-}
-
-static int avc_find_start_code_increnental(const uint8_t* data, int size, int prev_size, int* len)
-{
+    uint32_t start_code = 0xffffffff;
     int offset = (3 <= prev_size) ? (prev_size - 3) : 0;
-    int pos = avc_find_start_code(data + offset, size - offset, len);
-
-    if (0 <= pos) {
-        return pos + offset;
+    for (; offset < size; ++offset) {
+        start_code = (start_code << 8) | data[offset];
+        if (0x00000100 == (start_code & 0xffffff00)) {
+            return offset - 3;
+        }
     }
-
-    return pos;
+    return -1;
 }
 
 void avcnalu_init(avcnalu_t* nalu)
@@ -660,25 +613,44 @@ void avcnalu_init(avcnalu_t* nalu)
 
 int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size)
 {
-    int scpos, sclen;
+    int scpos;
     int new_size = (int)(nalu->size + (*size));
 
     if (new_size > MAX_NALU_SIZE) {
-        (*size) = nalu->size = 0;
+        (*size) = 0, nalu->size = 0;
         return LIBCAPTION_ERROR;
     }
 
+    // append new data
     memcpy(&nalu->data[nalu->size], (*data), (*size));
-    scpos = avc_find_start_code_increnental(&nalu->data[0], new_size, (int)nalu->size, &sclen);
+    scpos = avc_find_start_code_increnental(&nalu->data[0], new_size, (int)nalu->size);
 
     if (0 <= scpos) {
-        (*data) += (scpos - nalu->size) + sclen;
-        (*size) -= (scpos - nalu->size) + sclen;
+        (*data) += (scpos - nalu->size) + 3;
+        (*size) -= (scpos - nalu->size) + 3;
         nalu->size = scpos;
-        return 0 < nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
+        return 1 < nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
     } else {
-        (*size) = 0;
-        nalu->size = new_size;
+        (*size) = 0, nalu->size = new_size;
         return LIBCAPTION_OK;
     }
+}
+////////////////////////////////////////////////////////////////////////////////
+libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
+{
+    cea708_t cea708;
+    libcaption_stauts_t status = LIBCAPTION_OK;
+
+    cea708_init(&cea708);
+    // first byte is nalu_type
+    status = cea708_parse_h262(data+1,size-1,&cea708);
+    status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts+cts));
+
+    if (LIBCAPTION_READY == status) {
+        frame->timestamp = dts+cts;
+    }
+
+    return status;
+
+
 }

@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 
     sei_t sei;
     flvtag_t tag;
-    srt_t *srt = 0;
+    srt_t* srt = 0;
     int has_audio, has_video;
     caption_frame_t frame;
 

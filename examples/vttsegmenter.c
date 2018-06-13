@@ -38,37 +38,34 @@ void vtt_write_header(FILE* vttFile)
 
 void vtt_write_block(vtt_block_t* block, FILE* vttFile)
 {
-    switch (block->type) 
-    {
-        case VTT_REGION:
-            fprintf(vttFile, "REGION\r\n%s\r\n\r\n", vtt_block_data(block));
-            break;
-        case VTT_STYLE:
-            fprintf(vttFile, "STYLE\r\n%s\r\n\r\n", vtt_block_data(block));
-            break;
-        case VTT_NOTE:
-            fprintf(vttFile, "NOTE\r\n%s\r\n\r\n", vtt_block_data(block));
-            break;
-        case VTT_CUE:
-        {
-            if (block->cue_id != NULL) {
-                fprintf(vttFile, "%s\r\n", block->cue_id);
-            }
-
-            int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
-            vtt_crack_time(block->timestamp, &hh1, &mm1, &ss1, &ms1);
-            vtt_crack_time(block->timestamp + block->duration, &hh2, &mm2, &ss2, &ms2);
-        
-            fprintf(vttFile, "%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
-                hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
-            
-            if (block->cue_settings != NULL) {
-                printf(" %s", block->cue_settings);
-            }
-
-            fprintf(vttFile, "\r\n%s\r\n\r\n", vtt_block_data(block));
+    switch (block->type) {
+    case VTT_REGION:
+        fprintf(vttFile, "REGION\r\n%s\r\n\r\n", vtt_block_data(block));
+        break;
+    case VTT_STYLE:
+        fprintf(vttFile, "STYLE\r\n%s\r\n\r\n", vtt_block_data(block));
+        break;
+    case VTT_NOTE:
+        fprintf(vttFile, "NOTE\r\n%s\r\n\r\n", vtt_block_data(block));
+        break;
+    case VTT_CUE: {
+        if (block->cue_id != NULL) {
+            fprintf(vttFile, "%s\r\n", block->cue_id);
         }
-            break;
+
+        int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
+        vtt_crack_time(block->timestamp, &hh1, &mm1, &ss1, &ms1);
+        vtt_crack_time(block->timestamp + block->duration, &hh2, &mm2, &ss2, &ms2);
+
+        fprintf(vttFile, "%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
+            hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
+
+        if (block->cue_settings != NULL) {
+            printf(" %s", block->cue_settings);
+        }
+
+        fprintf(vttFile, "\r\n%s\r\n\r\n", vtt_block_data(block));
+    } break;
     }
 }
 
@@ -133,11 +130,10 @@ int main(int argc, char** argv)
         double segment_start = i * segment_size;
         double segment_end = (i + 1) * segment_size;
 
-
         vtt_block_t* cue = vtt->cue_head;
         while (cue != NULL) {
             if ((cue->timestamp < segment_end) && ((cue->timestamp + cue->duration) > segment_start)) {
-                vtt_write_block(cue, outputFile);                
+                vtt_write_block(cue, outputFile);
             }
             cue = cue->next;
         }

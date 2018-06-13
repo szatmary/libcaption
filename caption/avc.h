@@ -31,6 +31,7 @@ extern "C" {
 #include "cea708.h"
 #include "scc.h"
 #include <float.h>
+// TODO rename this file to mpeg.h
 ////////////////////////////////////////////////////////////////////////////////
 #define MAX_NALU_SIZE (4 * 1024 * 1024)
 typedef struct {
@@ -39,10 +40,19 @@ typedef struct {
 } avcnalu_t;
 
 void avcnalu_init(avcnalu_t* nalu);
+
+////////////////////////////////////////////////////////////////////////////////
+// TODO rename avcnalu_parse_annexb -> append_data
 int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size);
 static inline uint8_t avcnalu_type(avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
+static inline uint8_t h264nalu_type(avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
 static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return &nalu->data[0]; }
 static inline size_t avcnalu_size(avcnalu_t* nalu) { return nalu->size; }
+////////////////////////////////////////////////////////////////////////////////
+int h262_parse(avcnalu_t* nalu, const uint8_t** data, size_t* size);
+static inline uint8_t h262nalu_type(avcnalu_t* nalu) { return nalu->data[0]; }
+// static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return &nalu->data[0]; }
+// static inline size_t avcnalu_size(avcnalu_t* nalu) { return nalu->size; }
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t sei_message_t;
 
@@ -109,7 +119,14 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
     \param
 */
 // TODO add dts,cts to nalu
-static inline int sei_parse_avcnalu(sei_t* sei, avcnalu_t* nalu, double dts, double cts) { return sei_parse_nalu(sei, avcnalu_data(nalu), avcnalu_size(nalu), dts, cts); }
+static inline int sei_parse_avcnalu(sei_t* sei, avcnalu_t* nalu, double dts, double cts)
+{
+    return sei_parse_nalu(sei, avcnalu_data(nalu), avcnalu_size(nalu), dts, cts);
+}
+/*! \brief
+    \param
+*/
+int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
 /*! \brief
     \param
 */
@@ -218,6 +235,8 @@ static inline libcaption_stauts_t avcnalu_to_caption_frame(caption_frame_t* fram
 
     return err;
 }
+////////////////////////////////////////////////////////////////////////////////
+libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

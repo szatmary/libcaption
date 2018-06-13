@@ -22,6 +22,7 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "ts.h"
+#include <stdio.h>
 #include <string.h>
 
 void ts_init(ts_t* ts)
@@ -85,15 +86,19 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
                 int16_t elementary_pid = ((data[i + 1] & 0x1F) << 8) | data[i + 2];
                 int16_t esinfo_length = ((data[i + 3] & 0x0F) << 8) | data[i + 4];
 
-                if (0x1B == stream_type) {
-                    ts->avcpid = elementary_pid;
+                if (STREAM_TYPE_h262 == stream_type || STREAM_TYPE_h264 == stream_type) {
+                    ts->ccpid = elementary_pid;
+                    ts->stream_type = stream_type;
                 }
+                // {
+                //     fprintf(stderr,"Found stream_type %02x\n", stream_type);
+                // }
 
                 i += 5 + esinfo_length;
                 descriptor_loop_length -= 5 + esinfo_length;
             }
         }
-    } else if (payload_present && pid == ts->avcpid) {
+    } else if (payload_present && pid == ts->ccpid) {
         if (pusi) {
             // int data_alignment = !! (data[i + 6] & 0x04);
             int has_pts = !!(data[i + 7] & 0x80);

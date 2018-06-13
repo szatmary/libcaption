@@ -96,7 +96,11 @@ int cea708_init(cea708_t* cea708); // will confgure using HLS compatiable defaul
 /*! \brief
     \param
 */
-int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708);
+int cea708_parse(const uint8_t* data, size_t size, cea708_t* cea708);
+/*! \brief
+    \param
+*/
+libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t* cea708);
 /*! \brief
     \param
 */

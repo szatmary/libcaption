@@ -53,21 +53,38 @@ int cea708_init(cea708_t* cea708)
     return 1;
 }
 
-// 00 00 00  06 C1  FF FC 34 B9 FF : onCaptionInfo.
-int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708)
-{
-    int i;
 
+void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user_data_t* user_data)
+{
+    memset(user_data, 0, sizeof(user_data_t));
+    user_data->process_em_data_flag = !!(data[0] & 0x80);
+    user_data->process_cc_data_flag = !!(data[0] & 0x40);
+    user_data->additional_data_flag = !!(data[0] & 0x20);
+    user_data->cc_count = (data[0] & 0x1F);
+    user_data->em_data = data[1];
+    data += 2, size -= 2;
+
+    for (int i = 0; 3 < size && i < (int)user_data->cc_count; ++i, data += 3, size -= 3) {
+        user_data->cc_data[i].marker_bits = data[0] >> 3;
+        user_data->cc_data[i].cc_valid = data[0] >> 2;
+        user_data->cc_data[i].cc_type = data[0] >> 0;
+        user_data->cc_data[i].cc_data = data[1] << 8 | data[2];
+    }
+}
+
+// 00 00 00  06 C1  FF FC 34 B9 FF : onCaptionInfo.
+int cea708_parse(const uint8_t* data, size_t size, cea708_t* cea708)
+{
     if (3 > size) {
         goto error;
     }
 
+    // I think the first few bytes need to be handled in mpeg
     cea708->country = (itu_t_t35_country_code_t)(data[0]);
     cea708->provider = (itu_t_t35_provider_code_t)((data[1] << 8) | data[2]);
     cea708->user_identifier = 0;
     cea708->user_data_type_code = 0;
-    data += 3;
-    size -= 3;
+    data += 3, size -= 3;
 
     if (t35_provider_atsc == cea708->provider) {
         if (4 > size) {
@@ -75,27 +92,25 @@ int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708)
         }
 
         cea708->user_identifier = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
-        data += 4;
-        size -= 4;
+        data += 4, size -= 4;
     }
 
     // where country and provider are zero
     // Im not sure what this extra byte is. It sonly seesm to come up in onCaptionInfo
+    // h264 spec seems to describe this
     if (0 == cea708->provider && 0 == cea708->country) {
         if (1 > size) {
             goto error;
         }
 
-        data += 1;
-        size -= 1;
+        data += 1, size -= 1;
     } else if (t35_provider_atsc == cea708->provider || t35_provider_direct_tv == cea708->provider) {
         if (1 > size) {
             goto error;
         }
 
         cea708->user_data_type_code = data[0];
-        data += 1;
-        size -= 1;
+        data += 1, size -= 1;
     }
 
     if (t35_provider_direct_tv == cea708->provider) {
@@ -104,38 +119,12 @@ int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708)
         }
 
         cea708->directv_user_data_length = data[0];
-        data += 1;
-        size -= 1;
+        data += 1, size -= 1;
     }
 
-    memset(&cea708->user_data, 0, sizeof(user_data_t));
-
-    if (3 == cea708->user_data_type_code) {
-        if (2 > size) {
-            goto error;
-        }
-
-        cea708->user_data.process_em_data_flag = !!(data[0] & 0x80);
-        cea708->user_data.process_cc_data_flag = !!(data[0] & 0x40);
-        cea708->user_data.additional_data_flag = !!(data[0] & 0x20);
-        cea708->user_data.cc_count = (data[0] & 0x1F);
-        cea708->user_data.em_data = data[1];
-        data += 2;
-        size -= 2;
-
-        for (i = 0; i < (int)cea708->user_data.cc_count; ++i) {
-            if (3 > size) {
-                goto error;
-            }
-
-            cea708->user_data.cc_data[i].marker_bits = data[0] >> 3;
-            cea708->user_data.cc_data[i].cc_valid = data[0] >> 2;
-            cea708->user_data.cc_data[i].cc_type = data[0] >> 0;
-            cea708->user_data.cc_data[i].cc_data = data[1] << 8 | data[2];
-            data += 3;
-            size -= 3;
-        }
-    } else if (4 == cea708->user_data_type_code) {
+    if (3 == cea708->user_data_type_code && 2 <= size) {
+        cea708_parse_user_data_type_strcture(data,size,&cea708->user_data);
+    }  else if (4 == cea708->user_data_type_code) {
         // additional_CEA_608_data
     } else if (5 == cea708->user_data_type_code) {
         // luma_PAM_data
@@ -147,6 +136,22 @@ int cea708_parse(uint8_t* data, size_t size, cea708_t* cea708)
 error:
     return LIBCAPTION_ERROR;
 }
+
+libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t* cea708)
+{
+    if(!data || 7 > size) {
+        return LIBCAPTION_ERROR;
+    }
+
+    cea708->user_identifier = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
+    cea708->user_data_type_code = data[4];
+    if (3 == cea708->user_data_type_code) {
+        cea708_parse_user_data_type_strcture(data+5,size-5,&cea708->user_data);
+    }
+
+    return LIBCAPTION_OK;
+}
+
 
 int cea708_add_cc_data(cea708_t* cea708, int valid, cea708_cc_type_t type, uint16_t cc_data)
 {

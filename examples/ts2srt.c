@@ -26,14 +26,29 @@
 #include "ts.h"
 #include <stdio.h>
 
+// void srt_cue_from_sei(srt_t* srt, caption_frame_t* frame, const uint8_t* data, size_t size, double pts, double cts)
+// {
+//     sei_t sei;
+//     sei_init(&sei);
+//     // IS the nalu_type always 1 byte?
+//     sei_parse_avcnalu(&sei, data + 1, size - 1, pts, cts);
+//     sei_dump(&sei);
+
+//     if (LIBCAPTION_READY == sei_to_caption_frame(&sei, frame)) {
+//         caption_frame_dump(frame);
+//         srt_cue_from_caption_frame(frame, srt);
+//     }
+
+//     sei_free(&sei);
+// }
+
 int main(int argc, char** argv)
 {
     const char* path = argv[1];
 
     ts_t ts;
-    sei_t sei;
+    srt_t* srt;
     avcnalu_t nalu;
-    srt_t *srt;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
     ts_init(&ts);
@@ -52,40 +67,55 @@ int main(int argc, char** argv)
             break;
 
         case LIBCAPTION_READY: {
-            // fprintf (stderr,"read ts packet DATA\n");
-            while (ts.size) {
-                // fprintf (stderr,"ts.size %d (%02X%02X%02X%02X)\n",ts.size, ts.data[0], ts.data[1], ts.data[2], ts.data[3]);
+            size_t pkt_size = ts.size;
+            const uint8_t* pkt_data = ts.data;
 
-                switch (avcnalu_parse_annexb(&nalu, &ts.data, &ts.size)) {
+            while (pkt_size) {
+                switch (avcnalu_parse_annexb(&nalu, &pkt_data, &pkt_size)) {
                 case LIBCAPTION_OK:
                     break;
 
                 case LIBCAPTION_ERROR:
-                    // fprintf (stderr,"LIBCAPTION_ERROR == avcnalu_parse_annexb()\n");
+                    fprintf(stderr, "LIBCAPTION_ERROR == avcnalu_parse_annexb()\n");
                     avcnalu_init(&nalu);
                     break;
 
                 case LIBCAPTION_READY: {
-
-                    if (6 == avcnalu_type(&nalu)) {
-                        // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
-                        sei_init(&sei);
-                        sei_parse_avcnalu(&sei, &nalu, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
-
-                        // sei_dump(&sei);
-
-                        if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                            // caption_frame_dump(&frame);
-                            srt_cue_from_caption_frame(&frame, srt);
+                    switch (ts.stream_type) {
+                    case STREAM_TYPE_h262:
+                        if (0xB2 == h262nalu_type(&nalu)) {
+                            if (LIBCAPTION_READY == h262_user_data_to_caption_frame(&frame, nalu.data, nalu.size, ts_dts_seconds(&ts), ts_cts_seconds(&ts))) {
+                                caption_frame_dump(&frame);
+                                srt_cue_from_caption_frame(&frame, srt);
+                            }
                         }
+                        break;
 
-                        sei_free(&sei);
-                    }
+                    case STREAM_TYPE_h264:
+                        if (6 == h264nalu_type(&nalu)) {
+                            // fprintf(stderr, "h264nalu_type %02x (%ld)\n", h264nalu_type(&nalu), avcnalu_size(&nalu));
+                            sei_t sei;
+                            sei_init(&sei);
+                            sei_parse_avcnalu(&sei, &nalu, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
+                            sei_dump(&sei);
 
+                            if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
+                                caption_frame_dump(&frame);
+                                srt_cue_from_caption_frame(&frame, srt);
+                            }
+
+                            sei_free(&sei);
+                        }
+                        break;
+                    case STREAM_TYPE_h265:
+                        break;
+                    } // switch
+
+                    // Reset nalu
                     avcnalu_init(&nalu);
                 } break;
-                }
-            }
+                } //switch
+            } // while
         } break;
 
         case LIBCAPTION_ERROR:
@@ -93,6 +123,9 @@ int main(int argc, char** argv)
             break;
         }
     }
+
+    // TODO make sure we are handeling the final nalu
+
 
     srt_dump(srt);
     srt_free(srt);

@@ -119,7 +119,7 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size);
     Compares 2 strings up to max len
 */
 #ifndef strnstr
-char *strnstr(const char *string1, const char *string2, size_t len);
+char* strnstr(const char* string1, const char* string2, size_t len);
 #endif
 
 #ifdef __cplusplus

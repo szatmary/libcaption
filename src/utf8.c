@@ -45,7 +45,7 @@ size_t utf8_char_length(const utf8_char_t* c)
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
     };
 
-    return _utf8_char_length[(c[0] >> 3)&0x1F];
+    return _utf8_char_length[(c[0] >> 3) & 0x1F];
 }
 
 int utf8_char_whitespace(const utf8_char_t* c)
@@ -217,21 +217,21 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size)
 }
 
 #ifndef strnstr
-char *strnstr(const char *string1, const char *string2, size_t len)
+char* strnstr(const char* string1, const char* string2, size_t len)
 {
-	size_t length2;
+    size_t length2;
 
     length2 = strlen(string2);
-	if (!length2) {
-        return (char *)string1;
+    if (!length2) {
+        return (char*)string1;
     }
 
-	while (len >= length2) {
-		len--;
-		if (!memcmp(string1, string2, length2))
-			return (char *)string1;
-		string1++;
-	}
-	return NULL;
+    while (len >= length2) {
+        len--;
+        if (!memcmp(string1, string2, length2))
+            return (char*)string1;
+        string1++;
+    }
+    return NULL;
 }
 #endif
