@@ -53,7 +53,6 @@ int cea708_init(cea708_t* cea708)
     return 1;
 }
 
-
 void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user_data_t* user_data)
 {
     memset(user_data, 0, sizeof(user_data_t));
@@ -123,8 +122,8 @@ int cea708_parse(const uint8_t* data, size_t size, cea708_t* cea708)
     }
 
     if (3 == cea708->user_data_type_code && 2 <= size) {
-        cea708_parse_user_data_type_strcture(data,size,&cea708->user_data);
-    }  else if (4 == cea708->user_data_type_code) {
+        cea708_parse_user_data_type_strcture(data, size, &cea708->user_data);
+    } else if (4 == cea708->user_data_type_code) {
         // additional_CEA_608_data
     } else if (5 == cea708->user_data_type_code) {
         // luma_PAM_data
@@ -139,19 +138,18 @@ error:
 
 libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t* cea708)
 {
-    if(!data || 7 > size) {
+    if (!data || 7 > size) {
         return LIBCAPTION_ERROR;
     }
 
     cea708->user_identifier = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
     cea708->user_data_type_code = data[4];
     if (3 == cea708->user_data_type_code) {
-        cea708_parse_user_data_type_strcture(data+5,size-5,&cea708->user_data);
+        cea708_parse_user_data_type_strcture(data + 5, size - 5, &cea708->user_data);
     }
 
     return LIBCAPTION_OK;
 }
-
 
 int cea708_add_cc_data(cea708_t* cea708, int valid, cea708_cc_type_t type, uint16_t cc_data)
 {
@@ -250,8 +248,8 @@ void cea708_dump(cea708_t* cea708)
     fprintf(stderr, "user_data.em_data %d\n", cea708->user_data.em_data);
 
     for (i = 0; i < (int)cea708->user_data.cc_count; ++i) {
-        cea708_cc_type_t type;
         int valid;
+        cea708_cc_type_t type;
         uint16_t cc_data = cea708_cc_data(&cea708->user_data, i, &valid, &type);
 
         if (valid && cc_type_ntsc_cc_field_1 == type) {
@@ -269,8 +267,8 @@ libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* ce
 
     if (GA94 == cea708->user_identifier) {
         for (i = 0; i < count; ++i) {
-            cea708_cc_type_t type;
             int valid;
+            cea708_cc_type_t type;
             uint16_t cc_data = cea708_cc_data(&cea708->user_data, i, &valid, &type);
 
             if (valid && cc_type_ntsc_cc_field_1 == type) {

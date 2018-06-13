@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                             sei_t sei;
                             sei_init(&sei);
                             sei_parse_avcnalu(&sei, &nalu, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
-                            sei_dump(&sei);
+                            // sei_dump(&sei);
 
                             if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
                                 caption_frame_dump(&frame);
@@ -125,7 +125,6 @@ int main(int argc, char** argv)
     }
 
     // TODO make sure we are handeling the final nalu
-
 
     srt_dump(srt);
     srt_free(srt);

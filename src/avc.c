@@ -643,14 +643,13 @@ libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, cons
 
     cea708_init(&cea708);
     // first byte is nalu_type
-    status = cea708_parse_h262(data+1,size-1,&cea708);
-    status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts+cts));
+    status = cea708_parse_h262(data + 1, size - 1, &cea708);
+    // cea708_dump(&cea708);
+    status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
 
     if (LIBCAPTION_READY == status) {
-        frame->timestamp = dts+cts;
+        frame->timestamp = dts + cts;
     }
 
     return status;
-
-
 }
