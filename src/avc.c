@@ -593,7 +593,7 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
-static int avc_find_start_code_increnental(const uint8_t* data, int size, int prev_size)
+static int find_start_code_increnental(const uint8_t* data, int size, int prev_size)
 {
     uint32_t start_code = 0xffffffff;
     int offset = (3 <= prev_size) ? (prev_size - 3) : 0;
@@ -608,32 +608,38 @@ static int avc_find_start_code_increnental(const uint8_t* data, int size, int pr
 
 void avcnalu_init(avcnalu_t* nalu)
 {
-    memset(nalu, 0, sizeof(avcnalu_t));
+    nalu->size = 0;
+    nalu->status = LIBCAPTION_OK;
 }
 
-int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size)
+size_t mpeg_parse_bitstream(avcnalu_t* nalu, const uint8_t* data, size_t size)
 {
     int scpos;
-    int new_size = (int)(nalu->size + (*size));
+    size_t new_size = nalu->size + size;
 
-    if (new_size > MAX_NALU_SIZE) {
-        (*size) = 0, nalu->size = 0;
-        return LIBCAPTION_ERROR;
+    if (MAX_NALU_SIZE <= new_size) {
+        nalu->status = LIBCAPTION_ERROR;
+        return 0;
     }
 
     // append new data
     memcpy(&nalu->data[nalu->size], (*data), (*size));
-    scpos = avc_find_start_code_increnental(&nalu->data[0], new_size, (int)nalu->size);
+    scpos = find_start_code_increnental(&nalu->data[0], new_size, (int)nalu->size);
 
     if (0 <= scpos) {
-        (*data) += (scpos - nalu->size) + 3;
-        (*size) -= (scpos - nalu->size) + 3;
-        nalu->size = scpos;
-        return 1 < nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
+        nalu->size = scpos;// remove trailing zeros;
+        while( nalu->size && 0 != nalu->data[nalu->size-1 ){
+            --nalu->size;
+        }
+
+        size -= (scpos - nalu->size);
+        nalu->status = nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
     } else {
-        (*size) = 0, nalu->size = new_size;
-        return LIBCAPTION_OK;
+        nalu->size = new_size;
+        nalu->status = LIBCAPTION_OK;
     }
+
+    return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
 libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)

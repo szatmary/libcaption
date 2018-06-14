@@ -33,26 +33,30 @@ extern "C" {
 #include <float.h>
 // TODO rename this file to mpeg.h
 ////////////////////////////////////////////////////////////////////////////////
-#define MAX_NALU_SIZE (4 * 1024 * 1024)
+#define MAX_NALU_SIZE (6 * 1024 * 1024)
 typedef struct {
     size_t size;
     uint8_t data[MAX_NALU_SIZE];
+    libcaption_stauts_t status;
 } avcnalu_t;
 
 void avcnalu_init(avcnalu_t* nalu);
-
 ////////////////////////////////////////////////////////////////////////////////
-// TODO rename avcnalu_parse_annexb -> append_data
-int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size);
-static inline uint8_t avcnalu_type(avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
-static inline uint8_t h264nalu_type(avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
-static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return &nalu->data[0]; }
-static inline size_t avcnalu_size(avcnalu_t* nalu) { return nalu->size; }
+// Bitstream functions
+////////////////////////////////////////////////////////////////////////////////
+// Retuens number of bytes read;. zero on errpr
+size_t (avcnalu_t* nalu, const uint8_t* data, size_t size);
+static inline libcaption_stauts_t mpeg_bitstream_status(avcnalu_t* nalu) { return nalu->status; }
+static inline uint8_t h262nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->data[4] : 0; }
+static inline uint8_t h264nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->data[4] & 0x1F : 0; }
+static inline uint8_t h265nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? (nalu->data[4] >> 1) & 0x3F : 0; }
+static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return 4 <= nalu->size ? &nalu->data[4] : 0; }
+static inline size_tavcnalu_size(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->size - 4 : 0; }
+////////////////////////////////////////////////////////////////////////////////
+static inline uint8_t avcnalu_type(avcnalu_t* nalu) { return h264nalu_type(nalu); }
+int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size) { return mpeg_parse_bitstream(nalu,data,size); }
 ////////////////////////////////////////////////////////////////////////////////
 int h262_parse(avcnalu_t* nalu, const uint8_t** data, size_t* size);
-static inline uint8_t h262nalu_type(avcnalu_t* nalu) { return nalu->data[0]; }
-// static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return &nalu->data[0]; }
-// static inline size_t avcnalu_size(avcnalu_t* nalu) { return nalu->size; }
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t sei_message_t;
 
