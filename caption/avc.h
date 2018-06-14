@@ -31,32 +31,35 @@ extern "C" {
 #include "cea708.h"
 #include "scc.h"
 #include <float.h>
+#include <stddef.h>
 // TODO rename this file to mpeg.h
 ////////////////////////////////////////////////////////////////////////////////
+#define STREAM_TYPE_H262 0x02
+#define STREAM_TYPE_H264 0x1B
+#define STREAM_TYPE_H265 0x24
+#define H262_SEI_PACKET 0xB2
+#define H264_SEI_PACKET 0x06
+#define H265_SEI_PACKET 0x27 // There is also 0x28 
 #define MAX_NALU_SIZE (6 * 1024 * 1024)
 typedef struct {
     size_t size;
     uint8_t data[MAX_NALU_SIZE];
+    unsigned stream_type;
     libcaption_stauts_t status;
-} avcnalu_t;
+} mpeg_bitstream_t;
 
-void avcnalu_init(avcnalu_t* nalu);
+void mpeg_bitstream_init(mpeg_bitstream_t* packet, unsigned stream_type);
 ////////////////////////////////////////////////////////////////////////////////
 // Bitstream functions
 ////////////////////////////////////////////////////////////////////////////////
 // Retuens number of bytes read;. zero on errpr
-size_t (avcnalu_t* nalu, const uint8_t* data, size_t size);
-static inline libcaption_stauts_t mpeg_bitstream_status(avcnalu_t* nalu) { return nalu->status; }
-static inline uint8_t h262nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->data[4] : 0; }
-static inline uint8_t h264nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->data[4] & 0x1F : 0; }
-static inline uint8_t h265nalu_type(avcnalu_t* nalu) { return 4 <= nalu->size ? (nalu->data[4] >> 1) & 0x3F : 0; }
-static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return 4 <= nalu->size ? &nalu->data[4] : 0; }
-static inline size_tavcnalu_size(avcnalu_t* nalu) { return 4 <= nalu->size ? nalu->size - 4 : 0; }
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, const uint8_t* data, size_t size);
+static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
+uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet);
+const uint8_t* mpeg_bitstream_data(mpeg_bitstream_t* packet);
+size_t mpeg_bitstream_size(mpeg_bitstream_t* packet);
 ////////////////////////////////////////////////////////////////////////////////
-static inline uint8_t avcnalu_type(avcnalu_t* nalu) { return h264nalu_type(nalu); }
-int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size) { return mpeg_parse_bitstream(nalu,data,size); }
-////////////////////////////////////////////////////////////////////////////////
-int h262_parse(avcnalu_t* nalu, const uint8_t** data, size_t* size);
+int h262_parse(mpeg_bitstream_t* nalu, const uint8_t** data, size_t* size);
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t sei_message_t;
 
@@ -123,9 +126,9 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
     \param
 */
 // TODO add dts,cts to nalu
-static inline int sei_parse_avcnalu(sei_t* sei, avcnalu_t* nalu, double dts, double cts)
+static inline int sei_parse_avcnalu(sei_t* sei, mpeg_bitstream_t* nalu, double dts, double cts)
 {
-    return sei_parse_nalu(sei, avcnalu_data(nalu), avcnalu_size(nalu), dts, cts);
+    return sei_parse_nalu(sei, mpeg_bitstream_data(nalu), mpeg_bitstream_size(nalu), dts, cts);
 }
 /*! \brief
     \param
@@ -227,7 +230,7 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame);
 /*! \brief
     \param
 */
-static inline libcaption_stauts_t avcnalu_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
+static inline libcaption_stauts_t mpeg_bitstream_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
 {
     sei_t sei;
     libcaption_stauts_t err = LIBCAPTION_ERROR;
@@ -240,7 +243,7 @@ static inline libcaption_stauts_t avcnalu_to_caption_frame(caption_frame_t* fram
     return err;
 }
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts);
+libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* nalu, double dts, double cts);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

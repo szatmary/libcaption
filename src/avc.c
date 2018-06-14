@@ -396,13 +396,6 @@ int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, dou
         return 0;
     }
 
-    uint8_t nal_unit_type = (*data) & 0x1F;
-    ++data, --size;
-
-    if (6 != nal_unit_type) {
-        return 0;
-    }
-
     return sei_parse(sei, data, size, dts, cts);
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -593,10 +586,69 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
+// bitstream
+void mpeg_bitstream_init(mpeg_bitstream_t* packet, unsigned stream_type)
+{
+    packet->size = 0;
+    packet->status = LIBCAPTION_OK;
+    packet->stream_type = stream_type;
+}
+
+uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet)
+{
+    if (4 > packet->size) {
+        return 0;
+    }
+    switch (packet->stream_type) {
+    case STREAM_TYPE_H262:
+        return packet->data[3];
+    case STREAM_TYPE_H264:
+        return packet->data[3] & 0x1F;
+    case STREAM_TYPE_H265:
+        return (packet->data[3] >> 1) & 0x3F;
+    default:
+        return 0;
+    }
+}
+
+const uint8_t* mpeg_bitstream_data(mpeg_bitstream_t* packet)
+{
+    if (4 > packet->size) {
+        return 0;
+    }
+    switch (packet->stream_type) {
+    case STREAM_TYPE_H262:
+    case STREAM_TYPE_H264:
+        return &packet->data[4];
+    case STREAM_TYPE_H265:
+        return &packet->data[5];
+    default:
+        return 0;
+    }
+}
+
+size_t mpeg_bitstream_size(mpeg_bitstream_t* packet)
+{
+    if (4 > packet->size) {
+        return 0;
+    }
+    switch (packet->stream_type) {
+    case STREAM_TYPE_H262:
+    case STREAM_TYPE_H264:
+        return packet->size - 4;
+    case STREAM_TYPE_H265:
+        return packet->size - 5;
+    default:
+        return 0;
+    }
+}
+
+// prev_size MUST be at least 3
 static int find_start_code_increnental(const uint8_t* data, int size, int prev_size)
 {
+    // Skip the first start code
     uint32_t start_code = 0xffffffff;
-    int offset = (3 <= prev_size) ? (prev_size - 3) : 0;
+    int offset = 4 + (4 < prev_size ? prev_size - 4 : 0);
     for (; offset < size; ++offset) {
         start_code = (start_code << 8) | data[offset];
         if (0x00000100 == (start_code & 0xffffff00)) {
@@ -606,51 +658,48 @@ static int find_start_code_increnental(const uint8_t* data, int size, int prev_s
     return -1;
 }
 
-void avcnalu_init(avcnalu_t* nalu)
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* nalu, const uint8_t* data, size_t size)
 {
-    nalu->size = 0;
-    nalu->status = LIBCAPTION_OK;
-}
-
-size_t mpeg_parse_bitstream(avcnalu_t* nalu, const uint8_t* data, size_t size)
-{
-    int scpos;
     size_t new_size = nalu->size + size;
-
     if (MAX_NALU_SIZE <= new_size) {
         nalu->status = LIBCAPTION_ERROR;
         return 0;
     }
 
     // append new data
-    memcpy(&nalu->data[nalu->size], (*data), (*size));
-    scpos = find_start_code_increnental(&nalu->data[0], new_size, (int)nalu->size);
+    memcpy(&nalu->data[nalu->size], data, size);
+    int scpos = find_start_code_increnental(&nalu->data[0], new_size, nalu->size);
 
     if (0 <= scpos) {
-        nalu->size = scpos;// remove trailing zeros;
-        while( nalu->size && 0 != nalu->data[nalu->size-1 ){
-            --nalu->size;
+        fprintf(stderr, "sc: (%ld) %02x %02x %02x %02x\n", scpos, nalu->data[scpos], nalu->data[scpos + 1], nalu->data[scpos + 2], nalu->data[scpos + 3]);
+        nalu->size = scpos;
+        size -= (new_size - nalu->size);
+        fprintf(stderr, "%02x %02x %02x %02x\n", nalu->data[0], nalu->data[1], nalu->data[2], nalu->data[3]);
+        while (0 < nalu->size && 0 == nalu->data[nalu->size - 1]) {
+            fprintf(stderr, "removing trailing 0\n");
+            --nalu->size; // remove trailing zeros;
         }
 
-        size -= (scpos - nalu->size);
         nalu->status = nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
     } else {
         nalu->size = new_size;
         nalu->status = LIBCAPTION_OK;
     }
 
+    fprintf(stderr, "consumed %ld\n", size);
     return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
+// h262
+libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* packet, double dts, double cts)
 {
     cea708_t cea708;
     libcaption_stauts_t status = LIBCAPTION_OK;
 
     cea708_init(&cea708);
     // first byte is nalu_type
-    status = cea708_parse_h262(data + 1, size - 1, &cea708);
-    // cea708_dump(&cea708);
+    status = cea708_parse_h262(mpeg_bitstream_data(packet), mpeg_bitstream_size(packet), &cea708);
+    cea708_dump(&cea708);
     status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
 
     if (LIBCAPTION_READY == status) {

@@ -86,13 +86,10 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
                 int16_t elementary_pid = ((data[i + 1] & 0x1F) << 8) | data[i + 2];
                 int16_t esinfo_length = ((data[i + 3] & 0x0F) << 8) | data[i + 4];
 
-                if (STREAM_TYPE_h262 == stream_type || STREAM_TYPE_h264 == stream_type) {
+                if (STREAM_TYPE_H262 == stream_type || STREAM_TYPE_H264 == stream_type || STREAM_TYPE_H265 == stream_type) {
                     ts->ccpid = elementary_pid;
                     ts->stream_type = stream_type;
                 }
-                // {
-                //     fprintf(stderr,"Found stream_type %02x\n", stream_type);
-                // }
 
                 i += 5 + esinfo_length;
                 descriptor_loop_length -= 5 + esinfo_length;

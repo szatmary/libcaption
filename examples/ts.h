@@ -23,11 +23,9 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_TS_H
 #define LIBCAPTION_TS_H
+#include "avc.h"
 #include "caption.h"
 
-#define STREAM_TYPE_h262 0x02
-#define STREAM_TYPE_h264 0x1b
-#define STREAM_TYPE_h265 0x24
 typedef struct {
     int16_t pmtpid;
     int16_t ccpid;
