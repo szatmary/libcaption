@@ -47,8 +47,10 @@ typedef struct {
     uint8_t data[MAX_NALU_SIZE + 1];
     double dts, cts;
     libcaption_stauts_t status;
+    // Priority queue for out of order frame processing
+    // Should probablly be a linked list
+    size_t front;
     size_t latent;
-    // TODO this needs to be a priority queue.
     cea708_t cea708[MAX_REFRENCE_FRAMES];
 } mpeg_bitstream_t;
 
@@ -57,6 +59,12 @@ void mpeg_bitstream_init(mpeg_bitstream_t* packet);
 // Returns number of bytes read;. zero is not an error
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
 static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
+/*! \brief
+        Flushes latent packets caused by out or order frames.
+        Returns number of latent frames remaining, 0 when complete;
+    \param
+*/
+size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame);
 ////////////////////////////////////////////////////////////////////////////////
 int h262_parse(mpeg_bitstream_t* nalu, const uint8_t** data, size_t* size);
 ////////////////////////////////////////////////////////////////////////////////

@@ -117,10 +117,6 @@ int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
 /*! \brief sorts a vector of cea708_t objects by timestamp
     \param
 */
-void cea708_sort(cea708_t* cea708, size_t count);
-/*! \brief sorts a vector of cea708_t objects by timestamp
-    \param
-*/
 void cea708_dump(cea708_t* cea708);
 #ifdef __cplusplus
 }

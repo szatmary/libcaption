@@ -281,18 +281,3 @@ libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* ce
 
     return status;
 }
-
-void cea708_sort(cea708_t* cea708, size_t size)
-{
-    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
-    cea708_t tmp;
-bubble:
-    for (size_t i = 1; i < size; ++i) {
-        if (cea708[i - 1].timestamp < cea708[i].timestamp) {
-            memcpy(&tmp, &cea708[i - 1], sizeof(cea708_t));
-            memcpy(&cea708[i - 1], &cea708[i], sizeof(cea708_t));
-            memcpy(&cea708[i], &tmp, sizeof(cea708_t));
-            goto bubble;
-        }
-    }
-}
