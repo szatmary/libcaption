@@ -32,7 +32,8 @@ int main(int argc, char** argv)
     const char* path = argv[1];
 
     ts_t ts;
-    srt_t* srt;
+    srt_t* srt = 0;
+    // srt_cue_t, *cue;
     mpeg_bitstream_t mpegbs;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
@@ -64,13 +65,22 @@ int main(int argc, char** argv)
 
                 case LIBCAPTION_READY: {
                     caption_frame_dump(&frame);
+                    srt_cue_from_caption_frame(&frame, srt);
                 } break;
                 } //switch
             } // while
         } // if
     } // while
 
-    // TODO Flush anythig left in mpegbs
+    // Flush anything left
+    while(mpeg_bitstream_flush(&mpegbs, &frame))
+    {
+        if (mpeg_bitstream_status(&mpegbs)) {
+            srt_cue_from_caption_frame(&frame, srt);
+        }
+    }
+
+
     srt_dump(srt);
     srt_free(srt);
 

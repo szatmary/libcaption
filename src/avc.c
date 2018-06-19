@@ -625,7 +625,7 @@ static size_t find_start_code(const uint8_t* data, size_t size)
     return 0;
 }
 
- // WILL wrap around if larger than MAX_REFRENCE_FRAMES for memory saftey
+// WILL wrap around if larger than MAX_REFRENCE_FRAMES for memory saftey
 cea708_t* _mpeg_bitstream_cea708_at(mpeg_bitstream_t* packet, size_t pos) { return &packet->cea708[(packet->front + pos) % MAX_REFRENCE_FRAMES]; }
 cea708_t* _mpeg_bitstream_cea708_front(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, 0); }
 cea708_t* _mpeg_bitstream_cea708_back(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, packet->latent - 1); }
@@ -640,12 +640,13 @@ cea708_t* _mpeg_bitstream_cea708_emplace_back(mpeg_bitstream_t* packet, double t
 void _mpeg_bitstream_cea708_sort(mpeg_bitstream_t* packet)
 {
     // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
-    cea708_t c;
+    // This must be stable, decending sort
 again:
     for (size_t i = 1; i < packet->latent; ++i) {
+        cea708_t c;
         cea708_t* a = _mpeg_bitstream_cea708_at(packet, i - 1);
-        cea708_t* b = _mpeg_bitstream_cea708_at(packet, i - 0);
-        if (a->timestamp < b->timestamp) {
+        cea708_t* b = _mpeg_bitstream_cea708_at(packet, i);
+        if (a->timestamp > b->timestamp) {
             memcpy(&c, a, sizeof(cea708_t));
             memcpy(a, b, sizeof(cea708_t));
             memcpy(b, &c, sizeof(cea708_t));
@@ -659,7 +660,7 @@ size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame)
 {
     if (packet->latent) {
         cea708_t* cea708 = _mpeg_bitstream_cea708_front(packet);
-        packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, cea708));
+        packet->status = libcaption_status_update(LIBCAPTION_OK, cea708_to_caption_frame(frame, cea708));
         packet->front = (packet->front + 1) % MAX_REFRENCE_FRAMES;
         --packet->latent;
     }
@@ -671,7 +672,7 @@ void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* packet, caption_frame_t
 {
     _mpeg_bitstream_cea708_sort(packet);
     // Loop will terminate on LIBCAPTION_READY
-    while (packet->latent && packet->status == LIBCAPTION_OK && dts > _mpeg_bitstream_cea708_back(packet)->timestamp) {
+    while (packet->latent && packet->status == LIBCAPTION_OK && _mpeg_bitstream_cea708_front(packet)->timestamp < dts) {
         mpeg_bitstream_flush(packet, frame);
     }
 }
