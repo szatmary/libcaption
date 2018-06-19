@@ -48,6 +48,7 @@ typedef struct {
     double dts, cts;
     libcaption_stauts_t status;
     size_t latent;
+    // TODO this needs to be a priority queue.
     cea708_t cea708[MAX_REFRENCE_FRAMES];
 } mpeg_bitstream_t;
 

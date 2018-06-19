@@ -406,7 +406,6 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
 
     return status;
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 #define DEFAULT_CHANNEL 0
 
@@ -625,6 +624,17 @@ static size_t find_start_code(const uint8_t* data, size_t size)
     return 0;
 }
 
+static void cea708_push(mpeg_bitstream_t* packet, caption_frame_t* frame, double dts)
+{
+    ++packet->latent; // push the last latent frame into stack
+    cea708_sort(&packet->cea708[0], packet->latent);
+    // Loop until we are under  MAX_REFRENCE_FRAMES, or there is a LIBCAPTION_READY/ERROR, or there are frames where pts < next dts
+    while (packet->latent >= MAX_REFRENCE_FRAMES || (packet->status == LIBCAPTION_OK && dts > packet->cea708[packet->latent - 1].timestamp)) {
+        --packet->latent;
+        packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, &packet->cea708[packet->latent]));
+    }
+}
+
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
     if (MAX_NALU_SIZE <= packet->size) {
@@ -638,57 +648,43 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
         size = MAX_NALU_SIZE - packet->size;
     }
 
-    size_t scpos;
+    sei_t sei;
+    size_t header_size, scpos;
     packet->status = LIBCAPTION_OK;
     memcpy(&packet->data[packet->size], data, size);
     packet->size += size;
 
     while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(&packet->data[0], packet->size))) {
-
-        // fprintf(stderr, "sc: (%02x) (%ld) %02x %02x %02x %02x\n", mpeg_bitstream_packet_type(packet, stream_type), scpos, packet->data[0], packet->data[1], packet->data[2], packet->data[3]);
         switch (mpeg_bitstream_packet_type(packet, stream_type)) {
         default:
             break;
         case H262_SEI_PACKET:
-            if (STREAM_TYPE_H262 == stream_type) {
-                cea708_t* cea708 = &packet->cea708[packet->latent];
-                cea708_init(cea708, dts + cts);
-                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[4], scpos + 4, cea708));
-                packet->latent += LIBCAPTION_OK <= packet->status ? 1 : 0;
+            header_size = 4;
+            if (STREAM_TYPE_H262 == stream_type && scpos > header_size) {
+                cea708_init(&packet->cea708[packet->latent], dts + cts);
+                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[header_size], scpos - header_size, &packet->cea708[packet->latent]));
+                cea708_push(packet, frame, dts);
             }
             break;
         case H264_SEI_PACKET:
-            if (STREAM_TYPE_H264 == stream_type) {
-                sei_t sei;
-                sei_init(&sei);
-                exit(0);
-                // TODO B frame latency
-                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[4], scpos - 4, dts, cts));
-                packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
-                sei_free(&sei);
-            }
-            break;
         case H265_SEI_PACKET:
-            if (STREAM_TYPE_H265 == stream_type) {
-                // TODO double check this!
-                sei_t sei;
+            header_size = STREAM_TYPE_H264 == stream_type ? 4 : STREAM_TYPE_H265 == stream_type ? 5 : 0;
+            if (header_size && scpos > header_size) {
                 sei_init(&sei);
-                exit(0);
-                // TODO B frame latency
-                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[5], scpos - 5, dts, cts));
-                packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
-                sei_free(&sei);
+                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[header_size], scpos - header_size, dts, cts));
+                for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
+                    if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
+                        cea708_init(&packet->cea708[packet->latent], dts + cts);
+                        packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), &packet->cea708[packet->latent]));
+                        cea708_push(packet, frame, dts);
+                    }
+                }
             }
             break;
         }
 
         packet->size -= scpos;
         memmove(&packet->data[0], &packet->data[scpos], packet->size);
-
-        cea708_sort(&packet->cea708[0], packet->latent);
-        for (; packet->status == LIBCAPTION_OK && packet->latent && dts > packet->cea708[packet->latent - 1].timestamp; --packet->latent) {
-            packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, &packet->cea708[packet->latent - 1]));
-        }
     }
 
     return size;
