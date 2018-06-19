@@ -32,7 +32,6 @@ extern "C" {
 #include "scc.h"
 #include <float.h>
 #include <stddef.h>
-// TODO rename this file to mpeg.h
 ////////////////////////////////////////////////////////////////////////////////
 #define STREAM_TYPE_H262 0x02
 #define STREAM_TYPE_H264 0x1B

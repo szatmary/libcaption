@@ -215,3 +215,23 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size)
     data[*size] = 0;
     return data;
 }
+
+#ifndef strnstr
+char *strnstr(const char *string1, const char *string2, size_t len)
+{
+	size_t length2;
+
+    length2 = strlen(string2);
+	if (!length2) {
+        return (char *)string1;
+    }
+
+	while (len >= length2) {
+		len--;
+		if (!memcmp(string1, string2, length2))
+			return (char *)string1;
+		string1++;
+	}
+	return NULL;
+}
+#endif

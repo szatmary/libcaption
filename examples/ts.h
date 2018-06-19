@@ -23,7 +23,7 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_TS_H
 #define LIBCAPTION_TS_H
-#include "avc.h"
+#include "mpeg.h"
 #include "caption.h"
 
 typedef struct {
