@@ -345,7 +345,7 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
     }
 
     sei_t new_sei;
-    sei_init(&new_sei);
+    sei_init(&new_sei, flvtag_pts(tag));
     sei_cat(&new_sei, sei, 1);
 
     flvtag_t new_tag;
@@ -386,7 +386,7 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
 int flvtag_addcaption_text(flvtag_t* tag, const utf8_char_t* text)
 {
     sei_t sei;
-    sei_init(&sei);
+    sei_init(&sei, flvtag_pts(tag));
 
     if (text) {
         caption_frame_t frame;
@@ -405,7 +405,7 @@ int flvtag_addcaption_text(flvtag_t* tag, const utf8_char_t* text)
 int flvtag_addcaption_scc(flvtag_t* tag, const scc_t* scc)
 {
     sei_t sei;
-    sei_init(&sei);
+    sei_init(&sei, flvtag_pts(tag));
     sei_from_scc(&sei, scc);
     int ret = flvtag_addsei(tag, &sei);
     sei_free(&sei);

@@ -50,7 +50,6 @@ void write_amfcaptions_708(FILE* out, uint32_t timestamp, const char* text)
     flvtag_t tag;
     sei_message_t* msg;
     caption_frame_t frame;
-    sei_init(&sei);
     flvtag_init(&tag);
     caption_frame_init(&frame);
     caption_frame_from_text(&frame, text);

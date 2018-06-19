@@ -114,7 +114,7 @@ int cea708_add_cc_data(cea708_t* cea708, int valid, cea708_cc_type_t type, uint1
     \param
 */
 int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
-/*! \brief sorts a vector of cea708_t objects by timestamp
+/*! \brief
     \param
 */
 void cea708_dump(cea708_t* cea708);

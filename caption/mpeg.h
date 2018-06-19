@@ -21,8 +21,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_AVC_H
-#define LIBCAPTION_AVC_H
+#ifndef LIBCAPTION_MPEG_H
+#define LIBCAPTION_MPEG_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,8 +55,14 @@ typedef struct {
 
 void mpeg_bitstream_init(mpeg_bitstream_t* packet);
 ////////////////////////////////////////////////////////////////////////////////
-// Returns number of bytes read;. zero is not an error
+// TODO make convenience functions for flv/mp4
+/*! \brief
+    \param
+*/
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
+/*! \brief
+    \param
+*/
 static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
 /*! \brief
         Flushes latent packets caused by out or order frames.
@@ -64,8 +70,6 @@ static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet
     \param
 */
 size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame);
-////////////////////////////////////////////////////////////////////////////////
-int h262_parse(mpeg_bitstream_t* nalu, const uint8_t** data, size_t* size);
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t sei_message_t;
 
@@ -96,8 +100,7 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 // time in seconds
 typedef struct {
-    double dts;
-    double cts;
+    double timestamp;
     sei_message_t* head;
     sei_message_t* tail;
 } sei_t;
@@ -105,7 +108,7 @@ typedef struct {
 /*! \brief
     \param
 */
-void sei_init(sei_t* sei);
+void sei_init(sei_t* sei, double timestamp);
 /*! \brief
     \param
 */
@@ -121,13 +124,7 @@ void sei_message_append(sei_t* sei, sei_message_t* msg);
 /*! \brief
     \param
 */
-static inline double sei_dts(sei_t* sei) { return sei->dts; }
-static inline double sei_cts(sei_t* sei) { return sei->cts; }
-static inline double sei_pts(sei_t* sei) { return sei->dts + sei->cts; }
-/*! \brief
-    \param
-*/
-libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp);
 /*! \brief
     \param
 */

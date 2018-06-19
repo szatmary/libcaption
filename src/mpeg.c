@@ -169,12 +169,11 @@ sei_message_t* sei_message_new(sei_msgtype_t type, uint8_t* data, size_t size)
     return (sei_message_t*)msg;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void sei_init(sei_t* sei)
+void sei_init(sei_t* sei, double timestamp)
 {
-    sei->dts = -1;
-    sei->cts = -1;
     sei->head = 0;
     sei->tail = 0;
+    sei->timestamp = timestamp;
 }
 
 void sei_message_append(sei_t* sei, sei_message_t* msg)
@@ -212,13 +211,13 @@ void sei_free(sei_t* sei)
         sei->head = tail;
     }
 
-    sei_init(sei);
+    sei_init(sei,0);
 }
 
 void sei_dump(sei_t* sei)
 {
     fprintf(stderr, "SEI %p\n", sei);
-    sei_dump_messages(sei->head, sei->dts + sei->cts);
+    sei_dump_messages(sei->head, sei->timestamp);
 }
 
 void sei_dump_messages(sei_message_t* head, double timestamp)
@@ -329,11 +328,9 @@ uint8_t* sei_render_alloc(sei_t* sei, size_t* size)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp)
 {
-    sei_init(sei);
-    sei->dts = dts;
-    sei->cts = cts;
+    sei_init(sei, timestamp);
     int ret = 0;
 
     // SEI may contain more than one payload
@@ -401,7 +398,7 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
     }
 
     if (LIBCAPTION_READY == status) {
-        frame->timestamp = sei_pts(sei);
+        frame->timestamp = sei->timestamp;
     }
 
     return status;
@@ -414,7 +411,7 @@ void sei_append_708(sei_t* sei, cea708_t* cea708)
     sei_message_t* msg = sei_message_new(sei_type_user_data_registered_itu_t_t35, 0, CEA608_MAX_SIZE);
     msg->size = cea708_render(cea708, sei_message_data(msg), sei_message_size(msg));
     sei_message_append(sei, msg);
-    cea708_init(cea708, sei->dts + sei->cts); // will confgure using HLS compatiable defaults
+    cea708_init(cea708, sei->timestamp); // will confgure using HLS compatiable defaults
 }
 
 // This should be moved to 708.c
@@ -451,7 +448,8 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     uint16_t prev_cc_data;
     eia608_style_t styl, prev_styl;
 
-    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
+    sei_init(sei, frame->timestamp);
+    cea708_init(&cea708, frame->timestamp); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
 
@@ -530,7 +528,7 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     }
 
     sei_encode_eia608(sei, &cea708, 0); // flush
-    sei->dts = frame->timestamp; // assumes in order frames
+    sei->timestamp = frame->timestamp; // assumes in order frames
     // sei_dump (sei);
     return LIBCAPTION_OK;
 }
@@ -539,7 +537,7 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 {
     unsigned int i;
     cea708_t cea708;
-    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
+    cea708_init(&cea708, sei->timestamp); // set up a new popon frame
 
     for (i = 0; i < scc->cc_size; ++i) {
         if (31 == cea708.user_data.cc_count) {
@@ -559,7 +557,7 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 {
     cea708_t cea708;
-    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
+    cea708_init(&cea708, sei->timestamp); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
@@ -712,8 +710,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
         case H265_SEI_PACKET:
             header_size = STREAM_TYPE_H264 == stream_type ? 4 : STREAM_TYPE_H265 == stream_type ? 5 : 0;
             if (header_size && scpos > header_size) {
-                sei_init(&sei);
-                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[header_size], scpos - header_size, dts, cts));
+                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[header_size], scpos - header_size, dts + cts));
                 for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
                     if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
                         cea708_t* cea708 = _mpeg_bitstream_cea708_emplace_back(packet, dts + cts);
