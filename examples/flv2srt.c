@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 
                 if (6 == nalu_type) {
                     sei_init(&sei);
-                    sei_parse_nalu(&sei, nalu_data, nalu_size, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
+                    sei_parse(&sei, nalu_data, nalu_size, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
                     // sei_dump(&sei);
 
                     if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {

@@ -218,14 +218,14 @@ void sei_free(sei_t* sei)
 void sei_dump(sei_t* sei)
 {
     fprintf(stderr, "SEI %p\n", sei);
-    sei_dump_messages(sei->head);
+    sei_dump_messages(sei->head, sei->dts + sei->cts);
 }
 
-void sei_dump_messages(sei_message_t* head)
+void sei_dump_messages(sei_message_t* head, double timestamp)
 {
     cea708_t cea708;
     sei_message_t* msg;
-    cea708_init(&cea708);
+    cea708_init(&cea708, timestamp);
 
     for (msg = head; msg; msg = sei_message_next(msg)) {
         uint8_t* data = sei_message_data(msg);
@@ -329,7 +329,7 @@ uint8_t* sei_render_alloc(sei_t* sei, size_t* size)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
 {
     sei_init(sei);
     sei->dts = dts;
@@ -338,8 +338,8 @@ int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double c
 
     // SEI may contain more than one payload
     while (1 < size) {
-        int payloadType = 0;
-        int payloadSize = 0;
+        size_t payloadType = 0;
+        size_t payloadSize = 0;
 
         while (0 < size && 255 == (*data)) {
             payloadType += 255;
@@ -347,7 +347,7 @@ int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double c
         }
 
         if (0 == size) {
-            goto error;
+            return LIBCAPTION_ERROR;
         }
 
         payloadType += (*data);
@@ -359,7 +359,7 @@ int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double c
         }
 
         if (0 == size) {
-            goto error;
+            return LIBCAPTION_ERROR;
         }
 
         payloadSize += (*data);
@@ -371,8 +371,8 @@ int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double c
             size_t bytes = _copy_to_rbsp(payloadData, payloadSize, data, size);
             sei_message_append(sei, msg);
 
-            if ((int)bytes < payloadSize) {
-                goto error;
+            if (bytes < payloadSize) {
+                return LIBCAPTION_ERROR;
             }
 
             data += bytes;
@@ -382,21 +382,7 @@ int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double c
     }
 
     // There should be one trailing byte, 0x80. But really, we can just ignore that fact.
-    return ret;
-error:
-    sei_init(sei);
-    return 0;
-}
-
-int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts)
-{
-    assert(0 <= cts); // cant present before decode
-
-    if (0 == data || 0 == size) {
-        return 0;
-    }
-
-    return sei_parse(sei, data, size, dts, cts);
+    return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
 libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
@@ -405,7 +391,7 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
     sei_message_t* msg;
     libcaption_stauts_t status = LIBCAPTION_OK;
 
-    cea708_init(&cea708);
+    cea708_init(&cea708, frame->timestamp);
 
     for (msg = sei_message_head(sei); msg; msg = sei_message_next(msg)) {
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
@@ -429,8 +415,7 @@ void sei_append_708(sei_t* sei, cea708_t* cea708)
     sei_message_t* msg = sei_message_new(sei_type_user_data_registered_itu_t_t35, 0, CEA608_MAX_SIZE);
     msg->size = cea708_render(cea708, sei_message_data(msg), sei_message_size(msg));
     sei_message_append(sei, msg);
-    // cea708_dump (cea708);
-    cea708_init(cea708); // will confgure using HLS compatiable defaults
+    cea708_init(cea708, sei->dts + sei->cts); // will confgure using HLS compatiable defaults
 }
 
 // This should be moved to 708.c
@@ -467,7 +452,7 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     uint16_t prev_cc_data;
     eia608_style_t styl, prev_styl;
 
-    cea708_init(&cea708); // set up a new popon frame
+    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
 
@@ -555,7 +540,7 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 {
     unsigned int i;
     cea708_t cea708;
-    cea708_init(&cea708); // set up a new popon frame
+    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
 
     for (i = 0; i < scc->cc_size; ++i) {
         if (31 == cea708.user_data.cc_count) {
@@ -575,7 +560,7 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 {
     cea708_t cea708;
-    cea708_init(&cea708); // set up a new popon frame
+    cea708_init(&cea708, sei->dts + sei->cts); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
@@ -587,19 +572,21 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 }
 ////////////////////////////////////////////////////////////////////////////////
 // bitstream
-void mpeg_bitstream_init(mpeg_bitstream_t* packet, unsigned stream_type)
+void mpeg_bitstream_init(mpeg_bitstream_t* packet)
 {
+    packet->dts = 0;
+    packet->cts = 0;
     packet->size = 0;
+    packet->latent = 0;
     packet->status = LIBCAPTION_OK;
-    packet->stream_type = stream_type;
 }
 
-uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet)
+uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet, unsigned stream_type)
 {
     if (4 > packet->size) {
         return 0;
     }
-    switch (packet->stream_type) {
+    switch (stream_type) {
     case STREAM_TYPE_H262:
         return packet->data[3];
     case STREAM_TYPE_H264:
@@ -611,100 +598,130 @@ uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet)
     }
 }
 
-const uint8_t* mpeg_bitstream_data(mpeg_bitstream_t* packet)
-{
-    if (4 > packet->size) {
-        return 0;
-    }
-    switch (packet->stream_type) {
-    case STREAM_TYPE_H262:
-    case STREAM_TYPE_H264:
-        return &packet->data[4];
-    case STREAM_TYPE_H265:
-        return &packet->data[5];
-    default:
-        return 0;
-    }
-}
+// TODO optomize
+// static size_t find_start_code_increnental(const uint8_t* data, size_t size, size_t prev_size)
+// {
+//     // prev_size MUST be at least 4
+//     assert(3 < prev_size);
+//     uint32_t start_code = 0xffffffff;
+//     for (size_t i = prev_size - 3; i < size; ++i) {
+//         start_code = (start_code << 8) | data[i];
+//         if (0x00000100 == (start_code & 0xffffff00)) {
+//             return i - 3;
+//         }
+//     }
+//     return 0;
+// }
 
-size_t mpeg_bitstream_size(mpeg_bitstream_t* packet)
+static size_t find_start_code(const uint8_t* data, size_t size)
 {
-    if (4 > packet->size) {
-        return 0;
-    }
-    switch (packet->stream_type) {
-    case STREAM_TYPE_H262:
-    case STREAM_TYPE_H264:
-        return packet->size - 4;
-    case STREAM_TYPE_H265:
-        return packet->size - 5;
-    default:
-        return 0;
-    }
-}
-
-// prev_size MUST be at least 3
-static int find_start_code_increnental(const uint8_t* data, int size, int prev_size)
-{
-    // Skip the first start code
     uint32_t start_code = 0xffffffff;
-    int offset = 4 + (4 < prev_size ? prev_size - 4 : 0);
-    for (; offset < size; ++offset) {
-        start_code = (start_code << 8) | data[offset];
+    for (size_t i = 1; i < size; ++i) {
+        start_code = (start_code << 8) | data[i];
         if (0x00000100 == (start_code & 0xffffff00)) {
-            return offset - 3;
+            return i - 3;
         }
     }
-    return -1;
+    return 0;
 }
 
-size_t mpeg_bitstream_parse(mpeg_bitstream_t* nalu, const uint8_t* data, size_t size)
+static inline void sort_708(cea708_t* cea708, size_t size)
 {
-    size_t new_size = nalu->size + size;
-    if (MAX_NALU_SIZE <= new_size) {
-        nalu->status = LIBCAPTION_ERROR;
+    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
+    cea708_t tmp;
+bubble:
+    for (size_t i = 1; i < size; ++i) {
+        if (cea708[i - 1].timestamp < cea708[i].timestamp) {
+            memcpy(&tmp, &cea708[i - 1], sizeof(cea708_t));
+            memcpy(&cea708[i - 1], &cea708[i], sizeof(cea708_t));
+            memcpy(&cea708[i], &tmp, sizeof(cea708_t));
+            goto bubble;
+        }
+    }
+}
+
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
+{
+    if (MAX_NALU_SIZE <= packet->size) {
+        packet->status = LIBCAPTION_ERROR;
+        // fprintf(stderr, "LIBCAPTION_ERROR\n");
         return 0;
     }
 
-    // append new data
-    memcpy(&nalu->data[nalu->size], data, size);
-    int scpos = find_start_code_increnental(&nalu->data[0], new_size, nalu->size);
-
-    if (0 <= scpos) {
-        fprintf(stderr, "sc: (%ld) %02x %02x %02x %02x\n", scpos, nalu->data[scpos], nalu->data[scpos + 1], nalu->data[scpos + 2], nalu->data[scpos + 3]);
-        nalu->size = scpos;
-        size -= (new_size - nalu->size);
-        fprintf(stderr, "%02x %02x %02x %02x\n", nalu->data[0], nalu->data[1], nalu->data[2], nalu->data[3]);
-        while (0 < nalu->size && 0 == nalu->data[nalu->size - 1]) {
-            fprintf(stderr, "removing trailing 0\n");
-            --nalu->size; // remove trailing zeros;
-        }
-
-        nalu->status = nalu->size ? LIBCAPTION_READY : LIBCAPTION_OK;
-    } else {
-        nalu->size = new_size;
-        nalu->status = LIBCAPTION_OK;
+    // consume upto MAX_NALU_SIZE bytes
+    if (MAX_NALU_SIZE <= packet->size + size) {
+        size = MAX_NALU_SIZE - packet->size;
     }
 
-    fprintf(stderr, "consumed %ld\n", size);
+    size_t scpos;
+    packet->status = LIBCAPTION_OK;
+    memcpy(&packet->data[packet->size], data, size);
+    packet->size += size;
+
+    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(&packet->data[0], packet->size))) {
+
+        // fprintf(stderr, "sc: (%02x) (%ld) %02x %02x %02x %02x\n", mpeg_bitstream_packet_type(packet, stream_type), scpos, packet->data[0], packet->data[1], packet->data[2], packet->data[3]);
+        switch (mpeg_bitstream_packet_type(packet, stream_type)) {
+        default:
+            break;
+        case H262_SEI_PACKET:
+            if (STREAM_TYPE_H262 == stream_type) {
+                cea708_t* cea708 = &packet->cea708[packet->latent];
+                cea708_init(cea708, dts + cts);
+                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[4], scpos + 4, cea708));
+                packet->latent += LIBCAPTION_OK <= packet->status ? 1 : 0;
+                sort_708(&packet->cea708[0], packet->latent);
+                for (; packet->status == LIBCAPTION_OK && packet->latent && dts > packet->cea708[packet->latent - 1].timestamp; --packet->latent) {
+                    packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, &packet->cea708[packet->latent - 1], dts + cts));
+                }
+            }
+            break;
+        case H264_SEI_PACKET:
+            if (STREAM_TYPE_H264 == stream_type) {
+                sei_t sei;
+                sei_init(&sei);
+                // TODO B frame latency
+                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[4], scpos - 4, dts, cts));
+                packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
+                sei_free(&sei);
+            }
+            break;
+        case H265_SEI_PACKET:
+            if (STREAM_TYPE_H265 == stream_type) {
+                // TODO double check this!
+                sei_t sei;
+                sei_init(&sei);
+                // TODO B frame latency
+                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[5], scpos - 5, dts, cts));
+                packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
+                sei_free(&sei);
+            }
+            break;
+        }
+
+        packet->size -= scpos;
+        memmove(&packet->data[0], &packet->data[scpos], packet->size);
+    }
+
     return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
-// h262
-libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* packet, double dts, double cts)
-{
-    cea708_t cea708;
-    libcaption_stauts_t status = LIBCAPTION_OK;
+// // h262
+// libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* packet, double dts, double cts)
+// {
+//     cea708_t cea708;
+//     libcaption_stauts_t status = LIBCAPTION_OK;
 
-    cea708_init(&cea708);
-    // first byte is nalu_type
-    status = cea708_parse_h262(mpeg_bitstream_data(packet), mpeg_bitstream_size(packet), &cea708);
-    cea708_dump(&cea708);
-    status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
+//     cea708_init(&cea708);
+//     size_t size = mpeg_bitstream_size(packet, STREAM_TYPE_H262);
+//     const uint8_t* data = mpeg_bitstream_data(packet, STREAM_TYPE_H262);
+//     status = cea708_parse_h262(data, size, &cea708);
+//     // cea708_dump(&cea708);
+//     status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
 
-    if (LIBCAPTION_READY == status) {
-        frame->timestamp = dts + cts;
-    }
+//     if (LIBCAPTION_READY == status) {
+//         frame->timestamp = dts + cts;
+//     }
 
-    return status;
-}
+//     return status;
+// }

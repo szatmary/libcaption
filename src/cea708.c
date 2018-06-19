@@ -22,6 +22,7 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "cea708.h"
+#include <float.h>
 #include <memory.h>
 #include <stdio.h>
 
@@ -37,7 +38,7 @@ uint16_t cea708_cc_data(user_data_t* data, int index, int* valid, cea708_cc_type
     return data->cc_data[index].cc_data;
 }
 
-int cea708_init(cea708_t* cea708)
+int cea708_init(cea708_t* cea708, double timestamp)
 {
     memset(cea708, 0, sizeof(cea708_t));
     cea708->country = country_united_states;
@@ -50,6 +51,7 @@ int cea708_init(cea708_t* cea708)
     cea708->user_data.additional_data_flag = 0;
     cea708->user_data.em_data = 0xFF;
     cea708->user_data.cc_count = 0;
+    cea708->timestamp = timestamp;
     return 1;
 }
 

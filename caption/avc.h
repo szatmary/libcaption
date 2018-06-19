@@ -39,25 +39,23 @@ extern "C" {
 #define STREAM_TYPE_H265 0x24
 #define H262_SEI_PACKET 0xB2
 #define H264_SEI_PACKET 0x06
-#define H265_SEI_PACKET 0x27 // There is also 0x28 
+#define H265_SEI_PACKET 0x27 // There is also 0x28
 #define MAX_NALU_SIZE (6 * 1024 * 1024)
+#define MAX_REFRENCE_FRAMES 64
 typedef struct {
     size_t size;
-    uint8_t data[MAX_NALU_SIZE];
-    unsigned stream_type;
+    uint8_t data[MAX_NALU_SIZE + 1];
+    double dts, cts;
     libcaption_stauts_t status;
+    size_t latent;
+    cea708_t cea708[MAX_REFRENCE_FRAMES];
 } mpeg_bitstream_t;
 
-void mpeg_bitstream_init(mpeg_bitstream_t* packet, unsigned stream_type);
+void mpeg_bitstream_init(mpeg_bitstream_t* packet);
 ////////////////////////////////////////////////////////////////////////////////
-// Bitstream functions
-////////////////////////////////////////////////////////////////////////////////
-// Retuens number of bytes read;. zero on errpr
-size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, const uint8_t* data, size_t size);
+// Returns number of bytes read;. zero is not an error
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
 static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
-uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet);
-const uint8_t* mpeg_bitstream_data(mpeg_bitstream_t* packet);
-size_t mpeg_bitstream_size(mpeg_bitstream_t* packet);
 ////////////////////////////////////////////////////////////////////////////////
 int h262_parse(mpeg_bitstream_t* nalu, const uint8_t** data, size_t* size);
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,23 +119,7 @@ static inline double sei_pts(sei_t* sei) { return sei->dts + sei->cts; }
 /*! \brief
     \param
 */
-int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
-/*! \brief
-    \param
-*/
-// TODO add dts,cts to nalu
-static inline int sei_parse_avcnalu(sei_t* sei, mpeg_bitstream_t* nalu, double dts, double cts)
-{
-    return sei_parse_nalu(sei, mpeg_bitstream_data(nalu), mpeg_bitstream_size(nalu), dts, cts);
-}
-/*! \brief
-    \param
-*/
-int sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
-/*! \brief
-    \param
-*/
-static inline int sei_finish(sei_t* sei) { return sei_parse_nalu(sei, 0, 0, 0.0, DBL_MAX); }
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
 /*! \brief
     \param
 */
@@ -209,7 +191,7 @@ void sei_dump(sei_t* sei);
 /*! \brief
     \param
 */
-void sei_dump_messages(sei_message_t* head);
+void sei_dump_messages(sei_message_t* head, double timestamp);
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param
@@ -227,23 +209,6 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei);
     \param
 */
 libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame);
-/*! \brief
-    \param
-*/
-static inline libcaption_stauts_t mpeg_bitstream_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
-{
-    sei_t sei;
-    libcaption_stauts_t err = LIBCAPTION_ERROR;
-
-    sei_init(&sei);
-    sei_parse_nalu(&sei, data, size, dts, cts);
-    err = sei_to_caption_frame(&sei, frame);
-    sei_free(&sei);
-
-    return err;
-}
-////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* nalu, double dts, double cts);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

@@ -84,6 +84,7 @@ typedef struct {
     uint8_t user_data_type_code;
     uint8_t directv_user_data_length;
     user_data_t user_data;
+    double timestamp;
 } cea708_t;
 
 const static uint32_t GA94 = (('G' << 24) | ('A' << 16) | ('9' << 8) | '4');
@@ -92,7 +93,7 @@ const static uint32_t DTG1 = (('D' << 24) | ('T' << 16) | ('G' << 8) | '1');
 /*! \brief
     \param
 */
-int cea708_init(cea708_t* cea708); // will confgure using HLS compatiable defaults
+int cea708_init(cea708_t* cea708, double timestamp); // will confgure using HLS compatiable defaults
 /*! \brief
     \param
 */

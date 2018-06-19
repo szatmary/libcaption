@@ -47,6 +47,6 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data);
 // return timestamp in seconds
 static inline double ts_dts_seconds(ts_t* ts) { return ts->dts / 90000.0; }
 static inline double ts_pts_seconds(ts_t* ts) { return ts->pts / 90000.0; }
-static inline double ts_cts_seconds(ts_t* ts) { return (ts->dts - ts->pts) / 90000.0; }
+static inline double ts_cts_seconds(ts_t* ts) { return (ts->pts - ts->dts) / 90000.0; }
 
 #endif
