@@ -97,7 +97,7 @@ int cea708_init(cea708_t* cea708, double timestamp); // will confgure using HLS 
 /*! \brief
     \param
 */
-int cea708_parse(const uint8_t* data, size_t size, cea708_t* cea708);
+libcaption_stauts_t cea708_parse_h264(const uint8_t* data, size_t size, cea708_t* cea708);
 /*! \brief
     \param
 */
@@ -105,7 +105,7 @@ libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t
 /*! \brief
     \param
 */
-libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* cea708, double pts);
+libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* cea708);
 /*! \brief
     \param
 */
@@ -114,7 +114,11 @@ int cea708_add_cc_data(cea708_t* cea708, int valid, cea708_cc_type_t type, uint1
     \param
 */
 int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
-/*! \brief
+/*! \brief sorts a vector of cea708_t objects by timestamp
+    \param
+*/
+void cea708_sort(cea708_t* cea708, size_t count);
+/*! \brief sorts a vector of cea708_t objects by timestamp
     \param
 */
 void cea708_dump(cea708_t* cea708);

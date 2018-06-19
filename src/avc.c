@@ -241,7 +241,7 @@ void sei_dump_messages(sei_message_t* head, double timestamp)
         fprintf(stderr, "\n");
 
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-            if (LIBCAPTION_OK != cea708_parse(sei_message_data(msg), sei_message_size(msg), &cea708)) {
+            if (LIBCAPTION_OK != cea708_parse_h262(sei_message_data(msg), sei_message_size(msg), &cea708)) {
                 fprintf(stderr, "cea708_parse error\n");
             } else {
                 cea708_dump(&cea708);
@@ -395,8 +395,8 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
 
     for (msg = sei_message_head(sei); msg; msg = sei_message_next(msg)) {
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-            cea708_parse(sei_message_data(msg), sei_message_size(msg), &cea708);
-            status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, sei_pts(sei)));
+            cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), &cea708);
+            status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708));
         }
     }
 
@@ -625,21 +625,6 @@ static size_t find_start_code(const uint8_t* data, size_t size)
     return 0;
 }
 
-static inline void sort_708(cea708_t* cea708, size_t size)
-{
-    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
-    cea708_t tmp;
-bubble:
-    for (size_t i = 1; i < size; ++i) {
-        if (cea708[i - 1].timestamp < cea708[i].timestamp) {
-            memcpy(&tmp, &cea708[i - 1], sizeof(cea708_t));
-            memcpy(&cea708[i - 1], &cea708[i], sizeof(cea708_t));
-            memcpy(&cea708[i], &tmp, sizeof(cea708_t));
-            goto bubble;
-        }
-    }
-}
-
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
     if (MAX_NALU_SIZE <= packet->size) {
@@ -670,10 +655,6 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
                 cea708_init(cea708, dts + cts);
                 packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[4], scpos + 4, cea708));
                 packet->latent += LIBCAPTION_OK <= packet->status ? 1 : 0;
-                sort_708(&packet->cea708[0], packet->latent);
-                for (; packet->status == LIBCAPTION_OK && packet->latent && dts > packet->cea708[packet->latent - 1].timestamp; --packet->latent) {
-                    packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, &packet->cea708[packet->latent - 1], dts + cts));
-                }
             }
             break;
         case H264_SEI_PACKET:
@@ -701,6 +682,11 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
 
         packet->size -= scpos;
         memmove(&packet->data[0], &packet->data[scpos], packet->size);
+
+        cea708_sort(&packet->cea708[0], packet->latent);
+        for (; packet->status == LIBCAPTION_OK && packet->latent && dts > packet->cea708[packet->latent - 1].timestamp; --packet->latent) {
+            packet->status = libcaption_status_update(packet->status, cea708_to_caption_frame(frame, &packet->cea708[packet->latent - 1]));
+        }
     }
 
     return size;

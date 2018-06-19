@@ -63,44 +63,14 @@ int main(int argc, char** argv)
                     break;
 
                 case LIBCAPTION_READY: {
-                    // Frame was decoded
                     caption_frame_dump(&frame);
-
-                    // switch (mpeg_bitstream_packet_type(&mpegbs, ts.stream_type)) {
-                    // case H262_SEI_PACKET:
-                    //         if (LIBCAPTION_READY == h262_user_data_to_caption_frame(&frame, &mpegbs)) {
-                    //             caption_frame_dump(&frame);
-                    //             srt_cue_from_caption_frame(&frame, srt);
-                    //         }
-                    //     break;
-
-                    // case H264_SEI_PACKET:{
-                    //         // TODO
-                    //         // fprintf(stderr, "h264nalu_type %02x (%ld)\n", h264nalu_type(&mpegbs), avcnalu_size(&mpegbs));
-                    //         sei_t sei;
-                    //         sei_init(&sei);
-                    //         size_t size = mpeg_bitstream_size(&mpegbs,STREAM_TYPE_H264);
-                    //         const uint8_t *data = mpeg_bitstream_data(&mpegbs,STREAM_TYPE_H264);
-                    //         sei_parse_nalu(&sei, data, size, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
-                    //         if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                    //             caption_frame_dump(&frame);
-                    //             srt_cue_from_caption_frame(&frame, srt);
-                    //         }
-
-                    //         sei_free(&sei);
-                    //     }
-                    //     break;
-                    // case H265_SEI_PACKET:
-                    //     break;
-                    // } // switch
                 } break;
                 } //switch
             } // while
         } // if
     } // while
 
-    // TODO make sure we are handeling the final nalu
-
+    // TODO Flush anythig left in mpegbs
     srt_dump(srt);
     srt_free(srt);
 

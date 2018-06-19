@@ -167,18 +167,6 @@ void sei_message_free(sei_message_t* msg);
 /*! \brief
     \param
 */
-static inline int sei_decode_cea708(sei_message_t* msg, cea708_t* cea708)
-{
-    if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-        return cea708_parse(sei_message_data(msg), sei_message_size(msg), cea708);
-    } else {
-        return 0;
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-/*! \brief
-    \param
-*/
 size_t sei_render_size(sei_t* sei);
 /*! \brief
     \param

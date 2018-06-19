@@ -74,7 +74,7 @@ void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user
 }
 
 // 00 00 00  06 C1  FF FC 34 B9 FF : onCaptionInfo.
-int cea708_parse(const uint8_t* data, size_t size, cea708_t* cea708)
+libcaption_stauts_t cea708_parse_h264(const uint8_t* data, size_t size, cea708_t* cea708)
 {
     if (3 > size) {
         goto error;
@@ -262,7 +262,7 @@ void cea708_dump(cea708_t* cea708)
     }
 }
 
-libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* cea708, double pts)
+libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* cea708)
 {
     int i, count = cea708_cc_count(&cea708->user_data);
     libcaption_stauts_t status = LIBCAPTION_OK;
@@ -274,10 +274,25 @@ libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* ce
             uint16_t cc_data = cea708_cc_data(&cea708->user_data, i, &valid, &type);
 
             if (valid && cc_type_ntsc_cc_field_1 == type) {
-                status = libcaption_status_update(status, caption_frame_decode(frame, cc_data, pts));
+                status = libcaption_status_update(status, caption_frame_decode(frame, cc_data, cea708->timestamp));
             }
         }
     }
 
     return status;
+}
+
+ void cea708_sort(cea708_t* cea708, size_t size)
+{
+    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
+    cea708_t tmp;
+bubble:
+    for (size_t i = 1; i < size; ++i) {
+        if (cea708[i - 1].timestamp < cea708[i].timestamp) {
+            memcpy(&tmp, &cea708[i - 1], sizeof(cea708_t));
+            memcpy(&cea708[i - 1], &cea708[i], sizeof(cea708_t));
+            memcpy(&cea708[i], &tmp, sizeof(cea708_t));
+            goto bubble;
+        }
+    }
 }
