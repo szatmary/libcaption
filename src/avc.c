@@ -661,6 +661,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
             if (STREAM_TYPE_H264 == stream_type) {
                 sei_t sei;
                 sei_init(&sei);
+                exit(0);
                 // TODO B frame latency
                 packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[4], scpos - 4, dts, cts));
                 packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
@@ -672,6 +673,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
                 // TODO double check this!
                 sei_t sei;
                 sei_init(&sei);
+                exit(0);
                 // TODO B frame latency
                 packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[5], scpos - 5, dts, cts));
                 packet->status = libcaption_status_update(packet->status, sei_to_caption_frame(&sei, frame));
