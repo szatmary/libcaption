@@ -29,8 +29,9 @@
 
 vtt_block_t* vtt_block_free_head(vtt_block_t* head);
 
-vtt_t *vtt_new() {
-    vtt_t *vtt = malloc(sizeof(vtt_t));
+vtt_t* vtt_new()
+{
+    vtt_t* vtt = malloc(sizeof(vtt_t));
     vtt->region_head = NULL;
     vtt->style_head = NULL;
     vtt->cue_head = NULL;
@@ -63,35 +64,35 @@ vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enu
     block->text_size = size;
 
     switch (type) {
-        case VTT_REGION:
-            if (vtt->region_head == NULL) {
-                vtt->region_head = block;
-            } else {
-                vtt->region_tail->next = block;
-            }
-            vtt->region_tail = block;
-            break;
-        case VTT_STYLE:
-            if (vtt->style_head == NULL) {
-                vtt->style_head = block;
-            } else {
-                vtt->style_tail->next = block;
-            }
-            vtt->style_tail = block;
-            break;
-        case VTT_CUE:
-            if (vtt->cue_head == NULL) {
-                vtt->cue_head = block;
-            } else {
-                vtt->cue_tail->next = block;
-            }
-            vtt->cue_tail = block;
-            break;
-        case VTT_NOTE:
-            break;
+    case VTT_REGION:
+        if (vtt->region_head == NULL) {
+            vtt->region_head = block;
+        } else {
+            vtt->region_tail->next = block;
+        }
+        vtt->region_tail = block;
+        break;
+    case VTT_STYLE:
+        if (vtt->style_head == NULL) {
+            vtt->style_head = block;
+        } else {
+            vtt->style_tail->next = block;
+        }
+        vtt->style_tail = block;
+        break;
+    case VTT_CUE:
+        if (vtt->cue_head == NULL) {
+            vtt->cue_head = block;
+        } else {
+            vtt->cue_tail->next = block;
+        }
+        vtt->cue_tail = block;
+        break;
+    case VTT_NOTE:
+        break;
     }
 
-    utf8_char_t* dest = (utf8_char_t*)vtt_block_data(block);    
+    utf8_char_t* dest = (utf8_char_t*)vtt_block_data(block);
     if (data) {
         memcpy(dest, data, size);
     } else {
@@ -115,21 +116,24 @@ vtt_block_t* vtt_block_free_head(vtt_block_t* head)
     return next;
 }
 
-void vtt_cue_free_head(vtt_t* vtt) {
+void vtt_cue_free_head(vtt_t* vtt)
+{
     vtt->cue_head = vtt_block_free_head(vtt->cue_head);
     if (vtt->cue_head == NULL) {
         vtt->cue_tail = NULL;
     }
 }
 
-void vtt_style_free_head(vtt_t* vtt) {
+void vtt_style_free_head(vtt_t* vtt)
+{
     vtt->style_head = vtt_block_free_head(vtt->style_head);
     if (vtt->style_head == NULL) {
         vtt->style_tail = NULL;
     }
 }
 
-void vtt_region_free_head(vtt_t* vtt) {
+void vtt_region_free_head(vtt_t* vtt)
+{
     vtt->region_head = vtt_block_free_head(vtt->region_head);
     if (vtt->region_head == NULL) {
         vtt->region_tail = NULL;
@@ -137,7 +141,8 @@ void vtt_region_free_head(vtt_t* vtt) {
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
-double parse_timestamp(const utf8_char_t *line) {
+double parse_timestamp(const utf8_char_t* line)
+{
     int hh, mm, ss, ms;
     if (sscanf(line, "%d:%2d:%2d%*1[,.]%3d", &hh, &mm, &ss, &ms) == 4) {
         return VTTTIME2SECONDS(hh, mm, ss, ms);
@@ -148,7 +153,8 @@ double parse_timestamp(const utf8_char_t *line) {
     return -1.0;
 }
 
-void parse_timestamps(const utf8_char_t* line, double *start_pts, double *end_pts, char **cue_settings) {
+void parse_timestamps(const utf8_char_t* line, double* start_pts, double* end_pts, char** cue_settings)
+{
     char start_str[32];
     char end_str[32];
     char cue_str[1024];
@@ -174,17 +180,17 @@ void parse_timestamps(const utf8_char_t* line, double *start_pts, double *end_pt
     }
 }
 
-vtt_t *vtt_parse(const utf8_char_t* data, size_t size)
+vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
 {
     return _vtt_parse(data, size, 0);
 }
 
 vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
 {
-    vtt_t *vtt = NULL;
+    vtt_t* vtt = NULL;
     double str_pts = 0, end_pts = 0;
     size_t line_length = 0, trimmed_length = 0;
-    char *cue_settings;
+    char* cue_settings;
     enum VTT_BLOCK_TYPE block_type;
     size_t cue_id_length = 0;
     const utf8_char_t* cue_id = NULL;
@@ -211,7 +217,7 @@ vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
         do {
             data += line_length;
             size -= line_length;
-            line_length = utf8_line_length(data); // Line length 
+            line_length = utf8_line_length(data); // Line length
             trimmed_length = utf8_trimmed_length(data, line_length);
             // Skip empty lines
         } while (0 < line_length && 0 == trimmed_length);
@@ -295,16 +301,20 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame)
     return caption_frame_from_text(frame, data);
 }
 
-vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt)
+vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
 {
+    if (vtt->cue_tail && 0 >= vtt->cue_tail->duration) {
+        vtt->cue_tail->duration = frame->timestamp - vtt->cue_tail->timestamp;
+    }
+
     // CRLF per row, plus an extra at the end
     vtt_block_t* cue = vtt_block_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
     utf8_char_t* data = vtt_block_data(cue);
 
     caption_frame_to_text(frame, data);
+    cue->timestamp = frame->timestamp;
     // vtt requires an extra new line
     strcat((char*)data, "\r\n");
-    // TODO: Set timestamps
     return cue;
 }
 
@@ -335,13 +345,13 @@ static void _dump(vtt_t* vtt)
             printf("%s\n", block->cue_id);
         }
 
-        printf("%d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
+        printf("%02d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
             hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
-        
+
         if (block->cue_settings != NULL) {
             printf(" %s", block->cue_settings);
         }
-        
+
         printf("\r\n%s\r\n", vtt_block_data(block));
     }
 }

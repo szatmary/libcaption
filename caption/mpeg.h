@@ -21,8 +21,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_AVC_H
-#define LIBCAPTION_AVC_H
+#ifndef LIBCAPTION_MPEG_H
+#define LIBCAPTION_MPEG_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,21 +31,46 @@ extern "C" {
 #include "cea708.h"
 #include "scc.h"
 #include <float.h>
+#include <stddef.h>
 ////////////////////////////////////////////////////////////////////////////////
-#define MAX_NALU_SIZE (4 * 1024 * 1024)
+#define STREAM_TYPE_H262 0x02
+#define STREAM_TYPE_H264 0x1B
+#define STREAM_TYPE_H265 0x24
+#define H262_SEI_PACKET 0xB2
+#define H264_SEI_PACKET 0x06
+#define H265_SEI_PACKET 0x27 // There is also 0x28
+#define MAX_NALU_SIZE (6 * 1024 * 1024)
+#define MAX_REFRENCE_FRAMES 64
 typedef struct {
     size_t size;
-    uint8_t data[MAX_NALU_SIZE];
-} avcnalu_t;
+    uint8_t data[MAX_NALU_SIZE + 1];
+    double dts, cts;
+    libcaption_stauts_t status;
+    // Priority queue for out of order frame processing
+    // Should probablly be a linked list
+    size_t front;
+    size_t latent;
+    cea708_t cea708[MAX_REFRENCE_FRAMES];
+} mpeg_bitstream_t;
 
-void avcnalu_init(avcnalu_t* nalu);
-int avcnalu_parse_annexb(avcnalu_t* nalu, const uint8_t** data, size_t* size);
-static inline uint8_t avcnalu_type(avcnalu_t* nalu) { return nalu->data[0] & 0x1F; }
-static inline uint8_t* avcnalu_data(avcnalu_t* nalu) { return &nalu->data[0]; }
-static inline size_t avcnalu_size(avcnalu_t* nalu) { return nalu->size; }
+void mpeg_bitstream_init(mpeg_bitstream_t* packet);
 ////////////////////////////////////////////////////////////////////////////////
-typedef struct _sei_message_t sei_message_t;
-
+// TODO make convenience functions for flv/mp4
+/*! \brief
+    \param
+*/
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
+/*! \brief
+    \param
+*/
+static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
+/*! \brief
+        Flushes latent packets caused by out or order frames.
+        Returns number of latent frames remaining, 0 when complete;
+    \param
+*/
+size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame);
+////////////////////////////////////////////////////////////////////////////////
 typedef enum {
     sei_type_buffering_period = 0,
     sei_type_pic_timing = 1,
@@ -71,10 +96,14 @@ typedef enum {
     sei_type_stereo_video_info = 21,
 } sei_msgtype_t;
 ////////////////////////////////////////////////////////////////////////////////
-// time in seconds
+typedef struct _sei_message_t {
+    size_t size;
+    sei_msgtype_t type;
+    struct _sei_message_t* next;
+} sei_message_t;
+
 typedef struct {
-    double dts;
-    double cts;
+    double timestamp;
     sei_message_t* head;
     sei_message_t* tail;
 } sei_t;
@@ -82,7 +111,7 @@ typedef struct {
 /*! \brief
     \param
 */
-void sei_init(sei_t* sei);
+void sei_init(sei_t* sei, double timestamp);
 /*! \brief
     \param
 */
@@ -98,22 +127,7 @@ void sei_message_append(sei_t* sei, sei_message_t* msg);
 /*! \brief
     \param
 */
-static inline double sei_dts(sei_t* sei) { return sei->dts; }
-static inline double sei_cts(sei_t* sei) { return sei->cts; }
-static inline double sei_pts(sei_t* sei) { return sei->dts + sei->cts; }
-/*! \brief
-    \param
-*/
-int sei_parse_nalu(sei_t* sei, const uint8_t* data, size_t size, double dts, double cts);
-/*! \brief
-    \param
-*/
-// TODO add dts,cts to nalu
-static inline int sei_parse_avcnalu(sei_t* sei, avcnalu_t* nalu, double dts, double cts) { return sei_parse_nalu(sei, avcnalu_data(nalu), avcnalu_size(nalu), dts, cts); }
-/*! \brief
-    \param
-*/
-static inline int sei_finish(sei_t* sei) { return sei_parse_nalu(sei, 0, 0, 0.0, DBL_MAX); }
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp);
 /*! \brief
     \param
 */
@@ -161,18 +175,6 @@ void sei_message_free(sei_message_t* msg);
 /*! \brief
     \param
 */
-static inline int sei_decode_cea708(sei_message_t* msg, cea708_t* cea708)
-{
-    if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-        return cea708_parse(sei_message_data(msg), sei_message_size(msg), cea708);
-    } else {
-        return 0;
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-/*! \brief
-    \param
-*/
 size_t sei_render_size(sei_t* sei);
 /*! \brief
     \param
@@ -185,7 +187,7 @@ void sei_dump(sei_t* sei);
 /*! \brief
     \param
 */
-void sei_dump_messages(sei_message_t* head);
+void sei_dump_messages(sei_message_t* head, double timestamp);
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param
@@ -203,21 +205,6 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei);
     \param
 */
 libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame);
-/*! \brief
-    \param
-*/
-static inline libcaption_stauts_t avcnalu_to_caption_frame(caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
-{
-    sei_t sei;
-    libcaption_stauts_t err = LIBCAPTION_ERROR;
-
-    sei_init(&sei);
-    sei_parse_nalu(&sei, data, size, dts, cts);
-    err = sei_to_caption_frame(&sei, frame);
-    sei_free(&sei);
-
-    return err;
-}
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

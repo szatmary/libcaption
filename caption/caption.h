@@ -41,8 +41,8 @@ typedef signed int ssize_t;
 #endif
 
 typedef enum {
-    LIBCAPTION_OK = 1,
     LIBCAPTION_ERROR = 0,
+    LIBCAPTION_OK = 1,
     LIBCAPTION_READY = 2
 } libcaption_stauts_t;
 

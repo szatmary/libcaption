@@ -21,8 +21,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "avc.h"
 #include "flv.h"
+#include "mpeg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,7 +50,6 @@ void write_amfcaptions_708(FILE* out, uint32_t timestamp, const char* text)
     flvtag_t tag;
     sei_message_t* msg;
     caption_frame_t frame;
-    sei_init(&sei);
     flvtag_init(&tag);
     caption_frame_init(&frame);
     caption_frame_from_text(&frame, text);

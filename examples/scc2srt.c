@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     scc_t* scc = NULL;
     size_t scc_size = 0;
     caption_frame_t frame;
-    srt_t *srt = 0;
+    srt_t* srt = 0;
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[1], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
 

@@ -44,11 +44,11 @@ typedef struct _vtt_block_t {
     // CUE-Only
     double timestamp;
     double duration; // -1.0 for no duration
-    char *cue_settings;
-    char *cue_id;
+    char* cue_settings;
+    char* cue_id;
     // Standard block data
     size_t text_size;
-    char *block_text;
+    char* block_text;
 } vtt_block_t;
 
 // VTT files are a collection of REGION, STYLE and CUE blocks.
@@ -133,7 +133,7 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame);
 /*! \brief
     \param
 */
-vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t *vtt);
+vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt);
 /*! \brief
     \param
 */

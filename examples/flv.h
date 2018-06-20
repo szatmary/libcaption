@@ -24,6 +24,7 @@
 #ifndef LIBCAPTION_FLV_H
 #define LIBCAPTION_FLV_H
 
+#include "mpeg.h"
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -31,8 +32,6 @@
 #define FLV_FOOTER_SIZE 4
 #define FLV_TAG_HEADER_SIZE 11
 #define FLV_TAG_FOOTER_SIZE 4
-////////////////////////////////////////////////////////////////////////////////
-#include "avc.h"
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct {
     uint8_t* data;

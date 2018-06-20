@@ -21,7 +21,6 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "avc.h"
 #include "srt.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +62,7 @@ int main(int argc, char** argv)
     size_t size;
     utf8_char_t* data = utf8_load_text_file(argv[1], &size);
     srt = srt_parse(data, size);
-    
+
     for (cue = srt->cue_head; cue; cue = cue->next) {
         caption_frame_init(&frame);
         srt_cue_to_caption_frame(cue, &frame);

@@ -47,12 +47,12 @@ else()
 endif()
 
 set(CAPTION_SOURCES
-  src/avc.c
   src/caption.c
   src/cea708.c
   src/eia608.c
   src/eia608_charmap.c
   src/eia608_from_utf8.c
+  src/mpeg.c
   src/scc.c
   src/srt.c
   src/utf8.c
@@ -61,11 +61,11 @@ set(CAPTION_SOURCES
 )
 
 set(CAPTION_HEADERS
-  caption/avc.h
   caption/caption.h
   caption/cea708.h
   caption/eia608.h
   caption/eia608_charmap.h
+  caption/mpeg.h
   caption/scc.h
   caption/srt.h
   caption/utf8.h

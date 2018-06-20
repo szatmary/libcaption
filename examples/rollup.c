@@ -21,8 +21,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "avc.h"
 #include "flv.h"
+#include "mpeg.h"
 #include "srt.h"
 #include "wonderland.h"
 #include <stdio.h>
@@ -49,7 +49,7 @@ void append_caption(const utf8_char_t* data, srt_t* srt)
 
         // fprintf (stderr,"%.*s\n", line_length, data);
         double timestamp = srt->cue_tail ? srt->cue_tail->timestamp + SECONDS_PER_LINE : 0;
-        srt_cue_t *cue = srt_cue_new(srt, data, line_length);
+        srt_cue_t* cue = srt_cue_new(srt, data, line_length);
         cue->timestamp = timestamp;
         cue->duration = SECONDS_PER_LINE;
 
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 {
     int i = 0;
     flvtag_t tag;
-    srt_t *srt = 0;
+    srt_t* srt = 0;
     int has_audio, has_video;
     FILE* flv = flv_open_read(argv[1]);
     FILE* out = flv_open_write(argv[2]);

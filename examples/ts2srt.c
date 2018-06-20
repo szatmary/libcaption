@@ -21,81 +21,65 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#include "avc.h"
 #include "srt.h"
 #include "ts.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv)
 {
     const char* path = argv[1];
 
     ts_t ts;
-    sei_t sei;
-    avcnalu_t nalu;
-    srt_t *srt;
+    srt_t* srt = 0;
+    // srt_cue_t, *cue;
+    mpeg_bitstream_t mpegbs;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
     ts_init(&ts);
-    avcnalu_init(&nalu);
     caption_frame_init(&frame);
+    mpeg_bitstream_init(&mpegbs);
 
     srt = srt_new();
-
     FILE* file = fopen(path, "rb+");
-
+    setvbuf(file, 0, _IOFBF, 8192 * TS_PACKET_SIZE);
     // This fread 188 bytes at a time is VERY slow. Need to rewrite that
     while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
-        switch (ts_parse_packet(&ts, &pkt[0])) {
-        case LIBCAPTION_OK:
-            // fprintf (stderr,"read ts packet\n");
-            break;
-
-        case LIBCAPTION_READY: {
-            // fprintf (stderr,"read ts packet DATA\n");
+        if (LIBCAPTION_READY == ts_parse_packet(&ts, &pkt[0])) {
+            double dts = ts_dts_seconds(&ts);
+            double cts = ts_cts_seconds(&ts);
             while (ts.size) {
-                // fprintf (stderr,"ts.size %d (%02X%02X%02X%02X)\n",ts.size, ts.data[0], ts.data[1], ts.data[2], ts.data[3]);
+                size_t bytes_read = mpeg_bitstream_parse(&mpegbs, &frame, ts.data, ts.size, ts.stream_type, dts, cts);
+                ts.data += bytes_read, ts.size -= bytes_read;
+                switch (mpeg_bitstream_status(&mpegbs)) {
+                default:
+                case LIBCAPTION_ERROR:
+                    fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
+                    mpeg_bitstream_init(&mpegbs);
+                    return EXIT_FAILURE;
+                    break;
 
-                switch (avcnalu_parse_annexb(&nalu, &ts.data, &ts.size)) {
                 case LIBCAPTION_OK:
                     break;
 
-                case LIBCAPTION_ERROR:
-                    // fprintf (stderr,"LIBCAPTION_ERROR == avcnalu_parse_annexb()\n");
-                    avcnalu_init(&nalu);
-                    break;
-
                 case LIBCAPTION_READY: {
-
-                    if (6 == avcnalu_type(&nalu)) {
-                        // fprintf (stderr,"NALU %d (%d)\n", avcnalu_type (&nalu), avcnalu_size (&nalu));
-                        sei_init(&sei);
-                        sei_parse_avcnalu(&sei, &nalu, ts_dts_seconds(&ts), ts_cts_seconds(&ts));
-
-                        // sei_dump(&sei);
-
-                        if (LIBCAPTION_READY == sei_to_caption_frame(&sei, &frame)) {
-                            // caption_frame_dump(&frame);
-                            srt_cue_from_caption_frame(&frame, srt);
-                        }
-
-                        sei_free(&sei);
-                    }
-
-                    avcnalu_init(&nalu);
+                    // caption_frame_dump(&frame);
+                    srt_cue_from_caption_frame(&frame, srt);
                 } break;
-                }
-            }
-        } break;
+                } //switch
+            } // while
+        } // if
+    } // while
 
-        case LIBCAPTION_ERROR:
-            // fprintf (stderr,"read ts packet ERROR\n");
-            break;
+    // Flush anything left
+    while (mpeg_bitstream_flush(&mpegbs, &frame)) {
+        if (mpeg_bitstream_status(&mpegbs)) {
+            srt_cue_from_caption_frame(&frame, srt);
         }
     }
 
     srt_dump(srt);
     srt_free(srt);
 
-    return 1;
+    return EXIT_SUCCESS;
 }

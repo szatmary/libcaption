@@ -1,10 +1,10 @@
 # version
-v0.7
+v0.8
 Matthew Szatmary m3u8@twitch.tv / matt@szatmary.org
 
 # libcaption
 
-libcaption is a small library written in C to aid in the creating and parsing of closed caption data for use in the twitch player, open sourced under the MIT license to use within community developed broadcast tools. To maintain consistency across platforms libcaption aims to implement a subset of EIA608, CEA708 as supported by the Apple iOS platform.
+libcaption is a library written in C to aid in the creating and parsing of closed caption data, open sourced under the MIT license to use within community developed broadcast tools. To maintain consistency across platforms libcaption aims to implement a subset of EIA608, CEA708 as supported by the Apple iOS platform.
 
 608 support is currently limited to encoding and decoding the necessary control and preamble codes as well as support for the Basic North American, Special North American and Extended Western European character sets.
 
@@ -37,8 +37,8 @@ H.264 utility functions are limited to wrapping the 708 payload into a SEI NALU.
 * WEG = Extended Western European character set : German/Danish
 
 ## Limitations
-Current B-frame support is minimal. libcaption ensures no re-ordering of captions is required
-on playback. But caption parsing with out of order frames behaviour is currently undefined
+Current B-frame support for caption creation is minimal. libcaption ensures no re-ordering of captions is required
+on playback.
 
 ## Build Directions
 # Mac Os/Linux
