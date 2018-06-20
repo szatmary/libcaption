@@ -71,8 +71,6 @@ static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet
 */
 size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame);
 ////////////////////////////////////////////////////////////////////////////////
-typedef struct _sei_message_t sei_message_t;
-
 typedef enum {
     sei_type_buffering_period = 0,
     sei_type_pic_timing = 1,
@@ -98,7 +96,12 @@ typedef enum {
     sei_type_stereo_video_info = 21,
 } sei_msgtype_t;
 ////////////////////////////////////////////////////////////////////////////////
-// time in seconds
+typedef struct _sei_message_t {
+    size_t size;
+    sei_msgtype_t type;
+    struct _sei_message_t* next;
+} sei_message_t;
+
 typedef struct {
     double timestamp;
     sei_message_t* head;

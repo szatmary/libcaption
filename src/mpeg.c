@@ -136,12 +136,6 @@ size_t _copy_from_rbsp(uint8_t* data, uint8_t* payloadData, size_t payloadSize)
     return total;
 }
 ////////////////////////////////////////////////////////////////////////////////
-struct _sei_message_t {
-    size_t size;
-    sei_msgtype_t type;
-    struct _sei_message_t* next;
-};
-
 sei_message_t* sei_message_next(sei_message_t* msg) { return ((struct _sei_message_t*)msg)->next; }
 sei_msgtype_t sei_message_type(sei_message_t* msg) { return ((struct _sei_message_t*)msg)->type; }
 size_t sei_message_size(sei_message_t* msg) { return ((struct _sei_message_t*)msg)->size; }
@@ -211,7 +205,7 @@ void sei_free(sei_t* sei)
         sei->head = tail;
     }
 
-    sei_init(sei,0);
+    sei_init(sei, 0);
 }
 
 void sei_dump(sei_t* sei)

@@ -72,13 +72,11 @@ int main(int argc, char** argv)
     } // while
 
     // Flush anything left
-    while(mpeg_bitstream_flush(&mpegbs, &frame))
-    {
+    while (mpeg_bitstream_flush(&mpegbs, &frame)) {
         if (mpeg_bitstream_status(&mpegbs)) {
             srt_cue_from_caption_frame(&frame, srt);
         }
     }
-
 
     srt_dump(srt);
     srt_free(srt);

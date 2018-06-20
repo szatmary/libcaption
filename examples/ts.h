@@ -23,8 +23,8 @@
 /**********************************************************************************************/
 #ifndef LIBCAPTION_TS_H
 #define LIBCAPTION_TS_H
-#include "mpeg.h"
 #include "caption.h"
+#include "mpeg.h"
 
 typedef struct {
     int16_t pmtpid;

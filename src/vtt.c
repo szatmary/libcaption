@@ -303,7 +303,7 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame)
 
 vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
 {
-    if(vtt->cue_tail && 0 >= vtt->cue_tail->duration) {
+    if (vtt->cue_tail && 0 >= vtt->cue_tail->duration) {
         vtt->cue_tail->duration = frame->timestamp - vtt->cue_tail->timestamp;
     }
 
