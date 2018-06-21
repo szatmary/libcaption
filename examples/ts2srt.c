@@ -25,14 +25,13 @@
 #include "ts.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char** argv)
 {
-    const char* path = argv[1];
-
     ts_t ts;
     srt_t* srt = 0;
-    // srt_cue_t, *cue;
+    FILE* file = 0;
     mpeg_bitstream_t mpegbs;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
@@ -40,10 +39,16 @@ int main(int argc, char** argv)
     caption_frame_init(&frame);
     mpeg_bitstream_init(&mpegbs);
 
-    srt = srt_new();
-    FILE* file = fopen(path, "rb+");
-    setvbuf(file, 0, _IOFBF, 8192 * TS_PACKET_SIZE);
+    const char *path = argv[1];
+    if (0 == strlen(path) ||  0 == strcmp("-", path)) {
+        file = freopen(NULL, "rb", stdin);
+    } else {
+       file = fopen(path, "rb");
+        setvbuf(file, 0, _IOFBF, 8192 * TS_PACKET_SIZE);
+    }
+
     // This fread 188 bytes at a time is VERY slow. Need to rewrite that
+    srt = srt_new();
     while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
         if (LIBCAPTION_READY == ts_parse_packet(&ts, &pkt[0])) {
             double dts = ts_dts_seconds(&ts);
@@ -63,7 +68,7 @@ int main(int argc, char** argv)
                     break;
 
                 case LIBCAPTION_READY: {
-                    // caption_frame_dump(&frame);
+                    caption_frame_dump(&frame);
                     srt_cue_from_caption_frame(&frame, srt);
                 } break;
                 } //switch

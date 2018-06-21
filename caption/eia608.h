@@ -108,7 +108,6 @@ static inline int eia608_is_norpak(uint16_t cc_data) { return 0x1724 == (0x777C 
     \param
 */
 static inline int eia608_is_padding(uint16_t cc_data) { return 0x8080 == cc_data; }
-
 ////////////////////////////////////////////////////////////////////////////////
 // preamble
 typedef enum {
@@ -196,10 +195,11 @@ uint16_t eia608_from_basicna(uint16_t bna1, uint16_t bna2);
     \param
 */
 int eia608_to_utf8(uint16_t c, int* chan, utf8_char_t* char1, utf8_char_t* char2);
-////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param
 */
+static inline uint16_t eia608_padding() { return 0x8080; }
+////////////////////////////////////////////////////////////////////////////////
 void eia608_dump(uint16_t cc_data);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
