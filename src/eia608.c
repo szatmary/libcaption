@@ -189,6 +189,9 @@ uint16_t eia608_from_utf8_2(const utf8_char_t* c1, const utf8_char_t* c2)
 {
     uint16_t cc1 = _eia608_from_utf8(c1);
     uint16_t cc2 = _eia608_from_utf8(c2);
+
+    // if cc2 is zero width, encode it into second byte
+    if(!cc2) { cc2 = cc1, cc1 = 0;  }
     return eia608_from_basicna(cc1, cc2);
 }
 ////////////////////////////////////////////////////////////////////////////////

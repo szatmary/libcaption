@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     param.b_annexb = 0;
     param.b_repeat_headers = 0;
 
-    x264_param_apply_profile(&param, "main");
+    x264_param_apply_profile(&param, "baseline");
     x264 = x264_encoder_open(&param);
     {
 
@@ -93,26 +93,28 @@ int main(int argc, char** argv)
         cea708_add_cc_data(&cea708[10], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("F", "o"));
         cea708_add_cc_data(&cea708[11], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("x", ""));
         cea708_add_cc_data(&cea708[12], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
-        cea708_add_cc_data(&cea708[13], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("J", "u"));
-        cea708_add_cc_data(&cea708[14], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("m", "p"));
-        cea708_add_cc_data(&cea708[15], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", "d"));
-        cea708_add_cc_data(&cea708[16], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "O"));
-        cea708_add_cc_data(&cea708[17], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("v", "e"));
-        cea708_add_cc_data(&cea708[18], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("r", " "));
-        cea708_add_cc_data(&cea708[19], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("T", "h"));
-        cea708_add_cc_data(&cea708[20], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", " "));
-        cea708_add_cc_data(&cea708[21], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("L", "a"));
-        cea708_add_cc_data(&cea708[22], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("z", "y"));
-        cea708_add_cc_data(&cea708[23], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
-        cea708_add_cc_data(&cea708[24], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("D", "o"));
-        cea708_add_cc_data(&cea708[25], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("g", "s"));
-        cea708_add_cc_data(&cea708[26], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "B"));
-        cea708_add_cc_data(&cea708[27], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("a", "c"));
-        cea708_add_cc_data(&cea708[28], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("k", ""));
+        cea708_add_cc_data(&cea708[13], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_direct_captioning, 0));
+        cea708_add_cc_data(&cea708[14], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("J", "u"));
+        cea708_add_cc_data(&cea708[15], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("m", "p"));
+        cea708_add_cc_data(&cea708[16], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", "d"));
+        cea708_add_cc_data(&cea708[17], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "O"));
+        cea708_add_cc_data(&cea708[18], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("v", "e"));
+        cea708_add_cc_data(&cea708[19], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("r", " "));
+        cea708_add_cc_data(&cea708[20], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("T", "h"));
+        cea708_add_cc_data(&cea708[21], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", " "));
+        cea708_add_cc_data(&cea708[22], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("L", "a"));
+        cea708_add_cc_data(&cea708[23], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("z", "y"));
+        cea708_add_cc_data(&cea708[24], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
+        cea708_add_cc_data(&cea708[25], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_direct_captioning, 0));
+        cea708_add_cc_data(&cea708[26], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("D", "o"));
+        cea708_add_cc_data(&cea708[27], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("g", "s"));
+        cea708_add_cc_data(&cea708[28], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "B"));
+        cea708_add_cc_data(&cea708[29], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("a", "c"));
+        cea708_add_cc_data(&cea708[30], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("k", ""));
     }
 
     x264_picture_t pic_in, pic_out;
-    for(int j = 0 ; j < 300 ; ++j)  {
+    for(int j = 0 ; 1 ; ++j)  {
         x264_picture_init(&pic_in );
         pic_in.img.plane[0] = Y;
         pic_in.img.plane[1] = U;
@@ -124,7 +126,7 @@ int main(int argc, char** argv)
         pic_in.img.i_csp = X264_CSP_I420;
         pic_in.i_pts = (j * param.i_timebase_den) / 30;
         // memory leak
-        sei_message_t *msg = sei_message_from_cea708(&cea708[j % 28]);
+        sei_message_t *msg = sei_message_from_cea708(&cea708[j % 31]);
         x264_sei_payload_t payload;
         payload.payload = sei_message_data(msg);
         payload.payload_size = sei_message_size(msg);
