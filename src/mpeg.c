@@ -409,7 +409,7 @@ sei_message_t* sei_message_from_cea708(cea708_t* cea708)
 
 void sei_append_708(sei_t* sei, cea708_t* cea708)
 {
-    sei_message_t*msg = sei_message_from_cea708(cea708);
+    sei_message_t* msg = sei_message_from_cea708(cea708);
     sei_message_append(sei, msg);
     cea708_init(cea708, sei->timestamp); // will confgure using HLS compatiable defaults
 }
@@ -491,10 +491,12 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
             } else if (eia608_is_basicna(prev_cc_data)) {
                 if (eia608_is_basicna(cc_data)) {
                     // previous and current chars are both basicna, combine them into current
-                    sei_encode_eia608(sei, &cea708, eia608_from_basicna(prev_cc_data, cc_data));
+                    prev_cc_data = eia608_from_basicna(prev_cc_data, cc_data);
+                    sei_encode_eia608(sei, &cea708, prev_cc_data);
                 } else if (eia608_is_westeu(cc_data)) {
                     // extended charcters overwrite the previous charcter, so insert a dummy char thren write the extended char
-                    sei_encode_eia608(sei, &cea708, eia608_from_basicna(prev_cc_data, eia608_from_utf8_1(EIA608_CHAR_SPACE, DEFAULT_CHANNEL)));
+                    prev_cc_data = eia608_from_basicna(prev_cc_data, 0x2000);
+                    sei_encode_eia608(sei, &cea708, prev_cc_data);
                     sei_encode_eia608(sei, &cea708, cc_data);
                 } else {
                     // previous was basic na, but current isnt; write previous and current
@@ -504,9 +506,9 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
 
                 prev_cc_data = 0; // previous is handled, we can forget it now
             } else if (eia608_is_westeu(cc_data)) {
-                // extended chars overwrite the previous chars, so insert a dummy char
-                // TODO create a map of alternamt chars for eia608_is_westeu instead of using space
-                sei_encode_eia608(sei, &cea708, eia608_from_utf8_1(EIA608_CHAR_SPACE, DEFAULT_CHANNEL));
+                // extended chars overwrite the previous chars, so insert a dummy char (space)
+                // TODO create a map of alternate chars for eia608_is_westeu instead of using space
+                sei_encode_eia608(sei, &cea708, 0x2000);
                 sei_encode_eia608(sei, &cea708, cc_data);
             } else if (eia608_is_basicna(cc_data)) {
                 prev_cc_data = cc_data;

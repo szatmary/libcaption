@@ -161,11 +161,19 @@ int eia608_to_utf8(uint16_t c, int* chan, char* str1, char* str2)
 
 uint16_t eia608_from_basicna(uint16_t bna1, uint16_t bna2)
 {
-    if (!eia608_is_basicna(bna1) || !eia608_is_basicna(bna2)) {
+    bna1 &= 0x7F00, bna2 &= 0x7F00; // strip off parity bits
+    if (!bna1) {
+        // If first charcter is zero width, swap with the second
+        bna1 = bna2, bna2 = 0;
+    }
+
+    // Check that both charcters are basic north american,
+    // Or first is basic north american, and second is null
+    if (!eia608_is_basicna(bna1) || (bna2 && !eia608_is_basicna(bna2))) {
         return 0;
     }
 
-    return eia608_parity((0xFF00 & bna1) | ((0xFF00 & bna2) >> 8));
+    return eia608_parity(bna1 | (bna2 >> 8));
 }
 
 // prototype for re2c generated function
@@ -189,9 +197,6 @@ uint16_t eia608_from_utf8_2(const utf8_char_t* c1, const utf8_char_t* c2)
 {
     uint16_t cc1 = _eia608_from_utf8(c1);
     uint16_t cc2 = _eia608_from_utf8(c2);
-
-    // if cc2 is zero width, encode it into second byte
-    if(!cc2) { cc2 = cc1, cc1 = 0;  }
     return eia608_from_basicna(cc1, cc2);
 }
 ////////////////////////////////////////////////////////////////////////////////

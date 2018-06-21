@@ -1,8 +1,8 @@
-#include "flv.h"
 #include "caption.h"
-#include <x264.h>
+#include "flv.h"
 #include <stdio.h>
 #include <string.h>
+#include <x264.h>
 
 #define WIDTH (40 * 16)
 #define HEIGHT (32 * 16)
@@ -17,9 +17,9 @@ int main(int argc, char** argv)
     cea708_t cea708[1024];
 
     // Twitch Purple
-    memset(&Y[0],86,WIDTH * HEIGHT);
-    memset(&U[0],171,(WIDTH >> 1) * (HEIGHT >> 1));
-    memset(&V[0],137,(WIDTH >> 1) * (HEIGHT >> 1));
+    memset(&Y[0], 86, WIDTH * HEIGHT);
+    memset(&U[0], 171, (WIDTH >> 1) * (HEIGHT >> 1));
+    memset(&V[0], 137, (WIDTH >> 1) * (HEIGHT >> 1));
 
     x264_t* x264;
     x264_param_t param;
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     }
 
     { // create caption array
-        for(int i = 0 ; i < 1024 ; ++i) {
+        for (int i = 0; i < 1024; ++i) {
             cea708_init(&cea708[i], 0.0);
         }
 
@@ -94,28 +94,30 @@ int main(int argc, char** argv)
         cea708_add_cc_data(&cea708[11], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("x", ""));
         cea708_add_cc_data(&cea708[12], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
         cea708_add_cc_data(&cea708[13], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_direct_captioning, 0));
-        cea708_add_cc_data(&cea708[14], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("J", "u"));
-        cea708_add_cc_data(&cea708[15], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("m", "p"));
-        cea708_add_cc_data(&cea708[16], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", "d"));
-        cea708_add_cc_data(&cea708[17], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "O"));
-        cea708_add_cc_data(&cea708[18], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("v", "e"));
-        cea708_add_cc_data(&cea708[19], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("r", " "));
-        cea708_add_cc_data(&cea708[20], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("T", "h"));
-        cea708_add_cc_data(&cea708[21], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", " "));
-        cea708_add_cc_data(&cea708[22], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("L", "a"));
-        cea708_add_cc_data(&cea708[23], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("z", "y"));
-        cea708_add_cc_data(&cea708[24], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
-        cea708_add_cc_data(&cea708[25], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_direct_captioning, 0));
-        cea708_add_cc_data(&cea708[26], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("D", "o"));
-        cea708_add_cc_data(&cea708[27], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("g", "s"));
-        cea708_add_cc_data(&cea708[28], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "B"));
-        cea708_add_cc_data(&cea708[29], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("a", "c"));
-        cea708_add_cc_data(&cea708[30], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("k", ""));
+        cea708_add_cc_data(&cea708[14], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_roll_up_2, 0));
+        cea708_add_cc_data(&cea708[15], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("J", "u"));
+        cea708_add_cc_data(&cea708[16], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("m", "p"));
+        cea708_add_cc_data(&cea708[17], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", "d"));
+        cea708_add_cc_data(&cea708[18], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "O"));
+        cea708_add_cc_data(&cea708[19], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("v", "e"));
+        cea708_add_cc_data(&cea708[20], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("r", " "));
+        cea708_add_cc_data(&cea708[21], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("T", "h"));
+        cea708_add_cc_data(&cea708[22], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("e", " "));
+        cea708_add_cc_data(&cea708[23], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("L", "a"));
+        cea708_add_cc_data(&cea708[24], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("z", "y"));
+        cea708_add_cc_data(&cea708[25], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_carriage_return, 0));
+        cea708_add_cc_data(&cea708[26], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_direct_captioning, 0));
+        cea708_add_cc_data(&cea708[27], 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_roll_up_2, 0));
+        cea708_add_cc_data(&cea708[28], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("D", "o"));
+        cea708_add_cc_data(&cea708[29], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("g", "s"));
+        cea708_add_cc_data(&cea708[30], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2(" ", "B"));
+        cea708_add_cc_data(&cea708[31], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("a", "c"));
+        cea708_add_cc_data(&cea708[32], 1, cc_type_ntsc_cc_field_1, eia608_from_utf8_2("k", ""));
     }
 
     x264_picture_t pic_in, pic_out;
-    for(int j = 0 ; 1 ; ++j)  {
-        x264_picture_init(&pic_in );
+    for (int j = 0; 1; ++j) {
+        x264_picture_init(&pic_in);
         pic_in.img.plane[0] = Y;
         pic_in.img.plane[1] = U;
         pic_in.img.plane[2] = V;
@@ -126,7 +128,7 @@ int main(int argc, char** argv)
         pic_in.img.i_csp = X264_CSP_I420;
         pic_in.i_pts = (j * param.i_timebase_den) / 30;
         // memory leak
-        sei_message_t *msg = sei_message_from_cea708(&cea708[j % 31]);
+        sei_message_t* msg = sei_message_from_cea708(&cea708[j % 32]);
         x264_sei_payload_t payload;
         payload.payload = sei_message_data(msg);
         payload.payload_size = sei_message_size(msg);
@@ -137,14 +139,14 @@ int main(int argc, char** argv)
         int i_nals;
         x264_nal_t* nals;
 
-        if( 0 < x264_encoder_encode(x264, &nals, &i_nals, &pic_in, &pic_out)) {
+        if (0 < x264_encoder_encode(x264, &nals, &i_nals, &pic_in, &pic_out)) {
             // TODO negative dts handeling
             flvtag_initavc(&tag, pic_out.i_dts, pic_out.i_pts - pic_out.i_dts, pic_out.b_keyframe ? flvtag_frametype_keyframe : flvtag_frametype_interframe);
             for (int i = 0; i < i_nals; ++i) {
                 // TODO write the whole frame in one go
                 flvtag_avcwritenal(&tag, nals[i].p_payload + 4, nals[i].i_payload - 4);
             }
-            flv_write_tag(flv,&tag);
+            flv_write_tag(flv, &tag);
         }
-    }// while(THE_END_OF_THE_WORLD);
+    } // while(THE_END_OF_THE_WORLD);
 }
