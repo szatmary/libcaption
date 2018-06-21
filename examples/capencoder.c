@@ -7,13 +7,6 @@
 
 #define WIDTH (40 * 16)
 #define HEIGHT (32 * 16)
-#define THE_END_OF_THE_WORLD 0
-
-
-// void sei_free( void*sei )
-// {
-//     sei_message_t* msg = (sei_message_t*)sei->
-// }
 
 int main(int argc, char** argv)
 {
@@ -141,13 +134,13 @@ int main(int argc, char** argv)
         pic_in.img.i_plane = 3;
         pic_in.img.i_csp = X264_CSP_I420;
         pic_in.i_pts = (j * param.i_timebase_den) / 15;
-        // all kinds of memory leak
-        sei_message_t* msg = sei_message_from_cea708(&cea708[j % cc]);
+        // Caption
+        pic_in.extra_sei.payloads = (x264_sei_payload_t*)malloc(sizeof(x264_sei_payload_t));
+        pic_in.extra_sei.payloads->payload =  (uint8_t*)malloc(CEA708_MAX_SIZE);
+        pic_in.extra_sei.payloads->payload_size = cea708_render(&cea708[j % cc], pic_in.extra_sei.payloads->payload, CEA708_MAX_SIZE);
+        pic_in.extra_sei.payloads->payload_type = sei_type_user_data_registered_itu_t_t35;
         pic_in.extra_sei.num_payloads = 1;
-        pic_in.extra_sei.payloads = (x264_sei_payload_t *)malloc(sizeof(x264_sei_payload_t));
-        pic_in.extra_sei.payloads[0].payload = sei_message_data(msg);
-        pic_in.extra_sei.payloads[0].payload_size = sei_message_size(msg);
-        pic_in.extra_sei.payloads[0].payload_type = sei_type_user_data_registered_itu_t_t35;
+        pic_in.extra_sei.sei_free = free;
 
         int i_nals;
         x264_nal_t* nals;
@@ -161,5 +154,5 @@ int main(int argc, char** argv)
             }
             flv_write_tag(flv, &tag);
         }
-    } // while(THE_END_OF_THE_WORLD);
+    }
 }
