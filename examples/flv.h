@@ -127,13 +127,13 @@ int flv_write_tag(FILE* flv, flvtag_t* tag);
 int flv_read_header(FILE* flv, int* has_audio, int* has_video);
 int flv_write_header(FILE* flv, int has_audio, int has_video);
 ////////////////////////////////////////////////////////////////////////////////
-// If the tage has more that on sei message, they will be combined into one
 sei_t* flv_read_sei(FILE* flv, flvtag_t* tag);
 ////////////////////////////////////////////////////////////////////////////////
 int flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type);
 int flvtag_avcwritenal(flvtag_t* tag, uint8_t* data, size_t size);
 int flvtag_addcaption_scc(flvtag_t* tag, const scc_t* scc);
 int flvtag_addcaption_text(flvtag_t* tag, const utf8_char_t* text);
+int flvtag_avcsequenceheader(flvtag_t* tag, const uint8_t* sps_data, size_t sps_size, const uint8_t* pps_data, size_t pps_size);
 ////////////////////////////////////////////////////////////////////////////////
 int flvtag_amfcaption_708(flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
 ////////////////////////////////////////////////////////////////////////////////

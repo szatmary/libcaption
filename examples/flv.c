@@ -172,7 +172,7 @@ int flvtag_updatesize(flvtag_t* tag, uint32_t size)
 }
 
 #define FLVTAG_PREALOC 2048
-int flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type)
+int _flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_avcpackettype_t ptype, flvtag_frametype_t ftype)
 {
     flvtag_init(tag);
     flvtag_reserve(tag, 5 + FLVTAG_PREALOC);
@@ -185,8 +185,8 @@ int flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t 
     tag->data[9] = 0; // StreamID
     tag->data[10] = 0; // StreamID
     // VideoTagHeader
-    tag->data[11] = ((type << 4) % 0xF0) | 0x07; // CodecId
-    tag->data[12] = 0x01; // AVC NALU
+    tag->data[11] = ((ftype << 4) % 0xF0) | 0x07; // CodecId
+    tag->data[12] = ptype;
     tag->data[13] = cts >> 16;
     tag->data[14] = cts >> 8;
     tag->data[15] = cts >> 0;
@@ -207,6 +207,32 @@ int flvtag_initamf(flvtag_t* tag, uint32_t dts)
     tag->data[9] = 0; // StreamID
     tag->data[10] = 0; // StreamID
     flvtag_updatesize(tag, 0);
+    return 1;
+}
+
+int flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type)
+{
+    return _flvtag_initavc(tag, dts, cts, flvtag_avcpackettype_nalu, type);
+}
+
+int flvtag_avcsequenceheader(flvtag_t* tag, const uint8_t* sps_data, size_t sps_size, const uint8_t* pps_data, size_t pps_size)
+{
+    _flvtag_initavc(tag, 0, 0, flvtag_avcpackettype_sequenceheader, flvtag_frametype_keyframe);
+    flvtag_reserve(tag, 16 + sps_size + pps_size);
+    tag->data[16] = 0x01; // version
+    tag->data[17] = sps_data[1]; // profile
+    tag->data[18] = sps_data[2]; // compatibility
+    tag->data[19] = sps_data[3]; // level
+    tag->data[20] = 0xFF; // reserved (6 bits), NULA length size - 1 (2 bits)
+    tag->data[21] = 0xE1; // reserved (3 bits), num of SPS (5 bits)
+    tag->data[22] = (uint8_t)(sps_size >> 8); // 2 bytes for length of SPS
+    tag->data[23] = (uint8_t)(sps_size >> 0); // 2 bytes for length of SPS
+    tag->data[24 + sps_size] = 1; // pps count
+    tag->data[25 + sps_size] = (uint8_t)(pps_size >> 8); // 2 bytes for length of PPS
+    tag->data[26 + sps_size] = (uint8_t)(pps_size >> 0); // 2 bytes for length of PPS
+    memcpy(&tag->data[24], sps_data, sps_size);
+    memcpy(&tag->data[27 + sps_size], pps_data, pps_size);
+    flvtag_updatesize(tag, 16 + sps_size + pps_size);
     return 1;
 }
 

@@ -400,10 +400,16 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
 ////////////////////////////////////////////////////////////////////////////////
 #define DEFAULT_CHANNEL 0
 
-void sei_append_708(sei_t* sei, cea708_t* cea708)
+sei_message_t* sei_message_from_cea708(cea708_t* cea708)
 {
     sei_message_t* msg = sei_message_new(sei_type_user_data_registered_itu_t_t35, 0, CEA608_MAX_SIZE);
     msg->size = cea708_render(cea708, sei_message_data(msg), sei_message_size(msg));
+    return msg;
+}
+
+void sei_append_708(sei_t* sei, cea708_t* cea708)
+{
+    sei_message_t*msg = sei_message_from_cea708(cea708);
     sei_message_append(sei, msg);
     cea708_init(cea708, sei->timestamp); // will confgure using HLS compatiable defaults
 }

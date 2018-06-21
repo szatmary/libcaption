@@ -102,6 +102,7 @@ typedef struct _sei_message_t {
     struct _sei_message_t* next;
 } sei_message_t;
 
+// TODO make this a pointer/count, like x264
 typedef struct {
     double timestamp;
     sei_message_t* head;
@@ -205,6 +206,10 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei);
     \param
 */
 libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame);
+/*! \brief
+    \param
+*/
+sei_message_t* sei_message_from_cea708(cea708_t* cea708);
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }
