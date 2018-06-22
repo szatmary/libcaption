@@ -118,33 +118,39 @@ utf8_size_t utf8_char_count(const char* data, size_t size)
 }
 
 // returnes the length of the line in bytes triming not printable charcters at the end
-size_t utf8_trimmed_length(const utf8_char_t* data, size_t size)
+size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters)
 {
-    for (; 0 < size && ' ' >= (uint8_t)data[size - 1]; --size) {
+    size_t l, t = 0, split_at = 0;
+    for (size_t c = 0; (*data) && c < charcters; ++c) {
+        l = utf8_char_length(data);
+        t += l, data += l;
+        if (!utf8_char_whitespace(data)) {
+            split_at = t;
+        }
     }
 
-    return size;
+    return split_at;
 }
 
+size_t _utf8_newline(const utf8_char_t* data)
+{
+    if ('\r' == data[0]) {
+        return '\n' == data[1] ? 2 : 1; // windows/unix
+    } else if ('\n' == data[0]) {
+        return '\r' == data[1] ? 2 : 1; // riscos/macos
+    } else {
+        return 0;
+    }
+}
 // returns the length in bytes of the line including the new line charcter(s)
 // auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 size_t utf8_line_length(const utf8_char_t* data)
 {
-    size_t len = 0;
+    size_t n, len = 0;
 
     for (len = 0; 0 != data[len]; ++len) {
-        if ('\r' == data[len]) {
-            if ('\n' == data[len + 1]) {
-                return len + 2; // windows
-            } else {
-                return len + 1; // unix
-            }
-        } else if ('\n' == data[len]) {
-            if ('\r' == data[len + 1]) {
-                return len + 2; // riscos
-            } else {
-                return len + 1; // macos
-            }
+        if (0 < (n = _utf8_newline(data))) {
+            return len + n;
         }
     }
 
@@ -158,9 +164,12 @@ utf8_size_t utf8_wrap_length(const utf8_char_t* data, utf8_size_t size)
     size_t char_length, char_count, split_at = size;
 
     for (char_count = 0; char_count <= size; ++char_count) {
-        if (' ' >= (*data)) {
-            split_at = char_count;
-        }
+        if (_utf8_newline(data)) {
+            return char_count;
+        } else if (utf8_char_whitespace(data))
+            {
+                split_at = char_count;
+            }
 
         char_length = utf8_char_length(data);
         data += char_length;
