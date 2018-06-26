@@ -350,33 +350,27 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 ////////////////////////////////////////////////////////////////////////////////
 int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data)
 {
-    int r, c;
     ssize_t size = (ssize_t)strlen(data);
-    size_t char_count, char_length, line_length = 0, trimmed_length = 0;
     caption_frame_init(frame);
     frame->write = &frame->back;
 
-    for (r = 0; 0 < size && SCREEN_ROWS > r; ++r) {
-        const utf8_char_t* cap_data = data;
-        line_length = utf8_line_length(cap_data);
-        trimmed_length = utf8_trimmed_length(cap_data, line_length);
-        char_count = utf8_char_count(cap_data, trimmed_length);
-
-        // If char_count is greater than one line can display, split it.
-        if (SCREEN_COLS < char_count) {
-            char_count = utf8_wrap_length(cap_data, SCREEN_COLS);
-            line_length = utf8_string_length(cap_data, char_count + 1);
+    for (size_t r = 0; (*data) && size && r < SCREEN_ROWS;) {
+        // skip whitespace at start of line
+        while (size && utf8_char_whitespace(data)) {
+            size_t s = utf8_char_length(data);
+            data += s, size -= s;
         }
 
-        // Write the line
-        for (c = 0; c < (int)char_count; ++c) {
-            caption_frame_write_char(frame, r, c, eia608_style_white, 0, &cap_data[0]);
-            char_length = utf8_char_length(cap_data);
-            cap_data += char_length;
+        // get charcter count for wrap (or orest of line)
+        utf8_size_t char_count = utf8_wrap_length(data, SCREEN_COLS);
+        // write to caption frame
+        for (size_t c = 0; c < char_count; ++c) {
+            size_t char_length = utf8_char_length(data);
+            caption_frame_write_char(frame, r, c, eia608_style_white, 0, data);
+            data += char_length, size -= char_length;
         }
 
-        data += line_length;
-        size -= (ssize_t)line_length;
+        r += char_count ? 1 : 0; // Update row num only if not blank
     }
 
     caption_frame_end(frame);

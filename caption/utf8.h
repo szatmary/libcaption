@@ -82,7 +82,7 @@ utf8_size_t utf8_char_count(const char* data, size_t size);
 
     returnes the length of the line in bytes triming not printable characters at the end
 */
-size_t utf8_trimmed_length(const utf8_char_t* data, size_t size);
+utf8_size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters);
 /*! \brief
     \param
 
