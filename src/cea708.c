@@ -55,9 +55,13 @@ int cea708_init(cea708_t* cea708, double timestamp)
     return 1;
 }
 
-void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user_data_t* user_data)
+libcaption_stauts_t cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user_data_t* user_data)
 {
     memset(user_data, 0, sizeof(user_data_t));
+    if(2 > size ) {
+        return LIBCAPTION_ERROR;
+    }
+
     user_data->process_em_data_flag = !!(data[0] & 0x80);
     user_data->process_cc_data_flag = !!(data[0] & 0x40);
     user_data->additional_data_flag = !!(data[0] & 0x20);
@@ -71,6 +75,7 @@ void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user
         user_data->cc_data[i].cc_type = data[0] >> 0;
         user_data->cc_data[i].cc_data = data[1] << 8 | data[2];
     }
+    return LIBCAPTION_OK;
 }
 
 // 00 00 00  06 C1  FF FC 34 B9 FF : onCaptionInfo.
@@ -140,14 +145,14 @@ error:
 
 libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t* cea708)
 {
-    if (!data || 7 > size) {
+    if (!data || 5 > size) {
         return LIBCAPTION_ERROR;
     }
 
     cea708->user_identifier = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
     cea708->user_data_type_code = data[4];
     if (3 == cea708->user_data_type_code) {
-        cea708_parse_user_data_type_strcture(data + 5, size - 5, &cea708->user_data);
+        return cea708_parse_user_data_type_strcture(data + 5, size - 5, &cea708->user_data);
     }
 
     return LIBCAPTION_OK;
@@ -254,10 +259,9 @@ void cea708_dump(cea708_t* cea708)
         cea708_cc_type_t type;
         uint16_t cc_data = cea708_cc_data(&cea708->user_data, i, &valid, &type);
 
-        if (valid && cc_type_ntsc_cc_field_1 == type) {
+        fprintf(stderr, "user_data.cc_data[%d] cc_valid: %s, cc_type: %d, cc_data: %04x\n", i, cea708->user_data.cc_data[i].cc_valid ? "true" : "false", cea708->user_data.cc_data[i].cc_type, cea708->user_data.cc_data[i].cc_data);
+        if (valid && (cc_type_ntsc_cc_field_1 == type || cc_type_ntsc_cc_field_1 == type)) {
             eia608_dump(cc_data);
-        } else {
-            fprintf(stderr, "user_data.cc_data[%d] cc_valid: %s, cc_type: %d, cc_data: %04x\n", i, cea708->user_data.cc_data[i].cc_valid ? "true" : "false", cea708->user_data.cc_data[i].cc_type, cea708->user_data.cc_data[i].cc_data);
         }
     }
 }

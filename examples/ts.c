@@ -30,6 +30,33 @@ void ts_init(ts_t* ts)
     memset(ts, 0, sizeof(ts_t));
 }
 
+FILE* ts_open_read(const char* flv)
+{
+    if (0 == flv || 0 == strcmp("-", flv)) {
+        return freopen(NULL, "rb", stdin);
+    }
+
+    return fopen(flv, "rb");
+}
+
+FILE* ts_close(FILE* flv)
+{
+    fclose(flv);
+    return 0;
+}
+
+libcalption_status_t ts_read_packet(FILE *ts, uint8_t *packet)
+{
+    for(;;) {
+        size_t size = fread(packet,1,1,ts);
+        if(size && 0x47 == *packet) {
+            return (TS_PACKET_SIZE - 1 == fread(packet,1,TS_PACKET_SIZE-1,file) ? LIBCAPTION_OK : LIBCAPTION_ERROR;
+        }
+    }
+}
+
+
+
 static int64_t ts_parse_pts(const uint8_t* data)
 {
     // 0000 1110  1111 1111  1111 1110  1111 1111  1111 1110
@@ -42,7 +69,7 @@ static int64_t ts_parse_pts(const uint8_t* data)
     return pts;
 }
 
-int ts_parse_packet(ts_t* ts, const uint8_t* data)
+libcaption_status_t ts_parse_packet(ts_t* ts, const uint8_t* data)
 {
     size_t i = 0;
     int pusi = !!(data[i + 1] & 0x40); // Payload Unit Start Indicator
@@ -66,6 +93,7 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
         }
 
         ts->pmtpid = ((data[i + 10] & 0x1F) << 8) | data[i + 11];
+        fprintf(stderr,"PMT PID %d\n",ts->pmtpid );
     } else if (pid == ts->pmtpid) {
         // PMT
         if (payload_present) {
@@ -73,6 +101,7 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
             i += data[i] + 1;
         }
 
+        fprintf(stderr,"got pmt\n");
         uint16_t section_length = ((data[i + 1] & 0x0F) << 8) | data[i + 2];
         int current = data[i + 5] & 0x01;
         int16_t program_info_length = ((data[i + 10] & 0x0F) << 8) | data[i + 11];
@@ -87,6 +116,7 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
                 int16_t esinfo_length = ((data[i + 3] & 0x0F) << 8) | data[i + 4];
 
                 if (STREAM_TYPE_H262 == stream_type || STREAM_TYPE_H264 == stream_type || STREAM_TYPE_H265 == stream_type) {
+                    fprintf(stderr,"Selected PID %d type %02x\n",elementary_pid, stream_type);
                     ts->ccpid = elementary_pid;
                     ts->stream_type = stream_type;
                 }

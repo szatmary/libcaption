@@ -42,11 +42,17 @@ typedef struct {
     Expects 188 byte TS packet
 */
 #define TS_PACKET_SIZE 188
+FILE* ts_open_read(const char* flv);
+FILE* ts_close(FILE* flv);
+libcalption_status_t ts_read_packet(FILE *ts, uint8_t *packet);
+
 void ts_init(ts_t* ts);
-int ts_parse_packet(ts_t* ts, const uint8_t* data);
+libcaption_status_t ts_parse_packet(ts_t* ts, const uint8_t* data);
 // return timestamp in seconds
 static inline double ts_dts_seconds(ts_t* ts) { return ts->dts / 90000.0; }
 static inline double ts_pts_seconds(ts_t* ts) { return ts->pts / 90000.0; }
 static inline double ts_cts_seconds(ts_t* ts) { return (ts->pts - ts->dts) / 90000.0; }
+
+
 
 #endif

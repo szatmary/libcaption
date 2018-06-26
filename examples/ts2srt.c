@@ -24,6 +24,7 @@
 #include "srt.h"
 #include "ts.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 int main(int argc, char** argv)
@@ -31,7 +32,6 @@ int main(int argc, char** argv)
     const char* path = argv[1];
 
     ts_t ts;
-    srt_t* srt = 0;
     // srt_cue_t, *cue;
     mpeg_bitstream_t mpegbs;
     caption_frame_t frame;
@@ -40,30 +40,40 @@ int main(int argc, char** argv)
     caption_frame_init(&frame);
     mpeg_bitstream_init(&mpegbs);
 
-    srt = srt_new();
-    FILE* file = fopen(path, "rb+");
+    srt_t *srt = srt_new();
+    FILE* file = ts_open_read(path);
+    if(!file) {
+        fprintf(stderr,"Could not read from input file\n");
+    }
+
     setvbuf(file, 0, _IOFBF, 8192 * TS_PACKET_SIZE);
     // This fread 188 bytes at a time is VERY slow. Need to rewrite that
-    while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
+    while (LIBCAPTION_OK == ts_read(file, &pkt[0])) {
+        //
+        fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
         if (LIBCAPTION_READY == ts_parse_packet(&ts, &pkt[0])) {
             double dts = ts_dts_seconds(&ts);
             double cts = ts_cts_seconds(&ts);
             while (ts.size) {
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
                 size_t bytes_read = mpeg_bitstream_parse(&mpegbs, &frame, ts.data, ts.size, ts.stream_type, dts, cts);
                 ts.data += bytes_read, ts.size -= bytes_read;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
                 switch (mpeg_bitstream_status(&mpegbs)) {
                 default:
                 case LIBCAPTION_ERROR:
                     fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
-                    mpeg_bitstream_init(&mpegbs);
-                    return EXIT_FAILURE;
+                    // mpeg_bitstream_init(&mpegbs);
+                    // return EXIT_FAILURE;
                     break;
 
                 case LIBCAPTION_OK:
                     break;
 
                 case LIBCAPTION_READY: {
-                    // caption_frame_dump(&frame);
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
+                    caption_frame_dump(&frame);
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
                     srt_cue_from_caption_frame(&frame, srt);
                 } break;
                 } //switch
@@ -72,12 +82,14 @@ int main(int argc, char** argv)
     } // while
 
     // Flush anything left
+    fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
     while (mpeg_bitstream_flush(&mpegbs, &frame)) {
         if (mpeg_bitstream_status(&mpegbs)) {
             srt_cue_from_caption_frame(&frame, srt);
         }
     }
 
+    fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
     srt_dump(srt);
     srt_free(srt);
 

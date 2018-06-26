@@ -674,37 +674,48 @@ void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* packet, caption_frame_t
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
     if (MAX_NALU_SIZE <= packet->size) {
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
         packet->status = LIBCAPTION_ERROR;
-        // fprintf(stderr, "LIBCAPTION_ERROR\n");
+        // fprintf(stderr, "MAX_NALU_SIZE <= packet->size\n");
         return 0;
     }
 
     // consume upto MAX_NALU_SIZE bytes
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
     if (MAX_NALU_SIZE <= packet->size + size) {
-        size = MAX_NALU_SIZE - packet->size;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
+        size = MAX_NALU_SIZE - packet->size - 1;
     }
 
     sei_t sei;
     size_t header_size, scpos;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
     packet->status = LIBCAPTION_OK;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
+    fprintf(stderr,"packet->size %u size %u\n",packet->size,size);
     memcpy(&packet->data[packet->size], data, size);
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
     packet->size += size;
 
     while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(&packet->data[0], packet->size))) {
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
         switch (mpeg_bitstream_packet_type(packet, stream_type)) {
         default:
             break;
         case H262_SEI_PACKET:
             header_size = 4;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
             if (STREAM_TYPE_H262 == stream_type && scpos > header_size) {
                 cea708_t* cea708 = _mpeg_bitstream_cea708_emplace_back(packet, dts + cts);
                 packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[header_size], scpos - header_size, cea708));
+                cea708_dump(cea708);
                 _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
             }
             break;
         case H264_SEI_PACKET:
         case H265_SEI_PACKET:
             header_size = STREAM_TYPE_H264 == stream_type ? 4 : STREAM_TYPE_H265 == stream_type ? 5 : 0;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
             if (header_size && scpos > header_size) {
                 packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[header_size], scpos - header_size, dts + cts));
                 for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
@@ -719,28 +730,9 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
         }
 
         packet->size -= scpos;
+                fprintf(stderr,"here %s%d\n",__FILE__,__LINE__);
         memmove(&packet->data[0], &packet->data[scpos], packet->size);
     }
 
     return size;
 }
-////////////////////////////////////////////////////////////////////////////////
-// // h262
-// libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* packet, double dts, double cts)
-// {
-//     cea708_t cea708;
-//     libcaption_stauts_t status = LIBCAPTION_OK;
-
-//     cea708_init(&cea708);
-//     size_t size = mpeg_bitstream_size(packet, STREAM_TYPE_H262);
-//     const uint8_t* data = mpeg_bitstream_data(packet, STREAM_TYPE_H262);
-//     status = cea708_parse_h262(data, size, &cea708);
-//     // cea708_dump(&cea708);
-//     status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
-
-//     if (LIBCAPTION_READY == status) {
-//         frame->timestamp = dts + cts;
-//     }
-
-//     return status;
-// }
