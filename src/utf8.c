@@ -166,10 +166,9 @@ utf8_size_t utf8_wrap_length(const utf8_char_t* data, utf8_size_t size)
     for (char_count = 0; char_count <= size; ++char_count) {
         if (_utf8_newline(data)) {
             return char_count;
-        } else if (utf8_char_whitespace(data))
-            {
-                split_at = char_count;
-            }
+        } else if (utf8_char_whitespace(data)) {
+            split_at = char_count;
+        }
 
         char_length = utf8_char_length(data);
         data += char_length;
