@@ -32,7 +32,7 @@ vtt_block_t* vtt_block_free_head(vtt_block_t* head);
 vtt_t* vtt_new()
 {
     vtt_t* vtt = malloc(sizeof(vtt_t));
-    memset(vtt,0,sizeof(vtt_t));
+    memset(vtt, 0, sizeof(vtt_t));
     return vtt;
 }
 
