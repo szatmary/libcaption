@@ -25,6 +25,7 @@
 #include "ts.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char** argv)
 {
@@ -41,7 +42,12 @@ int main(int argc, char** argv)
     mpeg_bitstream_init(&mpegbs);
 
     srt = srt_new();
-    FILE* file = fopen(path, "rb+");
+    FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");
+    if(!file) {
+        fprintf(stderr,"Failed to open input\n");
+        return EXIT_FAILURE;
+    }
+
     setvbuf(file, 0, _IOFBF, 8192 * TS_PACKET_SIZE);
     // This fread 188 bytes at a time is VERY slow. Need to rewrite that
     while (TS_PACKET_SIZE == fread(&pkt[0], 1, TS_PACKET_SIZE, file)) {
