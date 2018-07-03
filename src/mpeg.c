@@ -714,6 +714,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
                         _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
                     }
                 }
+                sei_free(&sei);
             }
             break;
         }
