@@ -45,8 +45,6 @@ extern "C" {
 typedef struct {
     double dts, cts;
     libcaption_stauts_t status;
-    // Priority queue for out of order frame processing
-    // Should probablly be a linked list
     uint8_vector_t* buffer;
     cea708_vector_t* cea708;
 } mpeg_bitstream_t;

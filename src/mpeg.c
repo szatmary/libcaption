@@ -626,37 +626,6 @@ static size_t find_start_code(const uint8_t* data, size_t size)
     return 0;
 }
 
-// WILL wrap around if larger than MAX_REFRENCE_FRAMES for memory saftey
-// cea708_t* _mpeg_bitstream_cea708_at(mpeg_bitstream_t* packet, size_t pos) { return &packet->cea708[(packet->front + pos) % MAX_REFRENCE_FRAMES]; }
-// cea708_t* _mpeg_bitstream_cea708_front(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, 0); }
-// cea708_t* _mpeg_bitstream_cea708_back(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, packet->latent - 1); }
-// cea708_t* _mpeg_bitstream_cea708_emplace_back(mpeg_bitstream_t* packet, double timestamp)
-// {
-//     ++packet->latent;
-//     cea708_t* cea708 = _mpeg_bitstream_cea708_back(packet);
-//     cea708_init(cea708, timestamp);
-//     return cea708;
-// }
-
-// TODO replace this with cea708_vector_sort
-void _mpeg_bitstream_cea708_sort(mpeg_bitstream_t* bs)
-{
-    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
-    // This must be stable, decending sort
-again:
-    for (size_t i = 1; i < cea708_vector_count(&bs->cea708); ++i) {
-        cea708_t c;
-        cea708_t* a = cea708_vector_at(&bs->cea708, i - 1);
-        cea708_t* b = cea708_vector_at(&bs->cea708, i - 0);
-        if (a->timestamp > b->timestamp) {
-            memcpy(&c, a, sizeof(cea708_t));
-            memcpy(a, b, sizeof(cea708_t));
-            memcpy(b, &c, sizeof(cea708_t));
-            goto again;
-        }
-    }
-}
-
 // Removes items from front
 size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
 {
@@ -671,7 +640,7 @@ size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
 
 void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, double dts)
 {
-    _mpeg_bitstream_cea708_sort(bs);
+    cea708_vector_sort_asending(&bs->cea708);
     // Loop will terminate on LIBCAPTION_READY
     while (cea708_vector_count(&bs->cea708) && bs->status == LIBCAPTION_OK && cea708_vector_front(&bs->cea708)->timestamp < dts) {
         mpeg_bitstream_flush(bs, frame);
