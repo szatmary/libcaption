@@ -38,18 +38,20 @@ extern "C" {
 
 typedef void (*_vector_ctor_t)(void*);
 typedef void (*_vector_dtor_t)(void*);
+typedef int (*_vector_cmp_t)(void*, void*);
 typedef struct {
     size_t count;
     size_t alloc;
     size_t size;
     _vector_ctor_t ctor;
     _vector_ctor_t dtor;
+    _vector_cmp_t cmp;
 } _vector_t;
 
-static inline _vector_t* _vector_new(size_t s, _vector_ctor_t ctor, _vector_dtor_t dtor)
+static inline _vector_t* _vector_new(size_t s, _vector_ctor_t ctor, _vector_dtor_t dtor, _vector_cmp_t cmp)
 {
     _vector_t* v = (_vector_t*)calloc(1, sizeof(_vector_t) + s);
-    v->size = s, v->ctor = ctor, v->dtor = dtor;
+    v->size = s, v->ctor = ctor, v->dtor = dtor, v->cmp = cmp;
     return v;
 }
 
@@ -193,6 +195,29 @@ static inline void _vector_pop_back(_vector_t** v)
     }
 }
 
+/*! \brief
+*/
+static inline void _vector_sort(_vector_t** v)
+{
+    if (!(*v)->cmp) {
+        return;
+    }
+    // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
+again:
+    for (size_t i = 1; i < (*v)->count; ++i) {
+        char* a = _vector_at(v, i - 0);
+        char* b = _vector_at(v, i - 1);
+        if (0 > (*v)->cmp(a, b)) {
+            char* c = _vector_push_back(v);
+            memcpy(c, a, (*v)->size);
+            memcpy(a, b, (*v)->size);
+            memcpy(b, c, (*v)->size);
+            _vector_pop_back(v);
+            goto again;
+        }
+    }
+}
+
 /*! \brief Removes all element from the vector and free memory
 */
 static inline void _vector_del(_vector_t** v)
@@ -201,40 +226,47 @@ static inline void _vector_del(_vector_t** v)
     free(*v), *v = 0;
 }
 
-#define MAKE_VECTOR(TYPE, NAME, CTOR, DTOR)                                                                                                                            \
-    typedef _vector_t NAME##_vector_t;                                                                                                                                 \
-    typedef void (*NAME##_vector_ctor_t)(TYPE*);                                                                                                                       \
-    typedef void (*NAME##_vector_dtor_t)(TYPE*);                                                                                                                       \
-    static inline NAME##_vector_t* NAME##_vector_new() { return (NAME##_vector_t*)_vector_new(sizeof(TYPE), (_vector_ctor_t)CTOR, (_vector_dtor_t)DTOR); }             \
-    static inline TYPE* NAME##_vector_data(NAME##_vector_t** v) { return (TYPE*)_vector_data((_vector_t**)v); }                                                        \
-    static inline size_t NAME##_vector_count(NAME##_vector_t** v) { return _vector_count((_vector_t**)v); }                                                            \
-    static inline TYPE* NAME##_vector_at(NAME##_vector_t** v, size_t c) { return (TYPE*)_vector_at((_vector_t**)v, c); }                                               \
-    static inline TYPE* NAME##_vector_front(NAME##_vector_t** v) { return (TYPE*)_vector_front((_vector_t**)v); }                                                      \
-    static inline TYPE* NAME##_vector_back(NAME##_vector_t** v) { return (TYPE*)_vector_back((_vector_t**)v); }                                                        \
-    static inline size_t NAME##_vector_reserve(NAME##_vector_t** v, size_t c) { return _vector_reserve((_vector_t**)v, c); }                                           \
-    static inline size_t NAME##_vector_resize(NAME##_vector_t** v, size_t c) { return _vector_resize((_vector_t**)v, c); }                                             \
-    static inline size_t NAME##_vector_insert(NAME##_vector_t** v, size_t p, size_t c, const TYPE* d) { return _vector_insert((_vector_t**)v, p, c, (const char*)d); } \
-    static inline size_t NAME##_vector_append(NAME##_vector_t** v, size_t c, const TYPE* d) { return _vector_append((_vector_t**)v, c, (const char*)d); }              \
-    static inline size_t NAME##_vector_erase(NAME##_vector_t** v, size_t p, size_t c) { return _vector_erase((_vector_t**)v, p, c); }                                  \
-    static inline TYPE* NAME##_vector_push_back(_vector_t** v) { return (TYPE*)_vector_push_back((_vector_t**)v); }                                                    \
-    static inline void NAME##_vector_emplace_back(_vector_t** v, TYPE* d) { return _vector_emplace_back((_vector_t**)v, (char*)d); }                                   \
-    static inline void NAME##_vector_pop_back(NAME##_vector_t** v) { return _vector_pop_back((_vector_t**)v); }                                                        \
+#define MAKE_VECTOR(TYPE, NAME, CTOR, DTOR, CMP)                                                                                                                              \
+    typedef _vector_t NAME##_vector_t;                                                                                                                                        \
+    typedef void (*NAME##_vector_ctor_t)(TYPE*);                                                                                                                              \
+    typedef void (*NAME##_vector_dtor_t)(TYPE*);                                                                                                                              \
+    typedef int (*NAME##_vector_cmp_t)(TYPE*, TYPE*);                                                                                                                         \
+    static inline NAME##_vector_t* NAME##_vector_new() {return (NAME##_vector_t*)_vector_new(sizeof(TYPE), (_vector_ctor_t)CTOR, (_vector_dtor_t)DTOR, (_vector_cmp_t)CMP); } \
+    static inline TYPE* NAME##_vector_data(NAME##_vector_t** v) { return (TYPE*)_vector_data((_vector_t**)v); }                                                               \
+    static inline size_t NAME##_vector_count(NAME##_vector_t** v) { return _vector_count((_vector_t**)v); }                                                                   \
+    static inline TYPE* NAME##_vector_at(NAME##_vector_t** v, size_t c) { return (TYPE*)_vector_at((_vector_t**)v, c); }                                                      \
+    static inline TYPE* NAME##_vector_front(NAME##_vector_t** v) { return (TYPE*)_vector_front((_vector_t**)v); }                                                             \
+    static inline TYPE* NAME##_vector_back(NAME##_vector_t** v) { return (TYPE*)_vector_back((_vector_t**)v); }                                                               \
+    static inline size_t NAME##_vector_reserve(NAME##_vector_t** v, size_t c) { return _vector_reserve((_vector_t**)v, c); }                                                  \
+    static inline size_t NAME##_vector_resize(NAME##_vector_t** v, size_t c) { return _vector_resize((_vector_t**)v, c); }                                                    \
+    static inline size_t NAME##_vector_insert(NAME##_vector_t** v, size_t p, size_t c, const TYPE* d) { return _vector_insert((_vector_t**)v, p, c, (const char*)d); }        \
+    static inline size_t NAME##_vector_append(NAME##_vector_t** v, size_t c, const TYPE* d) { return _vector_append((_vector_t**)v, c, (const char*)d); }                     \
+    static inline size_t NAME##_vector_erase(NAME##_vector_t** v, size_t p, size_t c) { return _vector_erase((_vector_t**)v, p, c); }                                         \
+    static inline TYPE* NAME##_vector_push_back(_vector_t** v) { return (TYPE*)_vector_push_back((_vector_t**)v); }                                                           \
+    static inline void NAME##_vector_emplace_back(_vector_t** v, TYPE* d) { return _vector_emplace_back((_vector_t**)v, (char*)d); }                                          \
+    static inline void NAME##_vector_pop_back(NAME##_vector_t** v) { return _vector_pop_back((_vector_t**)v); }                                                               \
     static inline void NAME##_vector_del(NAME##_vector_t** v) { return _vector_del((_vector_t**)v); }
 
 // Common types
-static inline void int8_vector_init(int8_t* e) { (*e) = 0; }
-MAKE_VECTOR(int8_t, int8, int8_vector_init, int8_vector_init);
+#define MAKE_VECTOR_SIMPLE(TYPE, NAME) \
+    static inline void NAME##_vector_ctor(TYPE* a) { (*a) = 0; } \
+    static inline void NAME##_vector_dtor(TYPE* a) { (*a) = 0; } \
+    static inline int NAME##_vector_cmp(TYPE* a,TYPE* b) { return (*a) == (*b) ? 0 : (*a) < (*b) ? -1 : 1; } \
+    MAKE_VECTOR(TYPE,NAME, NAME##_vector_ctor,  NAME##_vector_dtor,  NAME##_vector_cmp)
 
-static inline void uint8_vector_init(uint8_t* e) { (*e) = 0; }
-MAKE_VECTOR(uint8_t, uint8, uint8_vector_init, uint8_vector_init);
 
-static inline void int16_vector_ctor(int16_t* e) { (*e) = 0; }
-static inline void int16_vector_dtor(int16_t* e) { (*e) = 0; }
-MAKE_VECTOR(int16_t, int16, int16_vector_ctor, int16_vector_dtor);
+MAKE_VECTOR_SIMPLE(int8_t, int8);
+MAKE_VECTOR_SIMPLE(uint8_t, uint8);
+MAKE_VECTOR_SIMPLE(double, double);
 
-static inline void uint16_vector_ctor(uint16_t* e) { (*e) = 0; }
-static inline void uint16_vector_dtor(uint16_t* e) { (*e) = 0; }
-MAKE_VECTOR(uint16_t, uint16, uint16_vector_ctor, uint16_vector_dtor);
+// static inline void int16_vector_ctor(int16_t* e) { (*e) = 0; }
+// static inline void int16_vector_dtor(int16_t* e) { (*e) = 0; }
+// MAKE_VECTOR(int16_t, int16, int16_vector_ctor, int16_vector_dtor, 0);
+
+// static inline void uint16_vector_ctor(uint16_t* e) { (*e) = 0; }
+// static inline void uint16_vector_dtor(uint16_t* e) { (*e) = 0; }
+// MAKE_VECTOR(uint16_t, uint16, uint16_vector_ctor, uint16_vector_dtor, 0);
+// MAKE_VECTOR(double, double, double_vector_init, double_vector_init, 0);
 
 // string
 // MAKE_VECTOR(char, str, 0, 0);
