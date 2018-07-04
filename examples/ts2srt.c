@@ -34,17 +34,16 @@ int main(int argc, char** argv)
     ts_t ts;
     srt_t* srt = 0;
     // srt_cue_t, *cue;
-    mpeg_bitstream_t mpegbs;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
+    mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
     ts_init(&ts);
     caption_frame_init(&frame);
-    mpeg_bitstream_init(&mpegbs);
 
     srt = srt_new();
     FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");
-    if(!file) {
-        fprintf(stderr,"Failed to open input\n");
+    if (!file) {
+        fprintf(stderr, "Failed to open input\n");
         return EXIT_FAILURE;
     }
 
@@ -55,13 +54,13 @@ int main(int argc, char** argv)
             double dts = ts_dts_seconds(&ts);
             double cts = ts_cts_seconds(&ts);
             while (ts.size) {
-                size_t bytes_read = mpeg_bitstream_parse(&mpegbs, &frame, ts.data, ts.size, ts.stream_type, dts, cts);
+                size_t bytes_read = mpeg_bitstream_parse(mpegbs, &frame, ts.data, ts.size, ts.stream_type, dts, cts);
                 ts.data += bytes_read, ts.size -= bytes_read;
-                switch (mpeg_bitstream_status(&mpegbs)) {
+                switch (mpeg_bitstream_status(mpegbs)) {
                 default:
                 case LIBCAPTION_ERROR:
                     fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
-                    mpeg_bitstream_init(&mpegbs);
+                    // mpeg_bitstream_init(&mpegbs);
                     return EXIT_FAILURE;
                     break;
 
@@ -78,14 +77,15 @@ int main(int argc, char** argv)
     } // while
 
     // Flush anything left
-    while (mpeg_bitstream_flush(&mpegbs, &frame)) {
-        if (mpeg_bitstream_status(&mpegbs)) {
+    while (mpeg_bitstream_flush(mpegbs, &frame)) {
+        if (mpeg_bitstream_status(mpegbs)) {
             srt_cue_from_caption_frame(&frame, srt);
         }
     }
 
     srt_dump(srt);
     srt_free(srt);
+    mpeg_bitstream_del(mpegbs);
 
     return EXIT_SUCCESS;
 }

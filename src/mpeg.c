@@ -565,28 +565,35 @@ libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 }
 ////////////////////////////////////////////////////////////////////////////////
 // bitstream
-void mpeg_bitstream_init(mpeg_bitstream_t* packet)
+mpeg_bitstream_t* mpeg_bitstream_new()
 {
-    packet->dts = 0;
-    packet->cts = 0;
-    packet->size = 0;
-    packet->front = 0;
-    packet->latent = 0;
-    packet->status = LIBCAPTION_OK;
+    mpeg_bitstream_t* bs = (mpeg_bitstream_t*)calloc(1, sizeof(mpeg_bitstream_t));
+    bs->dts = 0, bs->cts = 0;
+    bs->status = LIBCAPTION_OK;
+    bs->buffer = uint8_vector_new();
+    bs->cea708 = cea708_vector_new();
+    return bs;
+}
+
+void mpeg_bitstream_del(mpeg_bitstream_t* bs)
+{
+    uint8_vector_del(&bs->buffer);
+    cea708_vector_del(&bs->cea708);
+    free(bs);
 }
 
 uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet, unsigned stream_type)
 {
-    if (4 > packet->size) {
+    if (4 > uint8_vector_count(&packet->buffer)) {
         return 0;
     }
     switch (stream_type) {
     case STREAM_TYPE_H262:
-        return packet->data[3];
+        return *uint8_vector_at(&packet->buffer, 3);
     case STREAM_TYPE_H264:
-        return packet->data[3] & 0x1F;
+        return *uint8_vector_at(&packet->buffer, 3) & 0x1F;
     case STREAM_TYPE_H265:
-        return (packet->data[3] >> 1) & 0x3F;
+        return (*uint8_vector_at(&packet->buffer, 3) >> 1) & 0x3F;
     default:
         return 0;
     }
@@ -620,26 +627,27 @@ static size_t find_start_code(const uint8_t* data, size_t size)
 }
 
 // WILL wrap around if larger than MAX_REFRENCE_FRAMES for memory saftey
-cea708_t* _mpeg_bitstream_cea708_at(mpeg_bitstream_t* packet, size_t pos) { return &packet->cea708[(packet->front + pos) % MAX_REFRENCE_FRAMES]; }
-cea708_t* _mpeg_bitstream_cea708_front(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, 0); }
-cea708_t* _mpeg_bitstream_cea708_back(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, packet->latent - 1); }
-cea708_t* _mpeg_bitstream_cea708_emplace_back(mpeg_bitstream_t* packet, double timestamp)
-{
-    ++packet->latent;
-    cea708_t* cea708 = _mpeg_bitstream_cea708_back(packet);
-    cea708_init(cea708, timestamp);
-    return cea708;
-}
+// cea708_t* _mpeg_bitstream_cea708_at(mpeg_bitstream_t* packet, size_t pos) { return &packet->cea708[(packet->front + pos) % MAX_REFRENCE_FRAMES]; }
+// cea708_t* _mpeg_bitstream_cea708_front(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, 0); }
+// cea708_t* _mpeg_bitstream_cea708_back(mpeg_bitstream_t* packet) { return _mpeg_bitstream_cea708_at(packet, packet->latent - 1); }
+// cea708_t* _mpeg_bitstream_cea708_emplace_back(mpeg_bitstream_t* packet, double timestamp)
+// {
+//     ++packet->latent;
+//     cea708_t* cea708 = _mpeg_bitstream_cea708_back(packet);
+//     cea708_init(cea708, timestamp);
+//     return cea708;
+// }
 
-void _mpeg_bitstream_cea708_sort(mpeg_bitstream_t* packet)
+// TODO replace this with cea708_vector_sort
+void _mpeg_bitstream_cea708_sort(mpeg_bitstream_t* bs)
 {
     // TODO better sort? (for small nearly sorted lists bubble is difficult to beat)
     // This must be stable, decending sort
 again:
-    for (size_t i = 1; i < packet->latent; ++i) {
+    for (size_t i = 1; i < cea708_vector_count(&bs->cea708); ++i) {
         cea708_t c;
-        cea708_t* a = _mpeg_bitstream_cea708_at(packet, i - 1);
-        cea708_t* b = _mpeg_bitstream_cea708_at(packet, i);
+        cea708_t* a = cea708_vector_at(&bs->cea708, i - 1);
+        cea708_t* b = cea708_vector_at(&bs->cea708, i - 0);
         if (a->timestamp > b->timestamp) {
             memcpy(&c, a, sizeof(cea708_t));
             memcpy(a, b, sizeof(cea708_t));
@@ -650,55 +658,56 @@ again:
 }
 
 // Removes items from front
-size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame)
+size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
 {
-    if (packet->latent) {
-        cea708_t* cea708 = _mpeg_bitstream_cea708_front(packet);
-        packet->status = libcaption_status_update(LIBCAPTION_OK, cea708_to_caption_frame(frame, cea708));
-        packet->front = (packet->front + 1) % MAX_REFRENCE_FRAMES;
-        --packet->latent;
+    if (0 < cea708_vector_count(&bs->cea708)) {
+        cea708_t* cea708 = cea708_vector_front(&bs->cea708);
+        bs->status = libcaption_status_update(LIBCAPTION_OK, cea708_to_caption_frame(frame, cea708));
+        cea708_vector_pop_back(&bs->cea708);
     }
 
-    return packet->latent;
+    return cea708_vector_count(&bs->cea708);
 }
 
-void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* packet, caption_frame_t* frame, double dts)
+void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, double dts)
 {
-    _mpeg_bitstream_cea708_sort(packet);
+    _mpeg_bitstream_cea708_sort(bs);
     // Loop will terminate on LIBCAPTION_READY
-    while (packet->latent && packet->status == LIBCAPTION_OK && _mpeg_bitstream_cea708_front(packet)->timestamp < dts) {
-        mpeg_bitstream_flush(packet, frame);
+    while (cea708_vector_count(&bs->cea708) && bs->status == LIBCAPTION_OK && cea708_vector_front(&bs->cea708)->timestamp < dts) {
+        mpeg_bitstream_flush(bs, frame);
     }
 }
 
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
-    if (MAX_NALU_SIZE <= packet->size) {
+    size_t buffer_size = uint8_vector_count(&packet->buffer);
+    if (MAX_NALU_SIZE <= buffer_size) {
         packet->status = LIBCAPTION_ERROR;
-        // fprintf(stderr, "LIBCAPTION_ERROR\n");
         return 0;
     }
 
     // consume upto MAX_NALU_SIZE bytes
-    if (MAX_NALU_SIZE <= packet->size + size) {
-        size = MAX_NALU_SIZE - packet->size;
+    if (MAX_NALU_SIZE <= buffer_size + size) {
+        size = MAX_NALU_SIZE - buffer_size;
     }
 
     sei_t sei;
     size_t header_size, scpos;
     packet->status = LIBCAPTION_OK;
-    memcpy(&packet->data[packet->size], data, size);
-    packet->size += size;
+    uint8_vector_append(&packet->buffer, size, data);
 
-    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(&packet->data[0], packet->size))) {
+    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(uint8_vector_data(&packet->buffer), uint8_vector_count(&packet->buffer))))
+
+    {
         switch (mpeg_bitstream_packet_type(packet, stream_type)) {
         default:
             break;
         case H262_SEI_PACKET:
             header_size = 4;
             if (STREAM_TYPE_H262 == stream_type && scpos > header_size) {
-                cea708_t* cea708 = _mpeg_bitstream_cea708_emplace_back(packet, dts + cts);
-                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(&packet->data[header_size], scpos - header_size, cea708));
+                cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
+                cea708->timestamp = dts + cts;
+                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(uint8_vector_at(&packet->buffer, header_size), scpos - header_size, cea708));
                 _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
             }
             break;
@@ -706,10 +715,11 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
         case H265_SEI_PACKET:
             header_size = STREAM_TYPE_H264 == stream_type ? 4 : STREAM_TYPE_H265 == stream_type ? 5 : 0;
             if (header_size && scpos > header_size) {
-                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, &packet->data[header_size], scpos - header_size, dts + cts));
+                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, uint8_vector_at(&packet->buffer, header_size), scpos - header_size, dts + cts));
                 for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
                     if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-                        cea708_t* cea708 = _mpeg_bitstream_cea708_emplace_back(packet, dts + cts);
+                        cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
+                        cea708->timestamp = dts + cts;
                         packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), cea708));
                         _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
                     }
@@ -719,8 +729,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
             break;
         }
 
-        packet->size -= scpos;
-        memmove(&packet->data[0], &packet->data[scpos], packet->size);
+        uint8_vector_erase(&packet->buffer, 0, scpos);
     }
 
     return size;

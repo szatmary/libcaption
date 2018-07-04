@@ -118,6 +118,11 @@ int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
     \param
 */
 void cea708_dump(cea708_t* cea708);
+
+static inline void cea708_ctor(cea708_t* cea708) { cea708_init(cea708, 0.0); }
+static inline void cea708_dtor(cea708_t* cea708) { cea708_init(cea708, 0.0); }
+MAKE_VECTOR(cea708_t, cea708, cea708_ctor, cea708_dtor);
+
 #ifdef __cplusplus
 }
 #endif

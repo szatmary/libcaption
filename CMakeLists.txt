@@ -61,6 +61,7 @@ set(CAPTION_SOURCES
 )
 
 set(CAPTION_HEADERS
+  caption/types.h
   caption/caption.h
   caption/cea708.h
   caption/eia608.h
