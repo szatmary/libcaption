@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libcaption)
-set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
+#set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-g -O0 ${CMAKE_C_FLAGS}")
 add_definitions(-D__STDC_CONSTANT_MACROS)
 if (WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -93,11 +94,17 @@ endif()
 #add_executable(eia608_test unit_tests/eia608_test.c )
 #target_link_libraries(eia608_test caption)
 
+
+# Tests - TODO autro run these
 #add_executable(test_captions unit_tests/test_sei.c )
 #target_link_libraries(test_captions caption)
 
-add_executable(test_wrap unit_tests/test_wrap.c )
-target_link_libraries(test_wrap caption)
+#add_executable(test_wrap unit_tests/test_wrap.c )
+#target_link_libraries(test_wrap caption)
+
+#add_executable(test_captions unit_tests/vector.cpp)
+#target_link_libraries(test_captions caption)
+
 
 install (TARGETS caption DESTINATION lib EXPORT caption-targets)
 install (FILES ${CAPTION_HEADERS} DESTINATION include/caption)

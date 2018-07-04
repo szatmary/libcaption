@@ -616,6 +616,7 @@ uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet, unsigned stream_typ
 
 static size_t find_start_code(const uint8_t* data, size_t size)
 {
+    // TODO why does this loop-start at 1?
     uint32_t start_code = 0xffffffff;
     for (size_t i = 1; i < size; ++i) {
         start_code = (start_code << 8) | data[i];
@@ -630,7 +631,7 @@ static size_t find_start_code(const uint8_t* data, size_t size)
 size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
 {
     if (0 < cea708_vector_count(&bs->cea708)) {
-        cea708_t* cea708 = cea708_vector_front(&bs->cea708);
+        cea708_t* cea708 = cea708_vector_back(&bs->cea708);
         bs->status = libcaption_status_update(LIBCAPTION_OK, cea708_to_caption_frame(frame, cea708));
         cea708_vector_pop_back(&bs->cea708);
     }
@@ -638,11 +639,11 @@ size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
     return cea708_vector_count(&bs->cea708);
 }
 
-void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, double dts)
+void _mpeg_bitstream_cea708_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, double dts)
 {
-    cea708_vector_sort_asending(&bs->cea708);
+    cea708_vector_sort_descending(&bs->cea708);
     // Loop will terminate on LIBCAPTION_READY
-    while (cea708_vector_count(&bs->cea708) && bs->status == LIBCAPTION_OK && cea708_vector_front(&bs->cea708)->timestamp < dts) {
+    while (cea708_vector_count(&bs->cea708) && bs->status == LIBCAPTION_OK && cea708_vector_back(&bs->cea708)->timestamp < dts) {
         mpeg_bitstream_flush(bs, frame);
     }
 }
@@ -650,6 +651,7 @@ void _mpeg_bitstream_cea708_sort_flush(mpeg_bitstream_t* bs, caption_frame_t* fr
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
     size_t buffer_size = uint8_vector_count(&packet->buffer);
+
     if (MAX_NALU_SIZE <= buffer_size) {
         packet->status = LIBCAPTION_ERROR;
         return 0;
@@ -665,9 +667,8 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
     packet->status = LIBCAPTION_OK;
     uint8_vector_append(&packet->buffer, size, data);
 
-    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(uint8_vector_data(&packet->buffer), uint8_vector_count(&packet->buffer))))
-
-    {
+    // TODO find start code incrementally, This is too slow!
+    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(uint8_vector_begin(&packet->buffer), uint8_vector_count(&packet->buffer)))) {
         switch (mpeg_bitstream_packet_type(packet, stream_type)) {
         default:
             break;
@@ -677,7 +678,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
                 cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
                 cea708->timestamp = dts + cts;
                 packet->status = libcaption_status_update(packet->status, cea708_parse_h262(uint8_vector_at(&packet->buffer, header_size), scpos - header_size, cea708));
-                _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
+                _mpeg_bitstream_cea708_flush(packet, frame, dts);
             }
             break;
         case H264_SEI_PACKET:
@@ -690,7 +691,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
                         cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
                         cea708->timestamp = dts + cts;
                         packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), cea708));
-                        _mpeg_bitstream_cea708_sort_flush(packet, frame, dts);
+                        _mpeg_bitstream_cea708_flush(packet, frame, dts);
                     }
                 }
                 sei_free(&sei);
@@ -703,23 +704,3 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
 
     return size;
 }
-////////////////////////////////////////////////////////////////////////////////
-// // h262
-// libcaption_stauts_t h262_user_data_to_caption_frame(caption_frame_t* frame, mpeg_bitstream_t* packet, double dts, double cts)
-// {
-//     cea708_t cea708;
-//     libcaption_stauts_t status = LIBCAPTION_OK;
-
-//     cea708_init(&cea708);
-//     size_t size = mpeg_bitstream_size(packet, STREAM_TYPE_H262);
-//     const uint8_t* data = mpeg_bitstream_data(packet, STREAM_TYPE_H262);
-//     status = cea708_parse_h262(data, size, &cea708);
-//     // cea708_dump(&cea708);
-//     status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708, dts + cts));
-
-//     if (LIBCAPTION_READY == status) {
-//         frame->timestamp = dts + cts;
-//     }
-
-//     return status;
-// }

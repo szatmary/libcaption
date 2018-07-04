@@ -277,7 +277,11 @@ libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* ce
                 status = libcaption_status_update(status, caption_frame_decode(frame, cc_data, cea708->timestamp));
             }
         }
+        return status;
+    } else if (DTG1 == cea708->user_identifier) {
+        // TODO decode DTG1?
+        return LIBCAPTION_OK;
+    } else {
+        return LIBCAPTION_OK;
     }
-
-    return status;
 }
