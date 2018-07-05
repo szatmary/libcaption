@@ -81,23 +81,11 @@ size_t scc_to_608(scc_t** scc, const utf8_codepoint_t* data)
     }
 
     // Skip blank lines
-    size_t bytes;
-    for (;;) {
-        llen = utf8_string_line_length(data, &bytes);
-
-        if (0 == llen || 0 != utf8_string_trimmed_length(data, llen, &bytes)) {
-            break;
-        }
-
-        data += bytes;
-        size += bytes;
-    }
-
+    data = utf8_string_skip_whitespace(data);
     if (4 == sscanf(data, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) {
         data += 12, size += 12;
         // Get length of the remaining charcters
-        llen = utf8_string_line_length(data, &bytes);
-        llen = utf8_string_trimmed_length(data, llen, &bytes);
+        llen = utf8_string_line_length(data, 0);
         int max_cc_count = 1 + (llen / 5);
         (*scc) = scc_relloc((*scc), max_cc_count * 1.5);
         (*scc)->timestamp = scc_time_to_timestamp(hh, mm, ss, ff);

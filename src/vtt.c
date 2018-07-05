@@ -188,7 +188,7 @@ vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
 {
     vtt_t* vtt = NULL;
     double str_pts = 0, end_pts = 0;
-    size_t line_length = 0, trimmed_length = 0;
+    size_t trimmed_length, line_length = 0;
     char* cue_settings;
     enum VTT_BLOCK_TYPE block_type;
     size_t cue_id_length = 0;
@@ -211,15 +211,8 @@ vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
     vtt = vtt_new();
 
     for (;;) {
-        line_length = 0;
-
-        do {
-            data += line_length;
-            size -= line_length;
-            line_length = utf8_string_line_length(data, 0); // Line length
-            trimmed_length = utf8_string_trimmed_length(data, line_length, 0);
-            // Skip empty lines
-        } while (0 < line_length && 0 == trimmed_length);
+        data = utf8_string_skip_whitespace(data);
+        line_length = utf8_string_line_length(data, 0); // Line length
 
         // line length only zero at EOF
         if (0 == line_length) {
@@ -262,15 +255,12 @@ vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
         const utf8_codepoint_t* text = data;
         size_t text_size = 0;
 
-        line_length = 0;
-
         do {
-            text_size += line_length;
-            line_length = utf8_string_line_length(data, 0);
+            size_t line_bytes = 0;
+            line_length = utf8_string_line_length(data, &line_bytes);
             trimmed_length = utf8_string_trimmed_length(data, line_length, 0);
             // printf ("cap (%d): '%.*s'\n", line_length, (int) trimmed_length, data);
-            data += line_length;
-            size -= line_length;
+            data += line_bytes, size -= line_bytes;
         } while (trimmed_length);
 
         // should we trim here?

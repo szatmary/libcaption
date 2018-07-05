@@ -95,10 +95,13 @@ size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes);
     \param
 
     // returns number of codepoints to include before wraping the line
-    // If a new line charcter is encountered, it is included, thus the return value can be larger than max_codepoints
-    // Combined with utf8_string_trimmed_length() 
 */
 size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes);
+/*! \brief
+    \param
+
+*/
+utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str);
 
 /*! \brief
     \param

@@ -355,14 +355,10 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
     frame->write = &frame->back;
 
     for (size_t r = 0; len && str[0] && r < SCREEN_ROWS;) {
-        // skip whitespace at start of line
-        while (len && (codepoint_length = utf8_codepoint_is_whitespace(str))) {
-            str += codepoint_length, len -= codepoint_length;
-        }
+        str = utf8_string_skip_whitespace(str);
 
-        // get charcter count for wrap (or rest of line)
+        // get charcter count for wrap
         codepoint_count = utf8_string_wrap_length(str, SCREEN_COLS, 0);
-        codepoint_count = utf8_string_trimmed_length(str, codepoint_count, 0);
         // write to caption frame
         for (size_t c = 0; c < codepoint_count; ++c) {
             codepoint_length = utf8_codepoint_length(str);

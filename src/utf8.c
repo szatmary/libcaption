@@ -155,7 +155,6 @@ size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoint
         size_t newline_length = utf8_codepoint_is_newline(str);
 
         if (newline_length || codepoints >= max_codepoints) {
-            codepoints += newline_length, (*bytes) += newline_length;
             return codepoints;
         }
 
@@ -166,6 +165,15 @@ size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoint
 
         str += codepoint_length, (*bytes) += codepoint_length;
     }
+}
+
+utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
+{
+    for (size_t whitespace_length = 0; 0 < (whitespace_length = utf8_codepoint_is_whitespace(str)); str += whitespace_length) {
+        //noop
+    };
+
+    return (utf8_codepoint_t*)str;
 }
 
 size_t utf8_string_trimmed_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes)
