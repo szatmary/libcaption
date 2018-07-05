@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+// #include "types.h"
 #include <inttypes.h>
 #include <stddef.h>
 
@@ -35,83 +36,90 @@ extern "C" {
 //
 // utf8_size_t is the length of a string in chars
 // size_t is bytes
-typedef char utf8_char_t;
-typedef size_t utf8_size_t;
-/*! \brief
+typedef char utf8_codepoint_t;
+#define MAX_UTF8_STRING_BYTES (50 * 1024 * 1024)
+
+/*! \brief Returns a pointer to the next codepoint in a utf8 string
     \param
 
-    Skiped continuation bytes
 */
-
-const utf8_char_t* utf8_char_next(const utf8_char_t* c);
-/*! \brief
+const utf8_codepoint_t* utf8_codepoint_next(const utf8_codepoint_t* codepoint);
+/*! \brief returns the length of the codepoint in bytes
     \param
 
-    returnes the length of the char in bytes
+    if codepoint points to a continuation byte, The number of bytes before the next found codepoint is returned
 */
-size_t utf8_char_length(const utf8_char_t* c);
+//
+size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint);
 
-/*! \brief
+/*! \brief copyies on codepoind fron src to dst
     \param
-
-    returns 1 if first charcter is white space
+    returns number of bytes copied dst should have at least 5 bytes to be safe
 */
-int utf8_char_whitespace(const utf8_char_t* c);
+size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src);
 
 /*! \brief
     \param
 
-    returns length of the string in bytes
-    size is number of charcter to count (0 to count until NULL term)
+    returns the length of the codepoint in bytes if it is a whitepace charcter, Otherwise returns 0
 */
-size_t utf8_string_length(const utf8_char_t* data, utf8_size_t size);
-/*! \brief
+size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* c);
+/*! \brief returns the length of the codepoint in bytes if it is a newline charcter, Otherwise returns 0
     \param
+
+    
+    // returns 0 if codepoint is not a new line charcter
+    // Returns 1 for single byte new lines (i.e. windows/riscos)
+    // Returns 2 for multi-byte new lines (i.e. unix/macos)
+    // Assumes exastance of a null terminator
 */
-size_t utf8_char_copy(utf8_char_t* dst, const utf8_char_t* src);
+size_t utf8_codepoint_is_newline(const utf8_codepoint_t* codepoint);
 
 /*! \brief
     \param
 
-    returnes the number of utf8 charcters in a string givne the numbe of bytes
-    to coutn until the a null terminator, pass 0 for size
+    returns the number of codepoints in the string, up to a null terminator
+    bytes (if supplied) will be set to the number of byts the string consumes
 */
-utf8_size_t utf8_char_count(const char* data, size_t size);
+size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes);
+
 /*! \brief
     \param
 
-    returnes the length of the line in bytes triming not printable characters at the end
+    // returns the number of codepoints of up to and including the first new line charcter(s)
+    // auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-utf8_size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters);
+size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes);
+
 /*! \brief
     \param
 
-    returns the length in bytes of the line including the new line charcter(s)
+    // returns number of codepoints to include before wraping the line
+    // If a new line charcter is encountered, it is included, thus the return value can be larger than max_codepoints
+    // Combined with utf8_string_trimmed_length() 
+*/
+size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes);
+
+/*! \brief
+    \param
+
+
+    // returns the number of codepoint triming not printable charcters at the end
+*/
+size_t utf8_string_trimmed_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes);
+
+/*! \brief
+    \param
+
+    returns the number of lines in the the string
     auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-size_t utf8_line_length(const utf8_char_t* data);
-/*! \brief
-    \param
-
-    returns number of chars to include before split
-*/
-utf8_size_t utf8_wrap_length(const utf8_char_t* data, utf8_size_t size);
+size_t utf8_string_line_count(const utf8_codepoint_t* str);
 
 /*! \brief
     \param
-
-    returns number of new lines in the string
 */
-int utf8_line_count(const utf8_char_t* data);
-
-/*! \brief
-    \param
-    size in/out. In the the max seize, out is the size read;
-    returns number of new lins in teh string
-*/
-#define UFTF_DEFAULT_MAX_FILE_SIZE = (50 * 1024 * 1024);
-
-utf8_char_t* utf8_load_text_file(const char* path, size_t* size);
+utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
 
 /*! \brief
     \param

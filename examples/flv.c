@@ -286,7 +286,7 @@ const char onCaptionInfoUTF8[] = { 0x02, 0x00, 0x0D, 'o', 'n', 'C', 'a', 'p', 't
     0x02, 0x00, 0x00 };
 
 #define MAX_AMF_STRING 65636
-int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_char_t* text)
+int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_codepoint_t* text)
 {
     flvtag_initamf(tag, timestamp);
     unsigned long size = strlen(text);
@@ -383,7 +383,7 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
     return 1;
 }
 
-int flvtag_addcaption_text(flvtag_t* tag, const utf8_char_t* text)
+int flvtag_addcaption_text(flvtag_t* tag, const utf8_codepoint_t* text)
 {
     sei_t sei;
     sei_init(&sei, flvtag_pts(tag));

@@ -133,10 +133,10 @@ sei_t* flv_read_sei(FILE* flv, flvtag_t* tag);
 int flvtag_initavc(flvtag_t* tag, uint32_t dts, int32_t cts, flvtag_frametype_t type);
 int flvtag_avcwritenal(flvtag_t* tag, uint8_t* data, size_t size);
 int flvtag_addcaption_scc(flvtag_t* tag, const scc_t* scc);
-int flvtag_addcaption_text(flvtag_t* tag, const utf8_char_t* text);
+int flvtag_addcaption_text(flvtag_t* tag, const utf8_codepoint_t* text);
 ////////////////////////////////////////////////////////////////////////////////
 int flvtag_amfcaption_708(flvtag_t* tag, uint32_t timestamp, sei_message_t* msg);
 ////////////////////////////////////////////////////////////////////////////////
 // This method is expermental, and not currently available on Twitch
-int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_char_t* text);
+int flvtag_amfcaption_utf8(flvtag_t* tag, uint32_t timestamp, const utf8_codepoint_t* text);
 #endif

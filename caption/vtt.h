@@ -74,7 +74,7 @@ void vtt_free(vtt_t* vtt);
 /*! \brief
     \param
 */
-vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enum VTT_BLOCK_TYPE type);
+vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type);
 
 /*! \brief
     \param
@@ -95,12 +95,12 @@ void vtt_region_free_head(vtt_t* vtt);
 /*! \brief
     \param
 */
-vtt_t* vtt_parse(const utf8_char_t* data, size_t size);
+vtt_t* vtt_parse(const utf8_codepoint_t* data, size_t size);
 
 /*! \brief
     \param
 */
-vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode);
+vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode);
 
 /*! \brief
     \param
@@ -110,7 +110,7 @@ static inline vtt_block_t* vtt_cue_next(vtt_block_t* block) { return block->next
 /*! \brief
     \param
 */
-static inline utf8_char_t* vtt_block_data(vtt_block_t* block) { return (utf8_char_t*)(block) + sizeof(vtt_block_t); }
+static inline utf8_codepoint_t* vtt_block_data(vtt_block_t* block) { return (utf8_codepoint_t*)(block) + sizeof(vtt_block_t); }
 
 /*! \brief
     \param

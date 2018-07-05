@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-uint16_t _eia608_from_utf8 (const utf8_char_t* s)
+uint16_t _eia608_from_utf8 (const utf8_codepoint_t* s)
 {
     const unsigned char* YYMARKER = 0;
     const unsigned char* YYCURSOR = (const unsigned char*) s;

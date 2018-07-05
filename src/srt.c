@@ -38,7 +38,7 @@ void srt_free(srt_t* srt)
     vtt_free(srt);
 }
 
-vtt_t* srt_parse(const utf8_char_t* data, size_t size)
+vtt_t* srt_parse(const utf8_codepoint_t* data, size_t size)
 {
     return _vtt_parse(data, size, 1);
 }

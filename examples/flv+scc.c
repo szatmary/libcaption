@@ -37,8 +37,8 @@ int main(int argc, char** argv)
     }
 
     FILE* flv = flv_open_read(argv[1]);
-    utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[2], &scc_size);
-    utf8_char_t* scc_data = scc_data_ptr;
+    utf8_codepoint_t* scc_data_ptr = utf8_load_text_file(argv[2], &scc_size);
+    utf8_codepoint_t* scc_data = scc_data_ptr;
     FILE* out = flv_open_write(argv[3]);
 
     if (!flv) {

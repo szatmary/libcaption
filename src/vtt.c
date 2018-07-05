@@ -50,7 +50,7 @@ void vtt_free(vtt_t* vtt)
     free(vtt);
 }
 
-vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enum VTT_BLOCK_TYPE type)
+vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type)
 {
     vtt_block_t* block = malloc(sizeof(vtt_block_t) + size + 1);
     block->next = NULL;
@@ -90,7 +90,7 @@ vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_char_t* data, size_t size, enu
         break;
     }
 
-    utf8_char_t* dest = (utf8_char_t*)vtt_block_data(block);
+    utf8_codepoint_t* dest = (utf8_codepoint_t*)vtt_block_data(block);
     if (data) {
         memcpy(dest, data, size);
     } else {
@@ -139,7 +139,7 @@ void vtt_region_free_head(vtt_t* vtt)
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
-double parse_timestamp(const utf8_char_t* line)
+double parse_timestamp(const utf8_codepoint_t* line)
 {
     int hh, mm, ss, ms;
     if (sscanf(line, "%d:%2d:%2d%*1[,.]%3d", &hh, &mm, &ss, &ms) == 4) {
@@ -151,7 +151,7 @@ double parse_timestamp(const utf8_char_t* line)
     return -1.0;
 }
 
-void parse_timestamps(const utf8_char_t* line, double* start_pts, double* end_pts, char** cue_settings)
+void parse_timestamps(const utf8_codepoint_t* line, double* start_pts, double* end_pts, char** cue_settings)
 {
     char start_str[32];
     char end_str[32];
@@ -178,12 +178,13 @@ void parse_timestamps(const utf8_char_t* line, double* start_pts, double* end_pt
     }
 }
 
-vtt_t* vtt_parse(const utf8_char_t* data, size_t size)
+vtt_t* vtt_parse(const utf8_codepoint_t* data, size_t size)
 {
     return _vtt_parse(data, size, 0);
 }
 
-vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
+// TODO this may need to be rewrittent after utf8 stuff changes
+vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
 {
     vtt_t* vtt = NULL;
     double str_pts = 0, end_pts = 0;
@@ -191,7 +192,7 @@ vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
     char* cue_settings;
     enum VTT_BLOCK_TYPE block_type;
     size_t cue_id_length = 0;
-    const utf8_char_t* cue_id = NULL;
+    const utf8_codepoint_t* cue_id = NULL;
 
     if (!data || !size || size < 6) {
         return NULL;
@@ -215,8 +216,8 @@ vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
         do {
             data += line_length;
             size -= line_length;
-            line_length = utf8_line_length(data); // Line length
-            trimmed_length = utf8_trimmed_length(data, line_length);
+            line_length = utf8_string_line_length(data, 0); // Line length
+            trimmed_length = utf8_string_trimmed_length(data, line_length, 0);
             // Skip empty lines
         } while (0 < line_length && 0 == trimmed_length);
 
@@ -258,15 +259,15 @@ vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
         size -= line_length;
 
         // Caption text starts here
-        const utf8_char_t* text = data;
+        const utf8_codepoint_t* text = data;
         size_t text_size = 0;
 
         line_length = 0;
 
         do {
             text_size += line_length;
-            line_length = utf8_line_length(data);
-            trimmed_length = utf8_trimmed_length(data, line_length);
+            line_length = utf8_string_line_length(data, 0);
+            trimmed_length = utf8_string_trimmed_length(data, line_length, 0);
             // printf ("cap (%d): '%.*s'\n", line_length, (int) trimmed_length, data);
             data += line_length;
             size -= line_length;
@@ -307,7 +308,7 @@ vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
 
     // CRLF per row, plus an extra at the end
     vtt_block_t* cue = vtt_block_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
-    utf8_char_t* data = vtt_block_data(cue);
+    utf8_codepoint_t* data = vtt_block_data(cue);
 
     caption_frame_to_text(frame, data);
     cue->timestamp = frame->timestamp;

@@ -69,7 +69,7 @@ size_t fd_read(int fd, uint8_t* data, size_t size, int* eof)
 }
 
 size_t g_srt_size = 0;
-utf8_char_t g_srt_data[MAX_SRT_SIZE];
+utf8_codepoint_t g_srt_data[MAX_SRT_SIZE];
 srt_t* srt_from_fd(int fd)
 {
     int eof;

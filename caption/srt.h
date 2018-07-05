@@ -47,7 +47,7 @@ srt_t* srt_free_head(srt_t* head);
 /*! \brief
     \param
 */
-srt_t* srt_parse(const utf8_char_t* data, size_t size);
+srt_t* srt_parse(const utf8_codepoint_t* data, size_t size);
 /*! \brief
     \param
 */
@@ -61,7 +61,7 @@ static inline vtt_block_t* srt_next(vtt_block_t* srt) { return srt->next; }
 /*! \brief
     \param
 */
-static inline utf8_char_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_data(cue); }
+static inline utf8_codepoint_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_data(cue); }
 
 /*! \brief
     \param
@@ -76,7 +76,7 @@ static inline void srt_cue_free_head(srt_t* srt) { vtt_cue_free_head(srt); };
 /*! \brief
     \param
 */
-static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_char_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
+static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_codepoint_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
 
 /*! \brief
     \param

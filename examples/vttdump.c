@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     }
 
     size_t size;
-    utf8_char_t* data = utf8_load_text_file(argv[1], &size);
+    utf8_codepoint_t* data = utf8_load_text_file(argv[1], &size);
 
     vtt_t* vtt = vtt_parse(data, size);
 

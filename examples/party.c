@@ -65,7 +65,7 @@ void write_amfcaptions_708(FILE* out, uint32_t timestamp, const char* text)
     flvtag_free(&tag);
 }
 
-void write_amfcaptions_utf8(FILE* out, uint32_t timestamp, const utf8_char_t* text)
+void write_amfcaptions_utf8(FILE* out, uint32_t timestamp, const utf8_codepoint_t* text)
 {
     flvtag_t tag;
     flvtag_init(&tag);

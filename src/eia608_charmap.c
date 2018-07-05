@@ -28,7 +28,7 @@
 // 128 - 143: Extended Western European character set : Extended French
 // 144 - 159: Extended Western European character set : Portuguese
 // 160 - 175: Extended Western European character set : German/Danish
-const char* eia608_char_map[] = {
+const utf8_codepoint_t* eia608_char_map[] = {
     EIA608_CHAR_SPACE,
     EIA608_CHAR_EXCLAMATION_MARK,
     EIA608_CHAR_QUOTATION_MARK,

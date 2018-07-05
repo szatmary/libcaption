@@ -43,8 +43,8 @@ int main(int argc, char** argv)
 
     srt = srt_new();
     FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");
-    if(!file) {
-        fprintf(stderr,"Failed to open input\n");
+    if (!file) {
+        fprintf(stderr, "Failed to open input\n");
         return EXIT_FAILURE;
     }
 

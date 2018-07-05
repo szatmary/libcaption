@@ -30,7 +30,7 @@
 #define MAX_SRT_SIZE (10 * 1024 * 1024)
 #define MAX_READ_SIZE 4096
 
-size_t read_file(FILE* file, utf8_char_t* data, size_t size)
+size_t read_file(FILE* file, utf8_codepoint_t* data, size_t size)
 {
     size_t read, totl = 0;
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     }
 
     size_t size;
-    utf8_char_t* data = utf8_load_text_file(argv[1], &size);
+    utf8_codepoint_t* data = utf8_load_text_file(argv[1], &size);
     srt = srt_parse(data, size);
 
     for (cue = srt->cue_head; cue; cue = cue->next) {

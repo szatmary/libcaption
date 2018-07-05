@@ -58,8 +58,8 @@ static caption_frame_cell_t* frame_buffer_cell(caption_frame_buffer_t* buff, int
     return &buff->cell[row][col];
 }
 
-uint16_t _eia608_from_utf8(const char* s); // function is in eia608.c.re2c
-int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c)
+uint16_t _eia608_from_utf8(const utf8_codepoint_t* s); // function is in eia608.c.re2c
+int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const utf8_codepoint_t* c)
 {
     if (!frame->write || !_eia608_from_utf8(c)) {
         return 0;
@@ -67,7 +67,7 @@ int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_st
 
     caption_frame_cell_t* cell = frame_buffer_cell(frame->write, row, col);
 
-    if (cell && utf8_char_copy(&cell->data[0], c)) {
+    if (cell && utf8_codepoint_copy(&cell->data[0], c)) {
         cell->uln = underline;
         cell->sty = style;
         return 1;
@@ -76,7 +76,7 @@ int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_st
     return 0;
 }
 
-const utf8_char_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
+const utf8_codepoint_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
 {
     // always read from front
     caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, row, col);
@@ -130,7 +130,7 @@ libcaption_stauts_t caption_frame_carriage_return(caption_frame_t* frame)
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t eia608_write_char(caption_frame_t* frame, char* c)
+libcaption_stauts_t eia608_write_char(caption_frame_t* frame, const utf8_codepoint_t* c)
 {
     if (0 == c || 0 == c[0] || SCREEN_ROWS <= frame->state.row || 0 > frame->state.row || SCREEN_COLS <= frame->state.col || 0 > frame->state.col) {
         // NO-OP
@@ -275,7 +275,7 @@ libcaption_stauts_t caption_frame_decode_control(caption_frame_t* frame, uint16_
 libcaption_stauts_t caption_frame_decode_text(caption_frame_t* frame, uint16_t cc_data)
 {
     int chan;
-    char char1[5], char2[5];
+    utf8_codepoint_t char1[5], char2[5];
     size_t chars = eia608_to_utf8(cc_data, &chan, &char1[0], &char2[0]);
 
     if (eia608_is_westeu(cc_data)) {
@@ -348,36 +348,36 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int caption_frame_from_text(caption_frame_t* frame, const utf8_char_t* data)
+int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
 {
-    ssize_t size = (ssize_t)strlen(data);
+    size_t codepoint_count, codepoint_length, len = strlen(str);
     caption_frame_init(frame);
     frame->write = &frame->back;
 
-    for (size_t r = 0; (*data) && size && r < SCREEN_ROWS;) {
+    for (size_t r = 0; len && str[0] && r < SCREEN_ROWS;) {
         // skip whitespace at start of line
-        while (size && utf8_char_whitespace(data)) {
-            size_t s = utf8_char_length(data);
-            data += s, size -= s;
+        while (len && (codepoint_length = utf8_codepoint_is_whitespace(str))) {
+            str += codepoint_length, len -= codepoint_length;
         }
 
-        // get charcter count for wrap (or orest of line)
-        utf8_size_t char_count = utf8_wrap_length(data, SCREEN_COLS);
+        // get charcter count for wrap (or rest of line)
+        codepoint_count = utf8_string_wrap_length(str, SCREEN_COLS, 0);
+        codepoint_count = utf8_string_trimmed_length(str, codepoint_count, 0);
         // write to caption frame
-        for (size_t c = 0; c < char_count; ++c) {
-            size_t char_length = utf8_char_length(data);
-            caption_frame_write_char(frame, r, c, eia608_style_white, 0, data);
-            data += char_length, size -= char_length;
+        for (size_t c = 0; c < codepoint_count; ++c) {
+            codepoint_length = utf8_codepoint_length(str);
+            caption_frame_write_char(frame, r, c, eia608_style_white, 0, str);
+            str += codepoint_length, len -= codepoint_length;
         }
 
-        r += char_count ? 1 : 0; // Update row num only if not blank
+        r += codepoint_count ? 1 : 0; // Update row num only if not blank
     }
 
     caption_frame_end(frame);
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
+size_t caption_frame_to_text(caption_frame_t* frame, utf8_codepoint_t* data)
 {
     int r, c, uln, crlf = 0, count = 0;
     size_t s, size = 0;
@@ -387,15 +387,16 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
     for (r = 0; r < SCREEN_ROWS; ++r) {
         crlf += count, count = 0;
         for (c = 0; c < SCREEN_COLS; ++c) {
-            const utf8_char_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
+            const utf8_codepoint_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
             // dont start a new line until we encounter at least one printable character
-            if (0 < utf8_char_length(chr) && (0 < count || !utf8_char_whitespace(chr))) {
+            // TODO double check this!
+            if (0 < utf8_codepoint_length(chr) && (0 < count || !utf8_codepoint_is_whitespace(chr))) {
                 if (0 < crlf) {
                     memcpy(data, "\r\n\0", 3);
                     data += 2, size += 2, crlf = 0;
                 }
 
-                s = utf8_char_copy(data, chr);
+                s = utf8_codepoint_copy(data, chr);
                 data += s, size += s, ++count;
             }
         }
@@ -404,7 +405,7 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_char_t* data)
     return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
-size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
+size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_codepoint_t* buf)
 {
     int r, c;
     size_t bytes, total = 0;
@@ -426,7 +427,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
         // front buffer
         for (c = 0; c < SCREEN_COLS; ++c) {
             caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, r, c);
-            bytes = utf8_char_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
+            bytes = utf8_codepoint_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
             total += bytes, buf += bytes;
         }
 
@@ -436,7 +437,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
         // back buffer
         for (c = 0; c < SCREEN_COLS; ++c) {
             caption_frame_cell_t* cell = frame_buffer_cell(&frame->back, r, c);
-            bytes = utf8_char_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
+            bytes = utf8_codepoint_copy(buf, (!cell || 0 == cell->data[0]) ? EIA608_CHAR_SPACE : &cell->data[0]);
             total += bytes, buf += bytes;
         }
 
@@ -453,7 +454,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_char_t* buf)
 
 void caption_frame_dump(caption_frame_t* frame)
 {
-    utf8_char_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
+    utf8_codepoint_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
     caption_frame_dump_buffer(frame, buff);
     fprintf(stderr, "%s\n", buff);
 }
