@@ -32,7 +32,6 @@ int main(int argc, char** argv)
     const char* path = argv[1];
 
     ts_t ts;
-    srt_t* srt = 0;
     // srt_cue_t, *cue;
     caption_frame_t frame;
     uint8_t pkt[TS_PACKET_SIZE];
@@ -40,7 +39,7 @@ int main(int argc, char** argv)
     ts_init(&ts);
     caption_frame_init(&frame);
 
-    srt = srt_new();
+    srt_t* srt = srt_new();
     path = "/Users/twitch/Projects/libcaption/OpeningCeremony.ts";
     FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");
     if (!file) {
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
                     break;
 
                 case LIBCAPTION_READY: {
-                    caption_frame_dump(&frame);
+                    // caption_frame_dump(&frame);
                     srt_cue_from_caption_frame(&frame, srt);
                 } break;
                 } //switch
@@ -85,7 +84,7 @@ int main(int argc, char** argv)
     }
 
     srt_dump(srt);
-    srt_free(srt);
+    srt_del(srt);
     mpeg_bitstream_del(mpegbs);
 
     return EXIT_SUCCESS;

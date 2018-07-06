@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     }
 
     srt_dump(srt);
-    srt_free(srt);
+    srt_del(srt);
     mpeg_bitstream_del(mpegbs);
 
     return 1;

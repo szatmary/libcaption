@@ -39,10 +39,6 @@ typedef vtt_block_t srt_cue_t;
     \param
 */
 srt_t* srt_new();
-/*! \brief
-    \param
-*/
-srt_t* srt_free_head(srt_t* head);
 // returns the head of the link list. must bee freed when done
 /*! \brief
     \param
@@ -51,12 +47,7 @@ srt_t* srt_parse(const utf8_codepoint_t* data, size_t size);
 /*! \brief
     \param
 */
-void srt_free(srt_t* srt);
-
-/*! \brief
-    \param
-*/
-static inline vtt_block_t* srt_next(vtt_block_t* srt) { return srt->next; }
+void srt_del(srt_t* srt);
 
 /*! \brief
     \param
@@ -66,17 +57,12 @@ static inline utf8_codepoint_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_
 /*! \brief
     \param
 */
-static inline srt_cue_t* srt_cue_from_caption_frame(caption_frame_t* frame, srt_t* srt) { return vtt_cue_from_caption_frame(frame, srt); };
+static inline libcaption_stauts_t srt_cue_from_caption_frame(caption_frame_t* frame, srt_t* srt) { return vtt_cue_from_caption_frame(frame, srt); };
 
 /*! \brief
     \param
 */
-static inline void srt_cue_free_head(srt_t* srt) { vtt_cue_free_head(srt); };
-
-/*! \brief
-    \param
-*/
-static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_codepoint_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
+// static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_codepoint_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
 
 /*! \brief
     \param

@@ -27,68 +27,47 @@
 #include <stdlib.h>
 #include <string.h>
 
-vtt_block_t* vtt_block_free_head(vtt_block_t* head);
-
 vtt_t* vtt_new()
 {
-    vtt_t* vtt = malloc(sizeof(vtt_t));
-    memset(vtt, 0, sizeof(vtt_t));
+    vtt_t* vtt = calloc(sizeof(vtt_t), 1);
+    vtt->cue = vtt_block_vector_new();
+    vtt->note = vtt_block_vector_new();
+    vtt->style = vtt_block_vector_new();
+    vtt->region = vtt_block_vector_new();
     return vtt;
 }
 
-void vtt_free(vtt_t* vtt)
+void vtt_del(vtt_t* vtt)
 {
-    while (vtt->region_head != NULL) {
-        vtt->region_head = vtt_block_free_head(vtt->region_head);
-    }
-    while (vtt->style_head != NULL) {
-        vtt->style_head = vtt_block_free_head(vtt->style_head);
-    }
-    while (vtt->cue_head != NULL) {
-        vtt->cue_head = vtt_block_free_head(vtt->cue_head);
-    }
+    vtt_block_vector_del(&vtt->cue);
+    vtt_block_vector_del(&vtt->note);
+    vtt_block_vector_del(&vtt->style);
+    vtt_block_vector_del(&vtt->region);
     free(vtt);
 }
 
-vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type)
+void vtt_block_ctor(vtt_block_t** vtt_block)
+{
+    (*vtt_block) = 0;
+}
+
+void vtt_block_cdor(vtt_block_t** vtt_block)
+{
+    if (*vtt_block) {
+        free(*vtt_block);
+        fprintf(stderr, "memleak\n");
+    }
+}
+
+vtt_block_t* vtt_block_new(const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type)
 {
     vtt_block_t* block = malloc(sizeof(vtt_block_t) + size + 1);
-    block->next = NULL;
     block->type = type;
     block->timestamp = 0.0;
     block->duration = 0.0;
     block->cue_settings = NULL;
     block->cue_id = NULL;
     block->text_size = size;
-
-    switch (type) {
-    case VTT_REGION:
-        if (vtt->region_head == NULL) {
-            vtt->region_head = block;
-        } else {
-            vtt->region_tail->next = block;
-        }
-        vtt->region_tail = block;
-        break;
-    case VTT_STYLE:
-        if (vtt->style_head == NULL) {
-            vtt->style_head = block;
-        } else {
-            vtt->style_tail->next = block;
-        }
-        vtt->style_tail = block;
-        break;
-    case VTT_CUE:
-        if (vtt->cue_head == NULL) {
-            vtt->cue_head = block;
-        } else {
-            vtt->cue_tail->next = block;
-        }
-        vtt->cue_tail = block;
-        break;
-    case VTT_NOTE:
-        break;
-    }
 
     utf8_codepoint_t* dest = (utf8_codepoint_t*)vtt_block_data(block);
     if (data) {
@@ -99,43 +78,6 @@ vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_codepoint_t* data, size_t size
 
     dest[size] = '\0';
     return block;
-}
-
-vtt_block_t* vtt_block_free_head(vtt_block_t* head)
-{
-    vtt_block_t* next = head->next;
-    if (head->cue_id != NULL) {
-        free(head->cue_id);
-    }
-    if (head->cue_settings != NULL) {
-        free(head->cue_settings);
-    }
-    free(head);
-    return next;
-}
-
-void vtt_cue_free_head(vtt_t* vtt)
-{
-    vtt->cue_head = vtt_block_free_head(vtt->cue_head);
-    if (vtt->cue_head == NULL) {
-        vtt->cue_tail = NULL;
-    }
-}
-
-void vtt_style_free_head(vtt_t* vtt)
-{
-    vtt->style_head = vtt_block_free_head(vtt->style_head);
-    if (vtt->style_head == NULL) {
-        vtt->style_tail = NULL;
-    }
-}
-
-void vtt_region_free_head(vtt_t* vtt)
-{
-    vtt->region_head = vtt_block_free_head(vtt->region_head);
-    if (vtt->region_head == NULL) {
-        vtt->region_tail = NULL;
-    }
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
@@ -265,16 +207,34 @@ vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
 
         // should we trim here?
 
-        vtt_block_t* block = vtt_block_new(vtt, text, text_size, block_type);
+        vtt_block_t** block = 0;
+        switch (block_type) {
+        case VTT_REGION:
+            block = vtt_block_vector_push_back(&vtt->region);
+            break;
+        case VTT_STYLE:
+            block = vtt_block_vector_push_back(&vtt->style);
+            break;
+        case VTT_NOTE:
+            block = vtt_block_vector_push_back(&vtt->note);
+            break;
+        case VTT_CUE:
+            block = vtt_block_vector_push_back(&vtt->cue);
+            break;
+        };
+
+        // vtt_block_t* block = vtt_block_new(vtt, text, text_size, block_type);
+        (*block) = vtt_block_new(text, text_size, block_type);
 
         if (block_type == VTT_CUE) {
-            block->timestamp = str_pts;
-            block->duration = end_pts - str_pts;
-            block->cue_settings = cue_settings;
+            (*block)->timestamp = str_pts;
+            (*block)->duration = end_pts - str_pts;
+            (*block)->cue_settings = cue_settings;
             if (cue_id != NULL) {
-                block->cue_id = malloc(cue_id_length + 1);
-                memcpy(block->cue_id, cue_id, cue_id_length);
-                block->cue_id[cue_id_length] = '\0';
+                // TODO make a utf8_string_new function ti replace this
+                (*block)->cue_id = malloc(cue_id_length + 1);
+                memcpy((*block)->cue_id, cue_id, cue_id_length);
+                (*block)->cue_id[cue_id_length] = '\0';
             }
         }
 
@@ -290,58 +250,58 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame)
     return caption_frame_from_text(frame, data);
 }
 
-vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
+libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt)
 {
-    if (vtt->cue_tail && 0 >= vtt->cue_tail->duration) {
-        vtt->cue_tail->duration = frame->timestamp - vtt->cue_tail->timestamp;
+    vtt_block_t** cue = vtt_block_vector_back(&vtt->cue);
+    if (cue && 0 >= (*cue)->duration) {
+        (*cue)->duration = frame->timestamp - (*cue)->timestamp;
     }
 
     // CRLF per row, plus an extra at the end
-    vtt_block_t* cue = vtt_block_new(vtt, NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
-    utf8_codepoint_t* data = vtt_block_data(cue);
+    cue = vtt_block_vector_push_back(&vtt->cue);
+    (*cue) = vtt_block_new(NULL, 2 + CAPTION_FRAME_TEXT_BYTES, VTT_CUE);
+    utf8_codepoint_t* data = vtt_block_data(*cue);
 
     caption_frame_to_text(frame, data);
-    cue->timestamp = frame->timestamp;
+    (*cue)->timestamp = frame->timestamp;
     // vtt requires an extra new line
     strcat((char*)data, "\r\n");
-    return cue;
+    return LIBCAPTION_OK;
 }
 
 static void _dump(vtt_t* vtt)
 {
-    vtt_block_t* block;
+    vtt_block_t** block;
     printf("WEBVTT\r\n\r\n");
 
-    block = vtt->region_head;
-    while (block != NULL) {
-        printf("REGION\r\n%s\r\n", vtt_block_data(block));
-        block = block->next;
+    for (size_t i = 0; i < vtt_block_vector_count(&vtt->region); ++i) {
+        block = vtt_block_vector_at(&vtt->region, i);
+        printf("REGION\r\n%s\r\n", vtt_block_data(*block));
     }
 
-    block = vtt->style_head;
-    while (block != NULL) {
-        printf("STYLE\r\n%s\r\n", vtt_block_data(block));
-        block = block->next;
+    for (size_t i = 0; i < vtt_block_vector_count(&vtt->style); ++i) {
+        block = vtt_block_vector_at(&vtt->style, i);
+        printf("STYLE\r\n%s\r\n", vtt_block_data(*block));
     }
 
-    block = vtt->cue_head;
-    while (block != NULL) {
+    for (size_t i = 0; i < vtt_block_vector_count(&vtt->cue); ++i) {
+        block = vtt_block_vector_at(&vtt->cue, i);
         int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
-        vtt_crack_time(block->timestamp, &hh1, &mm1, &ss1, &ms1);
-        vtt_crack_time(block->timestamp + block->duration, &hh2, &mm2, &ss2, &ms2);
+        vtt_crack_time((*block)->timestamp, &hh1, &mm1, &ss1, &ms1);
+        vtt_crack_time((*block)->timestamp + (*block)->duration, &hh2, &mm2, &ss2, &ms2);
 
-        if (block->cue_id != NULL) {
-            printf("%s\n", block->cue_id);
+        if ((*block)->cue_id != NULL) {
+            printf("%s\n", (*block)->cue_id);
         }
 
         printf("%02d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
             hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
 
-        if (block->cue_settings != NULL) {
-            printf(" %s", block->cue_settings);
+        if ((*block)->cue_settings != NULL) {
+            printf(" %s", (*block)->cue_settings);
         }
 
-        printf("\r\n%s\r\n", vtt_block_data(block));
+        printf("\r\n%s\r\n", vtt_block_data(*block));
     }
 }
 

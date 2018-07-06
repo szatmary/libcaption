@@ -39,11 +39,13 @@ int main(int argc, char** argv)
 
     vtt_t* vtt = vtt_parse(data, size);
 
-    for (vtt_block_t* cue = vtt->cue_head; cue != NULL; cue = cue->next) {
+    vtt_block_t** cue = 0;
+    for (size_t i = 0; i < vtt_block_vector_count(&vtt->cue); ++i) {
+        cue = vtt_block_vector_at(&vtt->cue, i);
         caption_frame_init(&frame);
-        vtt_cue_to_caption_frame(cue, &frame);
+        vtt_cue_to_caption_frame((*cue), &frame);
         caption_frame_dump(&frame);
     }
 
-    vtt_free(vtt);
+    vtt_del(vtt);
 }

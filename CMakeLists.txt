@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libcaption)
-#set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
-set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
+#set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
 add_definitions(-D__STDC_CONSTANT_MACROS)
 if (WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -53,6 +53,7 @@ set(CAPTION_SOURCES
   src/eia608.c
   src/eia608_charmap.c
   src/eia608_from_utf8.c
+  src/types.c
   src/mpeg.c
   src/scc.c
   src/srt.c

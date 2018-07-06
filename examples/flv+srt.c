@@ -100,63 +100,63 @@ srt_t* srt_from_fd(int fd)
 
 int main(int argc, char** argv)
 {
-    flvtag_t tag;
-    srt_t* old_srt = NULL;
-    srt_cue_t* next_cue = NULL;
-    double timestamp, offset = 0, clear_timestamp = 0;
-    int has_audio, has_video;
-    FILE* flv = flv_open_read(argv[1]);
-    int fd = open(argv[2], O_RDWR);
-    FILE* out = flv_open_write(argv[3]);
+    //     flvtag_t tag;
+    //     srt_t* old_srt = NULL;
+    //     srt_cue_t* next_cue = NULL;
+    //     double timestamp, offset = 0, clear_timestamp = 0;
+    //     int has_audio, has_video;
+    //     FILE* flv = flv_open_read(argv[1]);
+    //     int fd = open(argv[2], O_RDWR);
+    //     FILE* out = flv_open_write(argv[3]);
 
-    flvtag_init(&tag);
+    //     flvtag_init(&tag);
 
-    if (!flv_read_header(flv, &has_audio, &has_video)) {
-        fprintf(stderr, "%s is not an flv file\n", argv[1]);
-        return EXIT_FAILURE;
-    }
+    //     if (!flv_read_header(flv, &has_audio, &has_video)) {
+    //         fprintf(stderr, "%s is not an flv file\n", argv[1]);
+    //         return EXIT_FAILURE;
+    //     }
 
-    flv_write_header(out, has_audio, has_video);
+    //     flv_write_header(out, has_audio, has_video);
 
-    fprintf(stderr, "Reading flv from %s\n", argv[1]);
-    fprintf(stderr, "Reading captons from %s\n", argv[2]);
-    fprintf(stderr, "Writing flv to %s\n", argv[3]);
+    //     fprintf(stderr, "Reading flv from %s\n", argv[1]);
+    //     fprintf(stderr, "Reading captons from %s\n", argv[2]);
+    //     fprintf(stderr, "Writing flv to %s\n", argv[3]);
 
-    while (flv_read_tag(flv, &tag)) {
+    //     while (flv_read_tag(flv, &tag)) {
 
-        srt_t* cur_srt = srt_from_fd(fd);
-        timestamp = flvtag_pts_seconds(&tag);
+    //         srt_t* cur_srt = srt_from_fd(fd);
+    //         timestamp = flvtag_pts_seconds(&tag);
 
-        if (cur_srt) {
-            fprintf(stderr, "Loaded new SRT at time %f\n", timestamp);
-            if (old_srt != NULL) {
-                srt_free(old_srt);
-            }
-            old_srt = cur_srt;
-            offset = timestamp;
-            clear_timestamp = timestamp;
-            next_cue = cur_srt->cue_head;
-        }
+    //         if (cur_srt) {
+    //             fprintf(stderr, "Loaded new SRT at time %f\n", timestamp);
+    //             if (old_srt != NULL) {
+    //                 srt_del(old_srt);
+    //             }
+    //             old_srt = cur_srt;
+    //             offset = timestamp;
+    //             clear_timestamp = timestamp;
+    //             next_cue = cur_srt->cue_head;
+    //         }
 
-        if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
-            if (next_cue && (offset + next_cue->timestamp) <= timestamp) {
-                fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + next_cue->timestamp), next_cue->duration, srt_cue_data(next_cue));
-                clear_timestamp = (offset + next_cue->timestamp) + next_cue->duration;
-                flvtag_addcaption_text(&tag, srt_cue_data(next_cue));
-                next_cue = next_cue->next;
-            } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
-                fprintf(stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
-                flvtag_addcaption_text(&tag, NULL);
-                clear_timestamp = -1;
-            }
-        }
+    //         if (flvtag_avcpackettype_nalu == flvtag_avcpackettype(&tag)) {
+    //             if (next_cue && (offset + next_cue->timestamp) <= timestamp) {
+    //                 fprintf(stderr, "T: %0.02f (%0.02fs):\n%s\n", (offset + next_cue->timestamp), next_cue->duration, srt_cue_data(next_cue));
+    //                 clear_timestamp = (offset + next_cue->timestamp) + next_cue->duration;
+    //                 flvtag_addcaption_text(&tag, srt_cue_data(next_cue));
+    //                 next_cue = next_cue->next;
+    //             } else if (0 <= clear_timestamp && clear_timestamp <= timestamp) {
+    //                 fprintf(stderr, "T: %0.02f: [CAPTIONS CLEARED]\n", timestamp);
+    //                 flvtag_addcaption_text(&tag, NULL);
+    //                 clear_timestamp = -1;
+    //             }
+    //         }
 
-        flv_write_tag(out, &tag);
-    }
+    //         flv_write_tag(out, &tag);
+    //     }
 
-    srt_free(old_srt);
-    flvtag_free(&tag);
-    flv_close(flv);
-    flv_close(out);
+    //     srt_del(old_srt);
+    //     flvtag_free(&tag);
+    //     flv_close(flv);
+    //     flv_close(out);
     return EXIT_SUCCESS;
 }

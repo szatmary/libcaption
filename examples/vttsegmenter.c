@@ -73,72 +73,72 @@ void vtt_write_block(vtt_block_t* block, FILE* vttFile)
  */
 int main(int argc, char** argv)
 {
-    if (argc != 5) {
-        fprintf(stderr, "Usage: vttsegmenter filename.vtt segment_size duration output%%05d.vtt\n");
-        return 0;
-    }
+    // if (argc != 5) {
+    //     fprintf(stderr, "Usage: vttsegmenter filename.vtt segment_size duration output%%05d.vtt\n");
+    //     return 0;
+    // }
 
-    double segment_size;
-    double duration;
-    if (1 != sscanf(argv[2], "%lf", &segment_size)) {
-        return 1;
-    }
-    if (1 != sscanf(argv[3], "%lf", &duration)) {
-        return 1;
-    }
+    // double segment_size;
+    // double duration;
+    // if (1 != sscanf(argv[2], "%lf", &segment_size)) {
+    //     return 1;
+    // }
+    // if (1 != sscanf(argv[3], "%lf", &duration)) {
+    //     return 1;
+    // }
 
-    size_t size;
-    utf8_codepoint_t* data = utf8_load_text_file(argv[1], &size);
-    if (data == NULL) {
-        fprintf(stderr, "Failed to load input file\n");
-        return 1;
-    }
-    vtt_t* vtt = vtt_parse(data, size);
-    if (vtt == NULL) {
-        fprintf(stderr, "Failed to parse vtt\n");
-        return 1;
-    }
+    // size_t size;
+    // utf8_codepoint_t* data = utf8_load_text_file(argv[1], &size);
+    // if (data == NULL) {
+    //     fprintf(stderr, "Failed to load input file\n");
+    //     return 1;
+    // }
+    // vtt_t* vtt = vtt_parse(data, size);
+    // if (vtt == NULL) {
+    //     fprintf(stderr, "Failed to parse vtt\n");
+    //     return 1;
+    // }
 
-    char filename[1024];
+    // char filename[1024];
 
-    for (int i = 0; i * segment_size < duration; i++) {
-        if (snprintf(filename, 1024, argv[4], i) < 0) {
-            fprintf(stderr, "Invalid filename pattern for output\n");
-            return 1;
-        }
+    // for (int i = 0; i * segment_size < duration; i++) {
+    //     if (snprintf(filename, 1024, argv[4], i) < 0) {
+    //         fprintf(stderr, "Invalid filename pattern for output\n");
+    //         return 1;
+    //     }
 
-        FILE* outputFile = fopen(filename, "w");
-        if (outputFile == NULL) {
-            fprintf(stderr, "Failed to open output file for reading: '%s'\n", filename);
-            return 1;
-        }
+    //     FILE* outputFile = fopen(filename, "w");
+    //     if (outputFile == NULL) {
+    //         fprintf(stderr, "Failed to open output file for reading: '%s'\n", filename);
+    //         return 1;
+    //     }
 
-        vtt_write_header(outputFile);
-        vtt_block_t* region = vtt->region_head;
-        while (region != NULL) {
-            vtt_write_block(region, outputFile);
-            region = region->next;
-        }
+    //     vtt_write_header(outputFile);
+    //     vtt_block_t* region = vtt->region_head;
+    //     while (region != NULL) {
+    //         vtt_write_block(region, outputFile);
+    //         region = region->next;
+    //     }
 
-        vtt_block_t* style = vtt->style_head;
-        while (style != NULL) {
-            vtt_write_block(style, outputFile);
-            style = style->next;
-        }
+    //     vtt_block_t* style = vtt->style_head;
+    //     while (style != NULL) {
+    //         vtt_write_block(style, outputFile);
+    //         style = style->next;
+    //     }
 
-        double segment_start = i * segment_size;
-        double segment_end = (i + 1) * segment_size;
+    //     double segment_start = i * segment_size;
+    //     double segment_end = (i + 1) * segment_size;
 
-        vtt_block_t* cue = vtt->cue_head;
-        while (cue != NULL) {
-            if ((cue->timestamp < segment_end) && ((cue->timestamp + cue->duration) > segment_start)) {
-                vtt_write_block(cue, outputFile);
-            }
-            cue = cue->next;
-        }
+    //     vtt_block_t* cue = vtt->cue_head;
+    //     while (cue != NULL) {
+    //         if ((cue->timestamp < segment_end) && ((cue->timestamp + cue->duration) > segment_start)) {
+    //             vtt_write_block(cue, outputFile);
+    //         }
+    //         cue = cue->next;
+    //     }
 
-        fclose(outputFile);
-    }
+    //     fclose(outputFile);
+    // }
 
-    vtt_free(vtt);
+    // vtt_free(vtt);
 }

@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     }
 
     srt_dump(srt);
-    srt_free(srt);
+    srt_del(srt);
     free(scc_data_ptr);
     return EXIT_SUCCESS;
 }

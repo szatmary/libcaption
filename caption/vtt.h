@@ -39,7 +39,6 @@ enum VTT_BLOCK_TYPE {
 
 // CUE represents a block of caption text
 typedef struct _vtt_block_t {
-    struct _vtt_block_t* next;
     enum VTT_BLOCK_TYPE type;
     // CUE-Only
     double timestamp;
@@ -51,50 +50,21 @@ typedef struct _vtt_block_t {
     char* block_text;
 } vtt_block_t;
 
+void vtt_block_ctor(vtt_block_t** vtt_block);
+void vtt_block_cdor(vtt_block_t** vtt_block);
+
+MAKE_VECTOR(vtt_block_t*, vtt_block, vtt_block_ctor, vtt_block_cdor, 0);
 // VTT files are a collection of REGION, STYLE and CUE blocks.
 // XXX: Comments (NOTE blocks) are ignored
 typedef struct _vtt_t {
-    vtt_block_t* region_head;
-    vtt_block_t* region_tail;
-    vtt_block_t* style_head;
-    vtt_block_t* style_tail;
-    vtt_block_t* cue_head;
-    vtt_block_t* cue_tail;
+    vtt_block_vector_t* cue;
+    vtt_block_vector_t* note;
+    vtt_block_vector_t* style;
+    vtt_block_vector_t* region;
 } vtt_t;
 
-/*! \brief
-    \param
-*/
 vtt_t* vtt_new();
-/*! \brief
-    \param
-*/
-void vtt_free(vtt_t* vtt);
-
-/*! \brief
-    \param
-*/
-vtt_block_t* vtt_block_new(vtt_t* vtt, const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type);
-
-/*! \brief
-    \param
-*/
-void vtt_cue_free_head(vtt_t* vtt);
-
-/*! \brief
-    \param
-*/
-void vtt_style_free_head(vtt_t* vtt);
-
-/*! \brief
-    \param
-*/
-void vtt_region_free_head(vtt_t* vtt);
-
-// returns a vtt_t, containing linked lists of blocks. must be freed when done
-/*! \brief
-    \param
-*/
+void vtt_del(vtt_t* vtt);
 vtt_t* vtt_parse(const utf8_codepoint_t* data, size_t size);
 
 /*! \brief
@@ -102,14 +72,6 @@ vtt_t* vtt_parse(const utf8_codepoint_t* data, size_t size);
 */
 vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode);
 
-/*! \brief
-    \param
-*/
-static inline vtt_block_t* vtt_cue_next(vtt_block_t* block) { return block->next; }
-
-/*! \brief
-    \param
-*/
 static inline utf8_codepoint_t* vtt_block_data(vtt_block_t* block) { return (utf8_codepoint_t*)(block) + sizeof(vtt_block_t); }
 
 /*! \brief
@@ -129,11 +91,10 @@ static inline void vtt_crack_time(double tt, int* hh, int* mm, int* ss, int* ms)
 */
 int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame);
 
-// returns the new cue
 /*! \brief
     \param
 */
-vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt);
+libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt);
 /*! \brief
     \param
 */

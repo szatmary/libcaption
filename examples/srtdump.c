@@ -47,7 +47,6 @@ int main(int argc, char** argv)
 {
     srt_t* srt;
     caption_frame_t frame;
-    srt_cue_t* cue;
 
     if (argc < 2) {
         return 0;
@@ -63,11 +62,13 @@ int main(int argc, char** argv)
     utf8_codepoint_t* data = utf8_load_text_file(argv[1], &size);
     srt = srt_parse(data, size);
 
-    for (cue = srt->cue_head; cue; cue = cue->next) {
+    vtt_block_t** cue = 0;
+    for (size_t i = 0; i < vtt_block_vector_count(&srt->cue); ++i) {
+        cue = vtt_block_vector_at(&srt->cue, i);
         caption_frame_init(&frame);
-        srt_cue_to_caption_frame(cue, &frame);
+        srt_cue_to_caption_frame((*cue), &frame);
         caption_frame_dump(&frame);
     }
 
-    srt_free(srt);
+    srt_del(srt);
 }

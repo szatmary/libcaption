@@ -42,5 +42,5 @@ int main(int argc, char** argv)
 
     srt_t* head = srt_parse(data, size);
     vtt_dump(head);
-    srt_free(head);
+    srt_del(head);
 }
