@@ -27,9 +27,7 @@
 extern "C" {
 #endif
 
-// #include "types.h"
-#include <inttypes.h>
-#include <stddef.h>
+#include "types.h"
 
 // These types exist to make the code more self dcoumenting
 // utf8_char_t point is a null teminate string of utf8 encodecd chars
@@ -132,6 +130,9 @@ utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
 #ifndef strnstr
 char* strnstr(const char* string1, const char* string2, size_t len);
 #endif
+
+
+MAKE_VECTOR(utf8_codepoint_t*, utf8_string, _str_ctor, _str_dtor, strcmp);
 
 #ifdef __cplusplus
 }

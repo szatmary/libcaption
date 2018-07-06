@@ -270,77 +270,6 @@ static inline void _vector_del(_vector_t** v)
     _vector_resize(v, 0);
     free(*v), *v = 0;
 }
-
-/**********************************************************************************************/
-typedef struct {
-    char* prev;
-    char* next;
-} _list_t;
-
-static inline char* _list_new(size_t s, _ctor_t ctor)
-{
-    char* l = (char*)calloc(sizeof(_list_t) + s, 1);
-    char* o = l ? l + sizeof(_list_t) : 0;
-    if (o && ctor) {
-        ctor(o);
-    }
-    return o;
-}
-
-/*! \brief
-    NOTE: does not check for null pointer, Use with caution
-*/
-static inline char* _list_previous(char* l) { return l ? ((_list_t*)(l - sizeof(_list_t)))->prev : 0; }
-static inline char* _list_next(char* l) { return l ? ((_list_t*)(l - sizeof(_list_t)))->next : 0; }
-static inline void _list_update_previous(char* l, char* p)
-{
-    if (l) {
-        ((_list_t*)(l - sizeof(_list_t)))->prev = p;
-    }
-}
-
-static inline void _list_update_next(char* l, char* n)
-{
-    if (l) {
-        ((_list_t*)(l - sizeof(_list_t)))->next = n;
-    }
-}
-
-static inline char* _list_insert_after(char* p, size_t s, _ctor_t ctor)
-{
-    char* l = _list_new(s, ctor);
-    char* n = _list_next(p);
-    _list_update_next(l, n);
-    _list_update_previous(l, p);
-    _list_update_next(p, l);
-    _list_update_previous(n, l);
-    return l;
-}
-
-static inline char* _list_insert_before(char* n, size_t s, _ctor_t ctor)
-{
-    char* l = _list_new(s, ctor);
-    char* p = _list_previous(p);
-    _list_update_next(l, n);
-    _list_update_previous(l, p);
-    _list_update_next(p, l);
-    _list_update_previous(n, l);
-    return l;
-}
-
-static inline void _list_erase(char* e, _dtor_t dtor)
-{
-    char* p = _list_previous(p);
-    char* n = _list_next(p);
-    _list_update_next(p, n);
-    _list_update_previous(n, p);
-    if (e && dtor) {
-        dtor(e);
-    }
-    free(e - sizeof(_list_t));
-}
-
-/**********************************************************************************************/
 #define MAKE_VECTOR(TYPE, NAME, CTOR, DTOR, CMP)                                                                                                                       \
     typedef _vector_t NAME##_vector_t;                                                                                                                                 \
     typedef void (*NAME##_ctor_t)(TYPE*);                                                                                                                              \
@@ -364,13 +293,7 @@ static inline void _list_erase(char* e, _dtor_t dtor)
     static inline void NAME##_vector_sort(_vector_t** v, int o) { return _vector_sort((_vector_t**)v, o); }                                                            \
     static inline void NAME##_vector_sort_ascending(_vector_t** v) { return _vector_sort_ascending((_vector_t**)v); }                                                  \
     static inline void NAME##_vector_sort_descending(_vector_t** v) { return _vector_sort_descending((_vector_t**)v); }                                                \
-    static inline void NAME##_vector_del(NAME##_vector_t** v) { return _vector_del((_vector_t**)v); }                                                                  \
-    static inline TYPE* NAME##_list_new() { return (TYPE*)_list_new(sizeof(TYPE), (_ctor_t)CTOR); }                                                                    \
-    static inline TYPE* NAME##_list_previous(TYPE* l) { return (TYPE*)_list_previous((char*)l); }                                                                      \
-    static inline TYPE* NAME##_list_next(TYPE* l) { return (TYPE*)_list_previous((char*)l); }                                                                          \
-    static inline TYPE* NAME##_list_insert_after(TYPE* p) { return (TYPE*)_list_insert_after((char*)p, sizeof(TYPE), (_ctor_t)CTOR); }                                 \
-    static inline TYPE* NAME##_list_insert_before(TYPE* p) { return (TYPE*)_list_insert_before((char*)p, sizeof(TYPE), (_ctor_t)CTOR); }                               \
-    static inline void NAME##_list_erase(TYPE* p) { return _list_erase((char*)p, (_dtor_t)DTOR); }
+    static inline void NAME##_vector_del(NAME##_vector_t** v) { return _vector_del((_vector_t**)v); }                                                                  
 
 // Common types
 #define MAKE_VECTOR_SIMPLE(TYPE, NAME)                                                                        \
