@@ -118,6 +118,11 @@ int cea708_render(cea708_t* cea708, uint8_t* data, size_t size);
     \param
 */
 void cea708_dump(cea708_t* cea708);
+
+static inline void cea708_vector_init(cea708_t* cea708) { cea708_init(cea708, 0.0); }
+static inline int cea708_vector_cmp(cea708_t* a, cea708_t* b) { return double_vector_cmp(&a->timestamp, &b->timestamp); }
+MAKE_VECTOR(cea708_t, cea708, cea708_vector_init, cea708_vector_init, cea708_vector_cmp);
+
 #ifdef __cplusplus
 }
 #endif

@@ -41,35 +41,32 @@ extern "C" {
 #define H265_SEI_PACKET 0x27 // There is also 0x28
 #define MAX_NALU_SIZE (6 * 1024 * 1024)
 #define MAX_REFRENCE_FRAMES 64
+
 typedef struct {
-    size_t size;
-    uint8_t data[MAX_NALU_SIZE + 1];
     double dts, cts;
     libcaption_stauts_t status;
-    // Priority queue for out of order frame processing
-    // Should probablly be a linked list
-    size_t front;
-    size_t latent;
-    cea708_t cea708[MAX_REFRENCE_FRAMES];
+    uint8_vector_t* buffer;
+    cea708_vector_t* cea708;
 } mpeg_bitstream_t;
 
-void mpeg_bitstream_init(mpeg_bitstream_t* packet);
+mpeg_bitstream_t* mpeg_bitstream_new();
+void mpeg_bitstream_del(mpeg_bitstream_t* bs);
 ////////////////////////////////////////////////////////////////////////////////
 // TODO make convenience functions for flv/mp4
 /*! \brief
     \param
 */
-size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
+size_t mpeg_bitstream_parse(mpeg_bitstream_t* bs, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts);
 /*! \brief
     \param
 */
-static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* packet) { return packet->status; }
+static inline libcaption_stauts_t mpeg_bitstream_status(mpeg_bitstream_t* bs) { return bs->status; }
 /*! \brief
         Flushes latent packets caused by out or order frames.
         Returns number of latent frames remaining, 0 when complete;
     \param
 */
-size_t mpeg_bitstream_flush(mpeg_bitstream_t* packet, caption_frame_t* frame);
+size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame);
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum {
     sei_type_buffering_period = 0,

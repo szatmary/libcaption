@@ -33,12 +33,11 @@ int main(int argc, char** argv)
     srt_t* srt = 0;
     int has_audio, has_video;
     caption_frame_t frame;
-    mpeg_bitstream_t mpegbs;
     const char* path = argv[1];
 
     flvtag_init(&tag);
     caption_frame_init(&frame);
-    mpeg_bitstream_init(&mpegbs);
+    mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
 
     FILE* flv = flv_open_read(path);
     srt = srt_new();
@@ -56,14 +55,14 @@ int main(int argc, char** argv)
 
             while (0 < size) {
                 size_t nalu_size = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-                mpeg_bitstream_parse(&mpegbs, &frame, (const uint8_t*)"\0\0\1", 3, STREAM_TYPE_H264, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
-                mpeg_bitstream_parse(&mpegbs, &frame, &data[LENGTH_SIZE], nalu_size, STREAM_TYPE_H264, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
+                mpeg_bitstream_parse(mpegbs, &frame, (const uint8_t*)"\0\0\1", 3, STREAM_TYPE_H264, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
+                mpeg_bitstream_parse(mpegbs, &frame, &data[LENGTH_SIZE], nalu_size, STREAM_TYPE_H264, flvtag_dts_seconds(&tag), flvtag_cts_seconds(&tag));
                 data += nalu_size + LENGTH_SIZE, size -= nalu_size + LENGTH_SIZE;
-                switch (mpeg_bitstream_status(&mpegbs)) {
+                switch (mpeg_bitstream_status(mpegbs)) {
                 default:
                 case LIBCAPTION_ERROR:
                     fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
-                    mpeg_bitstream_init(&mpegbs);
+                    // mpeg_bitstream_init(&mpegbs); // TODO replace me!
                     return EXIT_FAILURE;
                     break;
 
@@ -81,6 +80,7 @@ int main(int argc, char** argv)
 
     srt_dump(srt);
     srt_free(srt);
+    mpeg_bitstream_del(mpegbs);
 
     return 1;
 }

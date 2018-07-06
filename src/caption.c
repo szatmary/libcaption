@@ -306,8 +306,9 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
         return frame->status;
     }
 
-    if (0 > frame->timestamp || LIBCAPTION_READY == frame->status) {
+    if (0 > frame->timestamp || frame->timestamp == timestamp || LIBCAPTION_READY == frame->status) {
         frame->timestamp = timestamp;
+        frame->status = LIBCAPTION_OK;
     }
 
     // skip duplicate controll commands. We also skip duplicate specialna to match the behaviour of iOS/vlc
