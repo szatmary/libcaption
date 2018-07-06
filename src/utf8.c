@@ -127,20 +127,20 @@ size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes)
 
 size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
 {
-    size_t _bytes;
-    if (!bytes) {
-        bytes = &_bytes;
-    }
-
+    size_t str_bytes = 0;
     for (size_t codepoints = 0, (*bytes) = 0;; ++codepoints) {
         size_t codepoint_length = utf8_codepoint_length(str);
         size_t newline_length = utf8_codepoint_is_newline(str);
 
         if (!codepoint_length || newline_length) {
+            if(bytes) {
+                *bytes = str_bytes;
+            }
             return codepoints + newline_length;
         }
 
-        str += codepoint_length, (*bytes) += codepoint_length;
+        str += codepoint_length;
+        str_bytes += codepoint_length;
     }
 }
 
