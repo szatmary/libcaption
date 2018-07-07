@@ -81,13 +81,12 @@ vtt_block_t* vtt_block_new(const utf8_codepoint_t* data, size_t size, enum VTT_B
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
-double parse_timestamp(const utf8_codepoint_t* line)
-{
+double vtt_parse_timestamp(const utf8_codepoint_t* line) {
     int hh, mm, ss, ms;
-    if (sscanf(line, "%d:%2d:%2d%*1[,.]%3d", &hh, &mm, &ss, &ms) == 4) {
+    if (sscanf(line, "%d:%2d:%2d%*1[,.]%d", &hh, &mm, &ss, &ms) == 4) {
         return VTTTIME2SECONDS(hh, mm, ss, ms);
     }
-    if (sscanf(line, "%2d:%2d%*1[,.]%3d", &mm, &ss, &ms) == 3) {
+    if (sscanf(line, "%d:%2d%*1[,.]%d", &mm, &ss, &ms) == 3) {
         return VTTTIME2SECONDS(0.0, mm, ss, ms);
     }
     return -1.0;
@@ -106,11 +105,11 @@ void parse_timestamps(const utf8_codepoint_t* line, double* start_pts, double* e
     printf("Matches: %d\n", matches);
 
     if (matches >= 1) {
-        *start_pts = parse_timestamp(start_str);
+        *start_pts = vtt_parse_timestamp(start_str);
         printf("Start pts: %f\n", *start_pts);
     }
     if (matches >= 2) {
-        *end_pts = parse_timestamp(end_str);
+        *end_pts = vtt_parse_timestamp(end_str);
     }
     if ((matches == 3) && (strlen(cue_str) > 0)) {
         int cue_size = strlen(cue_str);
@@ -231,7 +230,7 @@ vtt_t* _vtt_parse(const utf8_codepoint_t* data, size_t size, int srt_mode)
             (*block)->duration = end_pts - str_pts;
             (*block)->cue_settings = cue_settings;
             if (cue_id != NULL) {
-                // TODO make a utf8_string_new function ti replace this
+                // TODO make a utf8_string_new function t0 replace this
                 (*block)->cue_id = malloc(cue_id_length + 1);
                 memcpy((*block)->cue_id, cue_id, cue_id_length);
                 (*block)->cue_id[cue_id_length] = '\0';

@@ -85,6 +85,9 @@ static inline void vtt_crack_time(double tt, int* hh, int* mm, int* ss, int* ms)
     (*hh) = (int)((int64_t)(tt / (60 * 60)));
 }
 
+double vtt_parse_timestamp(const utf8_codepoint_t* line);
+vtt_block_t* vtt_block_new(const utf8_codepoint_t* data, size_t size, enum VTT_BLOCK_TYPE type);
+
 // This only converts the current CUE, it does not walk the list
 /*! \brief
     \param

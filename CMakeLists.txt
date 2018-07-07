@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libcaption)
-set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
-#set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
+# set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
 add_definitions(-D__STDC_CONSTANT_MACROS)
 if (WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -15,48 +15,42 @@ endif()
 # Don't need to prefix local includes with "caption/*"
 include_directories(${PROJECT_SOURCE_DIR}/caption)
 
-option(ENABLE_RE2C "Use RE2C to generate eia608.c" OFF)
+
 set(eia608_from_utf8_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c)
-set(eia608_from_utf8_c_cached ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c.cached)
-if(ENABLE_RE2C)
-  find_program(RE2C re2c)
-  set(eia608_from_utf8_re2c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.re2c)
-  if(RE2C)
-    message(STATUS "Found re2c: ${RE2C}")
+set(eia608_from_utf8_re2c_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.re2c.c)
+set(eia608_from_utf8_cached_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.cached.c)
+set(srt_c ${PROJECT_SOURCE_DIR}/src/srt.c)
+set(srt_re2c_c ${PROJECT_SOURCE_DIR}/src/srt.re2c.c)
+set(srt_cached_c ${PROJECT_SOURCE_DIR}/src/srt.cached.c)
 
-    # Create a temporary file until re2c regenerates it so that CMake doesn't
-    # complain about the missing source file
-    if(NOT EXISTS ${eia608_from_utf8_c})
-      file(WRITE ${eia608_from_utf8_c} "")
-    endif()
-
-    add_custom_target(re2c
-      COMMAND ${CMAKE_COMMAND} -E remove ${eia608_from_utf8_c}
-      COMMAND ${RE2C} -bis -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c}
-      COMMAND ${CMAKE_COMMAND} -E copy ${eia608_from_utf8_c} ${eia608_from_utf8_c_cached}
-      DEPENDS ${eia608_from_utf8_re2c}
-      COMMENT "Generating ${eia608_from_utf8_re2c}")
-  else()
-    message(SEND_ERROR "Could not find re2c executable")
-  endif()
-else()
-  message(WARNING "Using cached re2c file: ${eia608_from_utf8_c_cached}")
-  if(NOT EXISTS ${eia608_from_utf8_c})
-    file(WRITE ${eia608_from_utf8_c} "")
-  endif()
+find_program(RE2C re2c)
+if(NOT RE2C)
+  message(STATUS "re2c not found. Using cached version of generated files.")
+  configure_file(${srt_cached_c} ${srt_c} COPYONLY)
   configure_file(${eia608_from_utf8_c_cached} ${eia608_from_utf8_c} COPYONLY)
+else()
+  add_custom_command(OUTPUT ${srt_c}
+    COMMAND ${RE2C} -bis -o ${srt_c} ${srt_re2c_c}
+    DEPENDS ${srt_re2c_c}
+    COMMENT "Generating ${srt_c}")
+
+    add_custom_command(OUTPUT ${eia608_from_utf8_c}
+    COMMAND ${RE2C} -bis -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c_c}
+    DEPENDS ${eia608_from_utf8_re2c_c}
+    COMMENT "Generating ${eia608_from_utf8_c}")
 endif()
 
+
 set(CAPTION_SOURCES
+  ${srt_c}
+  ${eia608_from_utf8_c}
   src/caption.c
   src/cea708.c
   src/eia608.c
   src/eia608_charmap.c
-  src/eia608_from_utf8.c
   src/types.c
   src/mpeg.c
   src/scc.c
-  src/srt.c
   src/utf8.c
   src/vtt.c
   src/xds.c
@@ -77,10 +71,6 @@ set(CAPTION_HEADERS
 )
 
 add_library(caption ${CAPTION_SOURCES})
-
-if(ENABLE_RE2C)
-  add_dependencies(caption re2c)
-endif()
 
 if(CMAKE_VERSION VERSION_EQUAL 2.8.12 OR CMAKE_VERSION VERSION_GREATER 2.8.12)
 target_include_directories(caption PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -29,6 +29,19 @@
         "environment": [],
         "externalConsole": false,
         "MIMode": "lldb"
+    },
+    {
+        "name": "srtdump (lldb) Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/examples/srtdump",
+        "preLaunchTask": "build",
+        "args": ["${workspaceFolder}/unit_tests/sample_files/TOS-en.srt"],
+        "stopAtEntry": true,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb"
     }
     ]
 }

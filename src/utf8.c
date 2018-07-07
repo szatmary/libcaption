@@ -146,25 +146,21 @@ size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
 
 size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes)
 {
-    size_t _bytes;
-    if (!bytes) {
-        bytes = &_bytes;
+    // TODO rewrite this!
+    size_t codepoints = 0, str_bytes = 0, codepoint_length = 0;
+    while(codepoints < max_codepoints) {
+            if( 0 == (codepoint_length = utf8_codepoint_length(str))) {
+                break;
+            }
+
+            ++codepoints;
+            str_bytes += codepoint_length;
     }
 
-    for (size_t codepoints = 0, (*bytes) = 0;; ++codepoints) {
-        size_t newline_length = utf8_codepoint_is_newline(str);
-
-        if (newline_length || codepoints >= max_codepoints) {
-            return codepoints;
-        }
-
-        size_t codepoint_length = utf8_codepoint_length(str);
-        if (!codepoint_length || 0 < utf8_codepoint_is_newline(str)) {
-            return codepoints;
-        }
-
-        str += codepoint_length, (*bytes) += codepoint_length;
+    if(bytes) {
+        *bytes = str_bytes;
     }
+    return codepoints; 
 }
 
 utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
