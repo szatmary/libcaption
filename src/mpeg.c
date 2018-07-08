@@ -139,22 +139,23 @@ size_t _copy_from_rbsp(uint8_t* data, uint8_t* payloadData, size_t payloadSize)
 void sei_message_ctor(sei_message_t* msg)
 {
     memset(msg, 0, sizeof(sei_message_t));
+    msg->payload = uint8_vector_new();
 }
 
 void sei_message_dtor(sei_message_t* msg)
 {
-    uint8_vector_resize(&msg->payload, 0);
+    uint8_vector_del(&msg->payload);
 }
 ////////////////////////////////////////////////////////////////////////////////
 void sei_ctor(sei_t* sei)
 {
     sei->timestamp = 0.0;
-    sei->messages = uint8_vector_new();
+    sei->messages = sei_message_vector_new();
 }
 
 void sei_dtor(sei_t* sei)
 {
-    uint8_vector_del(&sei->messages);
+    sei_message_vector_del(&sei->messages);
 }
 
 void sei_message_dup(sei_message_t* to, sei_message_t* from)

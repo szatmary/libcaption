@@ -79,16 +79,18 @@ char* _vector_back(_vector_t** v)
 
 /*! \brief Reserves enough memry to store c elements
 */
+#define PAGE_SIZE ((size_t)1024)
 size_t _vector_reserve(_vector_t** v, size_t c)
 {
     if (c > (*v)->alloc) {
-        // TODO alocate full pages
-        size_t bytes = (1 + c) * (*v)->size;
-        char* new_ptr = (char*)realloc((*v), sizeof(_vector_t) + bytes);
+        size_t bytes = sizeof(_vector_t) + ((1 + c) * (*v)->size);
+        bytes = (bytes + PAGE_SIZE) &~ (PAGE_SIZE-1); // Round to page size
+        size_t new_alloc = (bytes - ((*v)->size + sizeof(_vector_t))) / (*v)->size;
+        char* new_ptr = (char*)realloc((*v), bytes);
 
         if (new_ptr) {
             (*v) = (_vector_t*)new_ptr;
-            (*v)->alloc = c;
+            (*v)->alloc = new_alloc;
         }
     }
     return (*v)->alloc;
