@@ -82,6 +82,7 @@ char* _vector_back(_vector_t** v)
 size_t _vector_reserve(_vector_t** v, size_t c)
 {
     if (c > (*v)->alloc) {
+        // TODO alocate full pages
         size_t bytes = (1 + c) * (*v)->size;
         char* new_ptr = (char*)realloc((*v), sizeof(_vector_t) + bytes);
 
@@ -158,11 +159,12 @@ size_t _vector_erase(_vector_t** v, size_t p, size_t c)
         }
     }
 
-    char* erase_at = _vector_begin(v) + ((p + 0) * (*v)->size);
-    char* erase_to = _vector_begin(v) + ((p + c) * (*v)->size);
-    memmove(erase_at, erase_to, _vector_end(v) - erase_to);
-    (*v)->count -= c;
-    memset(_vector_begin(v) + ((*v)->size * (*v)->count), 0, (*v)->size);
+    char* buffer = _vector_begin(v);
+    char* erase_at = buffer + (p * (*v)->size);
+    char* erase_to = erase_at + (c * (*v)->size);
+    (*v)->count = _vector_end(v) - erase_to;
+    memmove(erase_at, erase_to, (*v)->count);
+    memset(buffer + ((*v)->size * (*v)->count), 0, (*v)->size);
     return (*v)->count;
 }
 

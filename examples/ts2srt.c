@@ -40,7 +40,6 @@ int main(int argc, char** argv)
     caption_frame_init(&frame);
 
     srt_t* srt = srt_new();
-    path = "/Users/twitch/Projects/libcaption/OpeningCeremony.ts";
     FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "Failed to open input\n");
@@ -68,7 +67,7 @@ int main(int argc, char** argv)
                     break;
 
                 case LIBCAPTION_READY: {
-                    // caption_frame_dump(&frame);
+                    caption_frame_dump(&frame);
                     srt_cue_from_caption_frame(&frame, srt);
                 } break;
                 } //switch

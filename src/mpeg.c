@@ -234,7 +234,7 @@ void sei_dump_messages(sei_message_t* head, double timestamp)
         fprintf(stderr, "\n");
 
         if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-            if (LIBCAPTION_OK != cea708_parse_h262(sei_message_data(msg), sei_message_size(msg), &cea708)) {
+            if (LIBCAPTION_OK != cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), &cea708)) {
                 fprintf(stderr, "cea708_parse error\n");
             } else {
                 cea708_dump(&cea708);
@@ -325,7 +325,6 @@ uint8_t* sei_render_alloc(sei_t* sei, size_t* size)
 libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp)
 {
     sei_init(sei, timestamp);
-    int ret = 0;
 
     // SEI may contain more than one payload
     while (1 < size) {
@@ -356,6 +355,7 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, doub
         payloadSize += (*data);
         ++data, --size;
 
+        // payloadSize is in rbsp, so It may be larger that bytes remaining
         if (payloadSize) {
             sei_message_t* msg = sei_message_new((sei_msgtype_t)payloadType, 0, payloadSize);
             uint8_t* payloadData = sei_message_data(msg);
@@ -363,12 +363,11 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, doub
             sei_message_append(sei, msg);
 
             if (bytes < payloadSize) {
+                // return LIBCAPTION_OK;
                 return LIBCAPTION_ERROR;
             }
 
-            data += bytes;
-            size -= bytes;
-            ++ret;
+            data += bytes, size -= bytes;
         }
     }
 
@@ -582,52 +581,39 @@ void mpeg_bitstream_del(mpeg_bitstream_t* bs)
     free(bs);
 }
 
-uint8_t mpeg_bitstream_packet_type(mpeg_bitstream_t* packet, unsigned stream_type)
+int mpeg_bitstream_packet_type(mpeg_bitstream_t* packet, int stream_type, size_t nal_size)
 {
-    if (4 > uint8_vector_count(&packet->buffer)) {
-        return 0;
+    // no nal can be less than 2 bytes
+    if (2 > nal_size) {
+        return -1;
     }
+
     switch (stream_type) {
     case STREAM_TYPE_H262:
-        return *uint8_vector_at(&packet->buffer, 3);
+        return *uint8_vector_begin(&packet->buffer);
     case STREAM_TYPE_H264:
-        return *uint8_vector_at(&packet->buffer, 3) & 0x1F;
+        return *uint8_vector_begin(&packet->buffer) & 0x1F;
     case STREAM_TYPE_H265:
-        return (*uint8_vector_at(&packet->buffer, 3) >> 1) & 0x3F;
+        return (*uint8_vector_begin(&packet->buffer) >> 1) & 0x3F;
     default:
-        return 0;
+        return -1;
     }
 }
 
-// TODO optomize
-// static size_t find_start_code_increnental(const uint8_t* data, size_t size, size_t prev_size)
-// {
-//     // prev_size MUST be at least 4
-//     assert(3 < prev_size);
-//     uint32_t start_code = 0xffffffff;
-//     for (size_t i = prev_size - 3; i < size; ++i) {
-//         start_code = (start_code << 8) | data[i];
-//         if (0x00000100 == (start_code & 0xffffff00)) {
-//             return i - 3;
-//         }
-//     }
-//     return 0;
-// }
-
-static size_t find_start_code(const uint8_t* data, size_t size)
+static ssize_t find_start_code(const uint8_t* data, size_t size, size_t prev_size)
 {
-    // TODO why does this loop-start at 1?
     uint32_t start_code = 0xffffffff;
-    for (size_t i = 1; i < size; ++i) {
+    prev_size = 3 < prev_size ? prev_size - 3 : 0;
+    for (size_t i = prev_size; i < size; ++i) {
         start_code = (start_code << 8) | data[i];
         if (0x00000100 == (start_code & 0xffffff00)) {
             return i - 3;
         }
     }
-    return 0;
+
+    return -1;
 }
 
-// Removes items from front
 size_t mpeg_bitstream_flush(mpeg_bitstream_t* bs, caption_frame_t* frame)
 {
     if (0 < cea708_vector_count(&bs->cea708)) {
@@ -648,58 +634,61 @@ void _mpeg_bitstream_cea708_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, 
     }
 }
 
+void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t *data, size_t size, double dts, double cts)
+{
+    sei_t sei;
+    packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size, dts + cts));
+    for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
+        if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
+            cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
+            cea708->timestamp = dts + cts;
+            packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), cea708));
+            _mpeg_bitstream_cea708_flush(packet, frame, dts);
+        }
+    }
+    sei_free(&sei);
+}
+
 size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, unsigned stream_type, double dts, double cts)
 {
-    size_t buffer_size = uint8_vector_count(&packet->buffer);
+    size_t prev_size = uint8_vector_count(&packet->buffer);
 
-    if (MAX_NALU_SIZE <= buffer_size) {
+    if (MAX_NALU_SIZE <= prev_size) {
         packet->status = LIBCAPTION_ERROR;
         return 0;
     }
 
     // consume upto MAX_NALU_SIZE bytes
-    if (MAX_NALU_SIZE <= buffer_size + size) {
-        size = MAX_NALU_SIZE - buffer_size;
+    if (MAX_NALU_SIZE <= prev_size + size) {
+        size = MAX_NALU_SIZE - prev_size;
     }
 
-    sei_t sei;
-    size_t header_size, scpos;
+    ssize_t scpos;
     packet->status = LIBCAPTION_OK;
     uint8_vector_append(&packet->buffer, size, data);
 
-    // TODO find start code incrementally, This is too slow!
-    while (packet->status == LIBCAPTION_OK && 0 < (scpos = find_start_code(uint8_vector_begin(&packet->buffer), uint8_vector_count(&packet->buffer)))) {
-        switch (mpeg_bitstream_packet_type(packet, stream_type)) {
-        default:
-            break;
-        case H262_SEI_PACKET:
-            header_size = 4;
-            if (STREAM_TYPE_H262 == stream_type && scpos > header_size) {
-                cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
-                cea708->timestamp = dts + cts;
-                packet->status = libcaption_status_update(packet->status, cea708_parse_h262(uint8_vector_at(&packet->buffer, header_size), scpos - header_size, cea708));
-                _mpeg_bitstream_cea708_flush(packet, frame, dts);
-            }
-            break;
-        case H264_SEI_PACKET:
-        case H265_SEI_PACKET:
-            header_size = STREAM_TYPE_H264 == stream_type ? 4 : STREAM_TYPE_H265 == stream_type ? 5 : 0;
-            if (header_size && scpos > header_size) {
-                packet->status = libcaption_status_update(packet->status, sei_parse(&sei, uint8_vector_at(&packet->buffer, header_size), scpos - header_size, dts + cts));
-                for (sei_message_t* msg = sei_message_head(&sei); msg; msg = sei_message_next(msg)) {
-                    if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-                        cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
-                        cea708->timestamp = dts + cts;
-                        packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), cea708));
-                        _mpeg_bitstream_cea708_flush(packet, frame, dts);
-                    }
-                }
-                sei_free(&sei);
-            }
-            break;
+    for (; packet->status == LIBCAPTION_OK && 0 <= (scpos = find_start_code(uint8_vector_begin(&packet->buffer), uint8_vector_count(&packet->buffer), prev_size)); prev_size = 0) {
+        int packet_type = mpeg_bitstream_packet_type(packet, stream_type, scpos);
+        size_t packet_size = scpos;
+        if (STREAM_TYPE_H262 == stream_type && H262_SEI_PACKET == packet_type) {
+            cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
+            cea708->timestamp = dts + cts;
+            packet->status = libcaption_status_update(packet->status, cea708_parse_h262(uint8_vector_begin(&packet->buffer), scpos, cea708));
+            _mpeg_bitstream_cea708_flush(packet, frame, dts);
         }
 
-        uint8_vector_erase(&packet->buffer, 0, scpos);
+        if (STREAM_TYPE_H264 == stream_type && H264_SEI_PACKET == packet_type) {
+            data = uint8_vector_begin(&packet->buffer) + 1;
+            _mpeg_bitstream_sei_parse(packet,frame, data, scpos - 1, dts, cts);
+        }
+
+        if (STREAM_TYPE_H265 == stream_type && H265_SEI_PACKET == packet_type) {
+            data = uint8_vector_begin(&packet->buffer) + 2;
+            _mpeg_bitstream_sei_parse(packet,frame, data, scpos - 2, dts, cts);
+        }
+
+
+        uint8_vector_erase(&packet->buffer, 0, scpos + 3);
     }
 
     return size;

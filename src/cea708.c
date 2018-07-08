@@ -22,6 +22,8 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 #include "cea708.h"
+#include "mpeg.h"
+#include <assert.h>
 #include <float.h>
 #include <memory.h>
 #include <stdio.h>
@@ -65,7 +67,7 @@ void cea708_parse_user_data_type_strcture(const uint8_t* data, size_t size, user
     user_data->em_data = data[1];
     data += 2, size -= 2;
 
-    for (int i = 0; 3 < size && i < (int)user_data->cc_count; ++i, data += 3, size -= 3) {
+    for (size_t i = 0; 3 < size && i < user_data->cc_count; ++i, data += 3, size -= 3) {
         user_data->cc_data[i].marker_bits = data[0] >> 3;
         user_data->cc_data[i].cc_valid = data[0] >> 2;
         user_data->cc_data[i].cc_type = data[0] >> 0;
@@ -140,14 +142,16 @@ error:
 
 libcaption_stauts_t cea708_parse_h262(const uint8_t* data, size_t size, cea708_t* cea708)
 {
+    assert(data && size);
     if (!data || 7 > size) {
         return LIBCAPTION_ERROR;
     }
 
-    cea708->user_identifier = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
-    cea708->user_data_type_code = data[4];
+    assert(H262_SEI_PACKET == data[0]);
+    cea708->user_identifier = ((data[1] << 24) | (data[2] << 16) | (data[3] << 8) | data[4]);
+    cea708->user_data_type_code = data[5];
     if (3 == cea708->user_data_type_code) {
-        cea708_parse_user_data_type_strcture(data + 5, size - 5, &cea708->user_data);
+        cea708_parse_user_data_type_strcture(data + 6, size - 6, &cea708->user_data);
     }
 
     return LIBCAPTION_OK;

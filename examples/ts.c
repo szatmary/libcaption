@@ -97,7 +97,7 @@ int ts_parse_packet(ts_t* ts, const uint8_t* data)
         }
     } else if (payload_present && pid == ts->ccpid) {
         if (pusi) {
-            // int data_alignment = !! (data[i + 6] & 0x04);
+            // int alignment = !!(data[i + 6] & 0x04);
             int has_pts = !!(data[i + 7] & 0x80);
             int has_dts = !!(data[i + 7] & 0x40);
             uint8_t header_length = data[i + 8];

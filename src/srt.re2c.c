@@ -48,7 +48,8 @@ void srt_dump(srt_t* srt)
     }
 }
 
-double _srt_parse_timestamp(utf8_codepoint_t* str) {
+double _srt_parse_timestamp(utf8_codepoint_t* str)
+{
     return 0.0;
 }
 
@@ -69,14 +70,12 @@ srt_t* srt_parse(const utf8_codepoint_t* str, size_t size)
         timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
     */
 
-        // eol_2x = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
-
     /*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
-    srt_t *srt = srt_new();
+    srt_t* srt = srt_new();
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
-    for(;;) {
-    /*!re2c
+    for (;;) {
+        /*!re2c
         * { return srt; }
         '\x00' { return srt; }
         blank_line* @a identifier @b eol @c timestamp @d ws+  "-->" ws+ @e timestamp @f ws* eol @g line_of_text* @h eolx2 {

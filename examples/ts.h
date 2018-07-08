@@ -29,9 +29,9 @@
 typedef struct {
     int16_t pmtpid;
     int16_t ccpid;
+    uint32_t flags;
     int16_t stream_type;
-    int64_t pts;
-    int64_t dts;
+    int64_t pts, dts;
     size_t size;
     const uint8_t* data;
 } ts_t;

@@ -81,7 +81,8 @@ vtt_block_t* vtt_block_new(const utf8_codepoint_t* data, size_t size, enum VTT_B
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
-double vtt_parse_timestamp(const utf8_codepoint_t* line) {
+double vtt_parse_timestamp(const utf8_codepoint_t* line)
+{
     int hh, mm, ss, ms;
     if (sscanf(line, "%d:%2d:%2d%*1[,.]%d", &hh, &mm, &ss, &ms) == 4) {
         return VTTTIME2SECONDS(hh, mm, ss, ms);

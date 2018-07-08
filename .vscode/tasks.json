@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "cmake . && make"
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug . && make"
         }
     ]
 }

@@ -148,19 +148,19 @@ size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoint
 {
     // TODO rewrite this!
     size_t codepoints = 0, str_bytes = 0, codepoint_length = 0;
-    while(codepoints < max_codepoints) {
-            if( 0 == (codepoint_length = utf8_codepoint_length(str))) {
-                break;
-            }
+    while (codepoints < max_codepoints) {
+        if (0 == (codepoint_length = utf8_codepoint_length(str))) {
+            break;
+        }
 
-            ++codepoints;
-            str_bytes += codepoint_length;
+        ++codepoints;
+        str_bytes += codepoint_length;
     }
 
-    if(bytes) {
+    if (bytes) {
         *bytes = str_bytes;
     }
-    return codepoints; 
+    return codepoints;
 }
 
 utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
