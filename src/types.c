@@ -226,6 +226,16 @@ again:
     _vector_pop_back(v);
 }
 
+/*! \brief
+*/
+void _vector_dup(_vector_t** t, _vector_t** f)
+{
+    size_t count = _vector_count(f);
+    _vector_resize(t, 0); // run dtors
+    _vector_reserve(t, count);
+    memcpy((*t), (*f), count * (*f)->size);
+}
+
 /*! \brief Removes all element from the vector and free memory
 */
 void _vector_del(_vector_t** v)

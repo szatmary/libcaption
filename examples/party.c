@@ -48,7 +48,6 @@ void write_amfcaptions_708(FILE* out, uint32_t timestamp, const char* text)
 {
     sei_t sei;
     flvtag_t tag;
-    sei_message_t* msg;
     caption_frame_t frame;
     flvtag_init(&tag);
     caption_frame_init(&frame);
@@ -56,12 +55,13 @@ void write_amfcaptions_708(FILE* out, uint32_t timestamp, const char* text)
     sei_from_caption_frame(&sei, &frame);
     // caption_frame_dump (&frame);
 
-    for (msg = sei_message_head(&sei); msg; msg = sei_message_next(msg), ++timestamp) {
+    for (size_t i = 0; i < sei_message_vector_count(&sei.messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei.messages, i);
         flvtag_amfcaption_708(&tag, timestamp, msg);
         flv_write_tag(out, &tag);
     }
 
-    sei_free(&sei);
+    sei_dtor(&sei);
     flvtag_free(&tag);
 }
 

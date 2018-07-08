@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 #include "caption.h"
-#define CEA608_MAX_SIZE (255)
+#define CEA708_MAX_SIZE (255)
 
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum {

@@ -96,16 +96,16 @@ typedef enum {
 typedef struct _sei_message_t {
     size_t size;
     sei_msgtype_t type;
-    uint8_vector_t *payload;
+    uint8_vector_t* payload;
 } sei_message_t;
 
-void sei_message_ctor(sei_message_t *msg);
-void sei_message_dtor(sei_message_t *msg);
-MAKE_VECTOR(sei_message_t,sei_message,sei_message_ctor,sei_message_dtor,0);
+void sei_message_ctor(sei_message_t* msg);
+void sei_message_dtor(sei_message_t* msg);
+MAKE_VECTOR(sei_message_t, sei_message, sei_message_ctor, sei_message_dtor, 0);
 
 typedef struct {
     double timestamp;
-    sei_message_vector_t *messages;
+    sei_message_vector_t* messages;
 } sei_t;
 
 /*! \brief
@@ -120,26 +120,10 @@ void sei_cat(sei_t* to, sei_t* from, int itu_t_t35);
 /*! \brief
     \param
 */
-void sei_message_append(sei_t* sei, sei_message_t* msg);
-/*! \brief
-    \param
-*/
 libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp);
 /*! \brief
     \param
 */
-// uint8_t* sei_message_data(sei_message_t* msg);
-// /*! \brief
-//     \param
-// */
-// sei_message_t* sei_message_new(sei_msgtype_t type, uint8_t* data, size_t size);
-// /*! \brief
-//     \param
-// */
-// static inline sei_message_t* sei_message_copy(sei_message_t* msg)
-// {
-//     return sei_message_new(sei_message_type(msg), sei_message_data(msg), sei_message_size(msg));
-// }
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param

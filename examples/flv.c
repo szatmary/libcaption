@@ -260,11 +260,11 @@ const char onCaptionInfo708[] = { 0x02, 0x00, 0x0D, 'o', 'n', 'C', 'a', 'p', 't'
 int flvtag_amfcaption_708(flvtag_t* tag, uint32_t timestamp, sei_message_t* msg)
 {
     flvtag_initamf(tag, timestamp);
-    unsigned long size = 1 + (4 * ((sei_message_size(msg) + 2) / 3));
+    unsigned long size = 1 + (4 * ((uint8_vector_count(&msg->payload) + 2) / 3));
     flvtag_reserve(tag, sizeof(onCaptionInfo708) + size + 3);
     memcpy(flvtag_payload_data(tag), onCaptionInfo708, sizeof(onCaptionInfo708));
     uint8_t* data = flvtag_payload_data(tag) + sizeof(onCaptionInfo708);
-    base64_encode(sei_message_data(msg), sei_message_size(msg), data, &size);
+    base64_encode(uint8_vector_begin(&msg->payload), uint8_vector_count(&msg->payload), data, &size);
 
     // Update the size of the base64 string
     data[-2] = size >> 8;
@@ -345,7 +345,8 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
     }
 
     sei_t new_sei;
-    sei_init(&new_sei, flvtag_pts(tag));
+    sei_ctor(&new_sei);
+    new_sei.timestamp = flvtag_pts(tag);
     sei_cat(&new_sei, sei, 1);
 
     flvtag_t new_tag;
@@ -363,19 +364,13 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
 
         if (6 == nalu_type) {
             sei_cat(&new_sei, sei, 0); // copy non itu_t_t35 sei messages
-        } else if (new_sei.head && 7 != nalu_type && 8 != nalu_type && 9 != nalu_type) {
+        } else if (7 != nalu_type && 8 != nalu_type && 9 != nalu_type) {
             flvtag_avcwritesei(&new_tag, &new_sei);
             flvtag_avcwritenal(&new_tag, nalu_data, nalu_size);
-            sei_free(&new_sei);
+            sei_dtor(&new_sei);
         } else {
             flvtag_avcwritenal(&new_tag, nalu_data, nalu_size);
         }
-    }
-
-    // On the off chance we have an empty frame, we still wish to write the sei
-    if (new_sei.head) {
-        flvtag_avcwritesei(&new_tag, &new_sei);
-        sei_free(&new_sei);
     }
 
     flvtag_swap(tag, &new_tag);
@@ -386,7 +381,8 @@ int flvtag_addsei(flvtag_t* tag, sei_t* sei)
 int flvtag_addcaption_text(flvtag_t* tag, const utf8_codepoint_t* text)
 {
     sei_t sei;
-    sei_init(&sei, flvtag_pts(tag));
+    sei_ctor(&sei);
+    sei.timestamp = flvtag_pts(tag);
 
     if (text) {
         caption_frame_t frame;
@@ -398,16 +394,17 @@ int flvtag_addcaption_text(flvtag_t* tag, const utf8_codepoint_t* text)
     }
 
     int ret = flvtag_addsei(tag, &sei);
-    sei_free(&sei);
+    sei_dtor(&sei);
     return ret;
 }
 
 int flvtag_addcaption_scc(flvtag_t* tag, const scc_t* scc)
 {
     sei_t sei;
-    sei_init(&sei, flvtag_pts(tag));
+    sei_ctor(&sei);
+    sei.timestamp = flvtag_pts(tag);
     sei_from_scc(&sei, scc);
     int ret = flvtag_addsei(tag, &sei);
-    sei_free(&sei);
+    sei_dtor(&sei);
     return ret;
 }

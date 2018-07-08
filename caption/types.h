@@ -118,6 +118,10 @@ void _vector_sort(_vector_t** v, int o);
 
 /*! \brief
 */
+void _vector_dup(_vector_t** t, _vector_t** f);
+
+/*! \brief
+*/
 void _vector_del(_vector_t** v);
 static inline void _vector_sort_ascending(_vector_t** v) { _vector_sort(v, 1); }
 static inline void _vector_sort_descending(_vector_t** v) { _vector_sort(v, -1); }
@@ -148,6 +152,7 @@ static inline void _vector_sort_descending(_vector_t** v) { _vector_sort(v, -1);
     static inline void NAME##_vector_sort(_vector_t** v, int o) { return _vector_sort((_vector_t**)v, o); }                                                            \
     static inline void NAME##_vector_sort_ascending(_vector_t** v) { return _vector_sort_ascending((_vector_t**)v); }                                                  \
     static inline void NAME##_vector_sort_descending(_vector_t** v) { return _vector_sort_descending((_vector_t**)v); }                                                \
+    static inline void NAME##_vector_dup(_vector_t** t, _vector_t** f) { return _vector_dup((_vector_t**)t, (_vector_t**)f); }                                         \
     static inline void NAME##_vector_del(NAME##_vector_t** v) { return _vector_del((_vector_t**)v); }
 
 // Common types

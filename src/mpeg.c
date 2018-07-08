@@ -136,12 +136,12 @@ size_t _copy_from_rbsp(uint8_t* data, uint8_t* payloadData, size_t payloadSize)
     return total;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void sei_message_ctor(sei_message_t *msg)
+void sei_message_ctor(sei_message_t* msg)
 {
-    memset(msg,0,sizeof(sei_message_t));
+    memset(msg, 0, sizeof(sei_message_t));
 }
 
-void sei_message_dtor(sei_message_t *msg)
+void sei_message_dtor(sei_message_t* msg)
 {
     uint8_vector_resize(&msg->payload, 0);
 }
@@ -157,16 +157,20 @@ void sei_dtor(sei_t* sei)
     uint8_vector_del(&sei->messages);
 }
 
-void sei_cat(sei_t* to, sei_t* from, int itu_t_t35)
+void sei_message_dup(sei_message_t* to, sei_message_t* from)
 {
-    if (!to || !from) {
-        return;
-    }
+    to->size = from->size;
+    to->type = from->type;
+    sei_message_vector_dup(&to->payload, &from->payload);
+}
 
-    for(size_t i = 0 ; i < sei_message_count(&sei->messages), ++i) {
-        sei_message_t* msg = sei_message_at(&sei->messages, i);
-        if (itu_t_t35 || sei_type_user_data_registered_itu_t_t35 != msg->type) {
-            sei_message_append(to, sei_message_copy(msg));
+void sei_cat(sei_t* to, sei_t* from, int itu_t_t35_only)
+{
+    for (size_t i = 0; i < sei_message_vector_count(&from->messages); ++i) {
+        sei_message_t* msg_from = sei_message_vector_at(&from->messages, i);
+        if (!itu_t_t35_only || sei_type_user_data_registered_itu_t_t35 != msg_from->type) {
+            sei_message_t* msg_to = sei_message_vector_push_back(&to->messages);
+            sei_message_dup(msg_to, msg_from);
         }
     }
 }
@@ -174,25 +178,24 @@ void sei_cat(sei_t* to, sei_t* from, int itu_t_t35)
 void sei_dump(sei_t* sei)
 {
     cea708_t cea708;
-    cea708_init(&cea708, timestamp);
+    cea708_init(&cea708, sei->timestamp);
 
     fprintf(stderr, "SEI %p\n", sei);
-    for(size_t i = 0 ; i < sei_message_count(&sei->messages), ++i) {
-        sei_message_t* msg = sei_message_at(&sei->messages, i);
-        uint8_t* data = sei_message_data(msg);
-        size_t size = sei_message_size(msg);
-        fprintf(stderr, "-- Message %p\n-- Message Type: %d\n-- Message Size: %d\n", data, sei_message_type(msg), (int)size);
+    for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
+        uint8_t* data = uint8_vector_begin(&msg->payload);
+        size_t size = uint8_vector_count(&msg->payload);
+        fprintf(stderr, "-- Message %p\n-- Message Type: %d\n-- Message Size: %d\n", data, msg->type, (int)size);
 
         while (size) {
             fprintf(stderr, "%02X ", *data);
-            ++data;
-            --size;
+            ++data, --size;
         }
 
         fprintf(stderr, "\n");
 
-        if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-            if (LIBCAPTION_OK != cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), &cea708)) {
+        if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
+            if (LIBCAPTION_OK != cea708_parse_h264(uint8_vector_begin(&msg->payload), uint8_vector_count(&msg->payload), &cea708)) {
                 fprintf(stderr, "cea708_parse error\n");
             } else {
                 cea708_dump(&cea708);
@@ -200,14 +203,13 @@ void sei_dump(sei_t* sei)
         }
     }
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 size_t sei_render_size(sei_t* sei)
 {
     size_t size = 2; // nalu_type + stop bit
     sei_message_t* msg;
-    for(size_t i = 0 ; i < sei_message_count(&sei->messages), ++i) {
-        sei_message_t* msg = sei_message_at(&sei->messages, i);
+    for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
         size += 1 + (msg->type / 255);
         size += 1 + (msg->size / 255);
         size += 1 + (msg->size * 4 / 3);
@@ -223,11 +225,11 @@ size_t sei_render(sei_t* sei, uint8_t* data)
     sei_message_t* msg;
     size_t escaped_size, size = 2; // nalu_type + stop bit
 
-    for(size_t i = 0 ; i < sei_message_count(&sei->messages), ++i) {
-        sei_message_t* msg = sei_message_at(&sei->messages, i);
+    for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
         int payloadType = msg->type;
-        int payloadSize =uint8_vector_count(msg->payload);
-        uint8_t* payloadData = uint8_vector_begin(msg->payload);
+        int payloadSize = uint8_vector_count(&msg->payload);
+        uint8_t* payloadData = uint8_vector_begin(&msg->payload);
 
         while (255 <= payloadType) {
             (*data) = 255;
@@ -302,16 +304,13 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, doub
 
         // payloadSize is in rbsp, so It may be larger that bytes remaining
         if (payloadSize) {
-
-            sei_message_t* msg = sei_message_push_back(&sei->messages);
-            
-            sei_message_new((sei_msgtype_t)payloadType, 0, payloadSize);
-            uint8_t* payloadData = sei_message_data(msg);
+            sei_message_t* msg = sei_message_vector_push_back(&sei->messages);
+            uint8_vector_resize(&msg->payload, payloadSize);
+            uint8_t* payloadData = uint8_vector_begin(&msg->payload);
             size_t bytes = _copy_to_rbsp(payloadData, payloadSize, data, size);
-            sei_message_append(sei, msg);
 
             if (bytes < payloadSize) {
-                // return LIBCAPTION_OK;
+                sei_message_vector_pop_back(&sei->messages);
                 return LIBCAPTION_ERROR;
             }
 
@@ -331,9 +330,10 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
 
     cea708_init(&cea708, frame->timestamp);
 
-    for (msg = sei_message_head(sei); msg; msg = sei_message_next(msg)) {
-        if (sei_type_user_data_registered_itu_t_t35 == sei_message_type(msg)) {
-            cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), &cea708);
+    for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
+        if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
+            cea708_parse_h264(uint8_vector_begin(&msg->payload), uint8_vector_count(&msg->payload), &cea708);
             status = libcaption_status_update(status, cea708_to_caption_frame(frame, &cea708));
         }
     }
@@ -349,9 +349,11 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
 
 void sei_append_708(sei_t* sei, cea708_t* cea708)
 {
-    sei_message_t* msg = sei_message_new(sei_type_user_data_registered_itu_t_t35, 0, CEA608_MAX_SIZE);
-    msg->size = cea708_render(cea708, sei_message_data(msg), sei_message_size(msg));
-    sei_message_append(sei, msg);
+    sei_message_t* msg = sei_message_vector_push_back(&sei->messages);
+    uint8_vector_resize(&msg->payload, CEA708_MAX_SIZE);
+    msg->type = sei_type_user_data_registered_itu_t_t35;
+    size_t new_size = cea708_render(cea708, uint8_vector_begin(&msg->payload), uint8_vector_count(&msg->payload));
+    uint8_vector_resize(&msg->payload, CEA708_MAX_SIZE);
     cea708_init(cea708, sei->timestamp); // will confgure using HLS compatiable defaults
 }
 
@@ -391,7 +393,8 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     uint16_t prev_cc_data;
     eia608_style_t styl, prev_styl;
 
-    sei_init(sei, frame->timestamp);
+    sei_ctor(sei);
+    sei->timestamp = frame->timestamp;
     cea708_init(&cea708, frame->timestamp); // set up a new popon frame
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
@@ -582,17 +585,19 @@ void _mpeg_bitstream_cea708_flush(mpeg_bitstream_t* bs, caption_frame_t* frame, 
     }
 }
 
-void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t *data, size_t size, double dts, double cts)
+void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, const uint8_t* data, size_t size, double dts, double cts)
 {
     sei_t sei;
-    seu_ctor(&sei);
+    sei_ctor(&sei);
     packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size, dts + cts));
-    for(size_t i = 0 ; i < sei_message_count(&sei.messages), ++i) {
-        sei_message_t* msg = sei_message_count(&sei.messages, i);
+    for (size_t i = 0; i < sei_message_vector_count(&sei.messages); ++i) {
+        sei_message_t* msg = sei_message_vector_at(&sei.messages, i);
         if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
             cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
             cea708->timestamp = dts + cts;
-            packet->status = libcaption_status_update(packet->status, cea708_parse_h264(sei_message_data(msg), sei_message_size(msg), cea708));
+            data = uint8_vector_begin(&packet->buffer);
+            size = uint8_vector_count(&packet->buffer);
+            packet->status = libcaption_status_update(packet->status, cea708_parse_h264(data, size, cea708));
             _mpeg_bitstream_cea708_flush(packet, frame, dts);
         }
     }
@@ -630,14 +635,13 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
 
         if (STREAM_TYPE_H264 == stream_type && H264_SEI_PACKET == packet_type) {
             data = uint8_vector_begin(&packet->buffer) + 1;
-            _mpeg_bitstream_sei_parse(packet,frame, data, scpos - 1, dts, cts);
+            _mpeg_bitstream_sei_parse(packet, frame, data, scpos - 1, dts, cts);
         }
 
         if (STREAM_TYPE_H265 == stream_type && H265_SEI_PACKET == packet_type) {
             data = uint8_vector_begin(&packet->buffer) + 2;
-            _mpeg_bitstream_sei_parse(packet,frame, data, scpos - 2, dts, cts);
+            _mpeg_bitstream_sei_parse(packet, frame, data, scpos - 2, dts, cts);
         }
-
 
         uint8_vector_erase(&packet->buffer, 0, scpos + 3);
     }
