@@ -96,23 +96,23 @@ typedef enum {
 typedef struct _sei_message_t {
     size_t size;
     sei_msgtype_t type;
-    struct _sei_message_t* next;
+    uint8_vector_t *payload;
 } sei_message_t;
+
+void sei_message_ctor(sei_message_t *msg);
+void sei_message_dtor(sei_message_t *msg);
+MAKE_VECTOR(sei_message_t,sei_message,sei_message_ctor,sei_message_dtor,0);
 
 typedef struct {
     double timestamp;
-    sei_message_t* head;
-    sei_message_t* tail;
+    sei_message_vector_t *messages;
 } sei_t;
 
 /*! \brief
     \param
 */
-void sei_init(sei_t* sei, double timestamp);
-/*! \brief
-    \param
-*/
-void sei_free(sei_t* sei);
+void sei_ctor(sei_t* sei);
+void sei_dtor(sei_t* sei);
 /*! \brief
     \param
 */
@@ -128,46 +128,18 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, doub
 /*! \brief
     \param
 */
-static inline sei_message_t* sei_message_head(sei_t* sei) { return sei->head; }
-/*! \brief
-    \param
-*/
-static inline sei_message_t* sei_message_tail(sei_t* sei) { return sei->tail; }
-/*! \brief
-    \param
-*/
-sei_message_t* sei_message_next(sei_message_t* msg);
-/*! \brief
-    \param
-*/
-sei_msgtype_t sei_message_type(sei_message_t* msg);
-/*! \brief
-    \param
-*/
-size_t sei_message_size(sei_message_t* msg);
-/*! \brief
-    \param
-*/
-uint8_t* sei_message_data(sei_message_t* msg);
-/*! \brief
-    \param
-*/
-sei_message_t* sei_message_new(sei_msgtype_t type, uint8_t* data, size_t size);
-/*! \brief
-    \param
-*/
-static inline sei_message_t* sei_message_copy(sei_message_t* msg)
-{
-    return sei_message_new(sei_message_type(msg), sei_message_data(msg), sei_message_size(msg));
-}
-/**
-Free message and all accoiated data. Messaged added to sei_t by using sei_append_message MUST NOT be freed
-These messages will be freed by calling sei_free()
-*/
-/*! \brief
-    \param
-*/
-void sei_message_free(sei_message_t* msg);
+// uint8_t* sei_message_data(sei_message_t* msg);
+// /*! \brief
+//     \param
+// */
+// sei_message_t* sei_message_new(sei_msgtype_t type, uint8_t* data, size_t size);
+// /*! \brief
+//     \param
+// */
+// static inline sei_message_t* sei_message_copy(sei_message_t* msg)
+// {
+//     return sei_message_new(sei_message_type(msg), sei_message_data(msg), sei_message_size(msg));
+// }
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param
@@ -181,10 +153,6 @@ size_t sei_render(sei_t* sei, uint8_t* data);
     \param
 */
 void sei_dump(sei_t* sei);
-/*! \brief
-    \param
-*/
-void sei_dump_messages(sei_message_t* head, double timestamp);
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param
