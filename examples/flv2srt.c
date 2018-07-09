@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     const char* path = argv[1];
 
     flvtag_init(&tag);
-    caption_frame_init(&frame);
+    caption_frame_ctor(&frame);
     mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
 
     FILE* flv = flv_open_read(path);

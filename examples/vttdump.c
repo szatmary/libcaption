@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     vtt_block_t** cue = 0;
     for (size_t i = 0; i < vtt_block_vector_count(&vtt->cue); ++i) {
         cue = vtt_block_vector_at(&vtt->cue, i);
-        caption_frame_init(&frame);
+        caption_frame_ctor(&frame);
         vtt_cue_to_caption_frame((*cue), &frame);
         caption_frame_dump(&frame);
     }

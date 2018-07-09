@@ -30,7 +30,6 @@ extern "C" {
 #include "eia608.h"
 #include "types.h"
 #include "utf8.h"
-#include "xds.h"
 
 // ssize_t is POSIX and does not exist on Windows
 #if defined(_MSC_VER)
@@ -76,7 +75,6 @@ typedef struct {
 // timestamp and duration are in seconds
 typedef struct {
     double timestamp;
-    xds_t xds;
     caption_frame_state_t state;
     caption_frame_buffer_t front;
     caption_frame_buffer_t back;
@@ -88,7 +86,7 @@ typedef struct {
     \brief Initializes an allocated caption_frame_t instance
     \param frame Pointer to prealocated caption_frame_t object
 */
-void caption_frame_init(caption_frame_t* frame);
+void caption_frame_ctor(caption_frame_t* frame);
 /*! \brief
     \param
 */

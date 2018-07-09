@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     uint8_t pkt[TS_PACKET_SIZE];
     mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
     ts_init(&ts);
-    caption_frame_init(&frame);
+    caption_frame_ctor(&frame);
 
     srt_t* srt = srt_new();
     FILE* file = (0 == strcmp("-", path)) ? freopen(NULL, "rb", stdin) : fopen(path, "rb");

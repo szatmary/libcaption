@@ -53,7 +53,6 @@ set(CAPTION_SOURCES
   src/scc.c
   src/utf8.c
   src/vtt.c
-  src/xds.c
 )
 
 set(CAPTION_HEADERS
@@ -67,7 +66,6 @@ set(CAPTION_HEADERS
   caption/srt.h
   caption/utf8.h
   caption/vtt.h
-  caption/xds.h
 )
 
 add_library(caption ${CAPTION_SOURCES})

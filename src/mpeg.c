@@ -179,8 +179,8 @@ void sei_cat(sei_t* to, sei_t* from, int itu_t_t35_only)
 void sei_dump(sei_t* sei)
 {
     cea708_t cea708;
-    cea708_init(&cea708, sei->timestamp);
-
+    cea708_ctor(&cea708);
+    cea708.timestamp = sei->timestamp;
     fprintf(stderr, "SEI %p\n", sei);
     for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
         sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
@@ -332,9 +332,8 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
     cea708_t cea708;
     sei_message_t* msg;
     libcaption_stauts_t status = LIBCAPTION_OK;
-
-    cea708_init(&cea708, frame->timestamp);
-
+    cea708_ctor(&cea708);
+    cea708.timestamp = sei->timestamp;
     for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
         sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
         if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
@@ -344,7 +343,7 @@ libcaption_stauts_t sei_to_caption_frame(sei_t* sei, caption_frame_t* frame)
     }
 
     if (LIBCAPTION_READY == status) {
-        frame->timestamp = sei->timestamp;
+        frame->timestamp = cea708.timestamp;
     }
 
     return status;
@@ -359,7 +358,7 @@ void sei_append_708(sei_t* sei, cea708_t* cea708)
     msg->type = sei_type_user_data_registered_itu_t_t35;
     size_t new_size = cea708_render(cea708, uint8_vector_begin(&msg->payload), uint8_vector_count(&msg->payload));
     uint8_vector_resize(&msg->payload, CEA708_MAX_SIZE);
-    cea708_init(cea708, sei->timestamp); // will confgure using HLS compatiable defaults
+    cea708_ctor(cea708), cea708->timestamp = sei->timestamp;
 }
 
 // This should be moved to 708.c
@@ -400,7 +399,8 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
 
     sei_ctor(sei);
     sei->timestamp = frame->timestamp;
-    cea708_init(&cea708, frame->timestamp); // set up a new popon frame
+    cea708_ctor(&cea708), cea708.timestamp = sei->timestamp;
+
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_resume_caption_loading, DEFAULT_CHANNEL));
 
@@ -488,8 +488,8 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 {
     unsigned int i;
     cea708_t cea708;
-    cea708_init(&cea708, sei->timestamp); // set up a new popon frame
-
+    cea708_ctor(&cea708);
+    cea708.timestamp = sei->timestamp;
     for (i = 0; i < scc->cc_size; ++i) {
         if (31 == cea708.user_data.cc_count) {
             sei_append_708(sei, &cea708);
@@ -508,7 +508,8 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
 libcaption_stauts_t sei_from_caption_clear(sei_t* sei)
 {
     cea708_t cea708;
-    cea708_init(&cea708, sei->timestamp); // set up a new popon frame
+    cea708_ctor(&cea708);
+    cea708.timestamp = sei->timestamp;
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_end_of_caption, DEFAULT_CHANNEL));
     cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, eia608_control_command(eia608_control_erase_non_displayed_memory, DEFAULT_CHANNEL));
@@ -596,8 +597,9 @@ void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame,
     sei_ctor(&sei);
     sei.timestamp = dts + cts;
     packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size));
-    for (size_t i = 0; i < sei_message_vector_count(&sei.messages); ++i) {
-        sei_message_t* msg = sei_message_vector_at(&sei.messages, i);
+    // This is a stack, we push in reverse order, so it pops in the correct otder
+    for (size_t i = sei_message_vector_count(&sei.messages); 0 != i ; --i) {
+        sei_message_t* msg = sei_message_vector_at(&sei.messages, i-1);
         if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
             cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
             cea708->timestamp = sei.timestamp;

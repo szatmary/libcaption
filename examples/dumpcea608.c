@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     caption_frame_t frame;
     mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
     int err = avformat_open_input(&formatCtx, path, 0, 0);
-    caption_frame_init(&frame);
+    caption_frame_ctor(&frame);
     avformat_find_stream_info(formatCtx, 0);
     int videoStreamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
     int stream_type = 0;
@@ -86,7 +86,6 @@ int main(int argc, char** argv)
                 default:
                 case LIBCAPTION_ERROR:
                     fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
-                    // mpeg_bitstream_init(&mpegbs);
                     return EXIT_FAILURE;
                     break;
 

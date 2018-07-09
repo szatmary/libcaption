@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     utf8_codepoint_t* scc_data_ptr = utf8_load_text_file(argv[1], &scc_size);
     utf8_codepoint_t* scc_data = scc_data_ptr;
 
-    caption_frame_init(&frame);
+    caption_frame_ctor(&frame);
     scc_data += scc_to_608(&scc, scc_data);
 
     srt = srt_new();

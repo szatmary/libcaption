@@ -24,7 +24,6 @@
 #include "caption.h"
 #include "eia608.h"
 #include "utf8.h"
-#include "xds.h"
 #include <stdio.h>
 #include <string.h>
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,9 +39,8 @@ void caption_frame_state_clear(caption_frame_t* frame)
     frame->state = (caption_frame_state_t){ 0, 0, 0, SCREEN_ROWS - 1, 0, 0 }; // clear global state
 }
 
-void caption_frame_init(caption_frame_t* frame)
+void caption_frame_ctor(caption_frame_t* frame)
 {
-    xds_init(&frame->xds);
     caption_frame_state_clear(frame);
     caption_frame_buffer_clear(&frame->back);
     caption_frame_buffer_clear(&frame->front);
@@ -319,11 +317,7 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 
     frame->state.cc_data = cc_data;
 
-    if (frame->xds.state) {
-        frame->status = xds_decode(&frame->xds, cc_data);
-    } else if (eia608_is_xds(cc_data)) {
-        frame->status = xds_decode(&frame->xds, cc_data);
-    } else if (eia608_is_control(cc_data)) {
+    if (eia608_is_control(cc_data)) {
         frame->status = caption_frame_decode_control(frame, cc_data);
     } else if (eia608_is_basicna(cc_data) || eia608_is_specialna(cc_data) || eia608_is_westeu(cc_data)) {
 
@@ -352,7 +346,7 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
 {
     size_t codepoint_count, codepoint_length, len = strlen(str);
-    caption_frame_init(frame);
+    caption_frame_ctor(frame);
     frame->write = &frame->back;
 
     for (size_t r = 0; len && str[0] && r < SCREEN_ROWS;) {

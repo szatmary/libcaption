@@ -386,7 +386,7 @@ int flvtag_addcaption_text(flvtag_t* tag, const utf8_codepoint_t* text)
 
     if (text) {
         caption_frame_t frame;
-        caption_frame_init(&frame);
+        caption_frame_ctor(&frame);
         caption_frame_from_text(&frame, text);
         sei_from_caption_frame(&sei, &frame);
     } else {
