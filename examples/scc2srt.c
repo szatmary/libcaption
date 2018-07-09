@@ -37,15 +37,13 @@ int main(int argc, char** argv)
     utf8_char_t* scc_data_ptr = utf8_load_text_file(argv[1], &scc_size);
     utf8_char_t* scc_data = scc_data_ptr;
 
+    srt = srt_new();
     caption_frame_init(&frame);
     scc_data += scc_to_608(&scc, scc_data);
-
-    srt = srt_new();
 
     while (scc->cc_size) {
         for (i = 0; i < scc->cc_size; ++i) {
             // eia608_dump (scc->cc_data[i]);
-
             if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
                 srt_cue_from_caption_frame(&frame, srt);
             }
