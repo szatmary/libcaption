@@ -42,6 +42,19 @@
         "environment": [],
         "externalConsole": false,
         "MIMode": "lldb"
+    },
+    {
+        "name": "dumpcea608 (lldb) Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/examples/dumpcea608",
+        "preLaunchTask": "build",
+        "args": ["${workspaceFolder}/tw.ts"],
+        "stopAtEntry": true,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb"
     }
     ]
 }

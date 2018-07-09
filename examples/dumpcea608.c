@@ -27,34 +27,87 @@ extern "C" {
 #endif
 #include <libavformat/avformat.h>
 #ifdef __cplusplus
-extern }
+extern
+}
 #endif
 
-int main(int argc, char** argv) {
+#include "mpeg.h"
+
+double av_time_to_seconds(int64_t a, AVRational *r) {
+    return (a * r->num) / (double)r->den;
+}
+
+int main(int argc, char** argv)
+{
 
     AVPacket pkt;
-    AVCodec *videoCodec = 0;
-    AVFormatContext *formatCtx = 0;
-    const char *path = argv[1];
-    int err = avformat_open_input(&formatCtx, path,0, 0);
+    AVCodec* videoCodec = 0;
+    AVFormatContext* formatCtx = 0;
+    const char* path = argv[1];
+    caption_frame_t frame;
+    mpeg_bitstream_t* mpegbs = mpeg_bitstream_new();
+    int err = avformat_open_input(&formatCtx, path, 0, 0);
+    caption_frame_init(&frame);
     avformat_find_stream_info(formatCtx, 0);
-    int videoStreamIdx = av_find_best_stream ( formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0 );
-
-
-    av_init_packet ( &pkt );
-    while ( 0 <= av_read_frame ( formatCtx, &pkt ) )
-    {
-        if(videoStreamIdx == pkt.stream_index) {
-                
-        }
-        av_free_packet(&pkt);
-        printf("got frame\n");        
+    int videoStreamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
+    int stream_type = 0;
+    switch (formatCtx->streams[videoStreamIdx]->codec->codec_id) {
+    case AV_CODEC_ID_MPEG2VIDEO:
+        printf("AV_CODEC_ID_MPEG2VIDEO\n");
+        stream_type = STREAM_TYPE_H262;
+        break;
+    case AV_CODEC_ID_H264:
+        printf("AV_CODEC_ID_H264\n");
+        stream_type = STREAM_TYPE_H264;
+        break;
+    case AV_CODEC_ID_H265:
+        printf("AV_CODEC_ID_HEVC\n");
+        break;
+    default:
+        fprintf(stderr, "Unsupported codec (libavformat code_id %d\n", formatCtx->streams[videoStreamIdx]->codec->codec_id);
+        // TODO clean exit
+        exit(EXIT_FAILURE);
+        break;
     }
 
+    // TODO Some containers require we switch to annex b
 
+    av_init_packet(&pkt);
+    while (0 <= av_read_frame(formatCtx, &pkt)) {
+        if (videoStreamIdx == pkt.stream_index) {
+            uint8_t *data = pkt.data;
+            size_t size = pkt.size;
+            double dts = av_time_to_seconds(pkt.pts, &formatCtx->streams[pkt.stream_index]->time_base);
+            double cts = av_time_to_seconds(pkt.pts - pkt.dts, &formatCtx->streams[pkt.stream_index]->time_base);
+            size_t bytes_read = mpeg_bitstream_parse(mpegbs, &frame, data, size, stream_type, dts, cts);
+            data += bytes_read, size -= bytes_read;
+            switch (mpeg_bitstream_status(mpegbs)) {
+            default:
+            case LIBCAPTION_ERROR:
+                fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
+                // mpeg_bitstream_init(&mpegbs);
+                return EXIT_FAILURE;
+                break;
 
+            case LIBCAPTION_OK:
+                break;
 
+            case LIBCAPTION_READY: {
+                caption_frame_dump(&frame);
+                // srt_cue_from_caption_frame(&frame, srt);
+            } break;
+            } //switch
+        }
 
+        av_packet_unref(&pkt);
+    }
 
-    printf("%d\n",err);
+    // Flush anything left
+    // while (mpeg_bitstream_flush(mpegbs, &frame)) {
+    //     if (mpeg_bitstream_status(mpegbs)) {
+    //         srt_cue_from_caption_frame(&frame, srt);
+    //     }
+    // }
+
+    mpeg_bitstream_del(mpegbs);
 }

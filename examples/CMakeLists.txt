@@ -5,7 +5,7 @@ find_package( FFMPEG  )
 
 add_executable(dumpcea608 dumpcea608.c)
 include_directories(${FFMPEG_INCLUDE_DIRS})
-target_link_libraries(dumpcea608 caption ${FFMPEG_LIBRARIES})
+target_link_libraries(dumpcea608 ${FFMPEG_LIBRARIES} caption)
 install(TARGETS dumpcea608 DESTINATION bin)
 
 

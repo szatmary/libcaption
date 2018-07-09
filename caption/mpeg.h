@@ -33,6 +33,7 @@ extern "C" {
 #include <float.h>
 #include <stddef.h>
 ////////////////////////////////////////////////////////////////////////////////
+// TODO prefix with lib caption!
 #define STREAM_TYPE_H262 0x02
 #define STREAM_TYPE_H264 0x1B
 #define STREAM_TYPE_H265 0x24
@@ -94,7 +95,6 @@ typedef enum {
 } sei_msgtype_t;
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t {
-    size_t size;
     sei_msgtype_t type;
     uint8_vector_t* payload;
 } sei_message_t;

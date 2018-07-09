@@ -56,6 +56,7 @@ static size_t _find_emulation_prevention_byte(const uint8_t* data, size_t size)
     return size;
 }
 
+// TODO return uint8_vectoe
 static size_t _copy_to_rbsp(uint8_t* destData, size_t destSize, const uint8_t* sorcData, size_t sorcSize)
 {
     size_t toCopy, totlSize = 0;
@@ -160,7 +161,6 @@ void sei_dtor(sei_t* sei)
 
 void sei_message_dup(sei_message_t* to, sei_message_t* from)
 {
-    to->size = from->size;
     to->type = from->type;
     sei_message_vector_dup(&to->payload, &from->payload);
 }
@@ -209,11 +209,13 @@ size_t sei_render_size(sei_t* sei)
 {
     size_t size = 2; // nalu_type + stop bit
     sei_message_t* msg;
+
     for (size_t i = 0; i < sei_message_vector_count(&sei->messages); ++i) {
         sei_message_t* msg = sei_message_vector_at(&sei->messages, i);
+        size_t msg_size = uint8_vector_count(&msg->payload);
         size += 1 + (msg->type / 255);
-        size += 1 + (msg->size / 255);
-        size += 1 + (msg->size * 4 / 3);
+        size += 1 + (msg_size / 255);
+        size += 1 + (msg_size * 4 / 3);
     }
 
     return size;
@@ -309,12 +311,14 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, doub
             uint8_vector_resize(&msg->payload, payloadSize);
             uint8_t* payloadData = uint8_vector_begin(&msg->payload);
             size_t bytes = _copy_to_rbsp(payloadData, payloadSize, data, size);
-
+            
             if (bytes < payloadSize) {
                 sei_message_vector_pop_back(&sei->messages);
                 return LIBCAPTION_ERROR;
             }
 
+            msg->type = payloadType;
+            uint8_vector_resize(&msg->payload, bytes);
             data += bytes, size -= bytes;
         }
     }
