@@ -274,7 +274,7 @@ uint8_t* sei_render_alloc(sei_t* sei, size_t* size)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp)
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size)
 {
     // SEI may contain more than one payload
     while (1 < size) {
@@ -594,19 +594,19 @@ void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame,
 {
     sei_t sei;
     sei_ctor(&sei);
-    packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size, dts + cts));
+    sei.timestamp = dts + cts;
+    packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size));
     for (size_t i = 0; i < sei_message_vector_count(&sei.messages); ++i) {
         sei_message_t* msg = sei_message_vector_at(&sei.messages, i);
         if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
             cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
-            cea708->timestamp = dts + cts;
-            data = uint8_vector_begin(&packet->buffer);
-            size = uint8_vector_count(&packet->buffer);
+            cea708->timestamp = sei.timestamp;
+            data = uint8_vector_begin(&msg->payload), size = uint8_vector_count(&msg->payload);
             packet->status = libcaption_status_update(packet->status, cea708_parse_h264(data, size, cea708));
-            _mpeg_bitstream_cea708_flush(packet, frame, dts);
         }
     }
 
+    _mpeg_bitstream_cea708_flush(packet, frame, dts);
     sei_dtor(&sei);
 }
 

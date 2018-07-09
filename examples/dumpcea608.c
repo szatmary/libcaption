@@ -39,7 +39,6 @@ double av_time_to_seconds(int64_t a, AVRational *r) {
 
 int main(int argc, char** argv)
 {
-
     AVPacket pkt;
     AVCodec* videoCodec = 0;
     AVFormatContext* formatCtx = 0;
@@ -62,6 +61,7 @@ int main(int argc, char** argv)
         break;
     case AV_CODEC_ID_H265:
         printf("AV_CODEC_ID_HEVC\n");
+        stream_type = STREAM_TYPE_H265;
         break;
     default:
         fprintf(stderr, "Unsupported codec (libavformat code_id %d\n", formatCtx->streams[videoStreamIdx]->codec->codec_id);
@@ -77,26 +77,28 @@ int main(int argc, char** argv)
         if (videoStreamIdx == pkt.stream_index) {
             uint8_t *data = pkt.data;
             size_t size = pkt.size;
-            double dts = av_time_to_seconds(pkt.pts, &formatCtx->streams[pkt.stream_index]->time_base);
+            double dts = av_time_to_seconds(pkt.dts, &formatCtx->streams[pkt.stream_index]->time_base);
             double cts = av_time_to_seconds(pkt.pts - pkt.dts, &formatCtx->streams[pkt.stream_index]->time_base);
-            size_t bytes_read = mpeg_bitstream_parse(mpegbs, &frame, data, size, stream_type, dts, cts);
-            data += bytes_read, size -= bytes_read;
-            switch (mpeg_bitstream_status(mpegbs)) {
-            default:
-            case LIBCAPTION_ERROR:
-                fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
-                // mpeg_bitstream_init(&mpegbs);
-                return EXIT_FAILURE;
-                break;
+            while(size) {
+                size_t bytes_read = mpeg_bitstream_parse(mpegbs, &frame, data, size, stream_type, dts, cts);
+                data += bytes_read, size -= bytes_read;
+                switch (mpeg_bitstream_status(mpegbs)) {
+                default:
+                case LIBCAPTION_ERROR:
+                    fprintf(stderr, "LIBCAPTION_ERROR == mpeg_bitstream_parse()\n");
+                    // mpeg_bitstream_init(&mpegbs);
+                    return EXIT_FAILURE;
+                    break;
 
-            case LIBCAPTION_OK:
-                break;
+                case LIBCAPTION_OK:
+                    break;
 
-            case LIBCAPTION_READY: {
-                caption_frame_dump(&frame);
-                // srt_cue_from_caption_frame(&frame, srt);
-            } break;
-            } //switch
+                case LIBCAPTION_READY: {
+                    caption_frame_dump(&frame);
+                    // srt_cue_from_caption_frame(&frame, srt);
+                } break;
+                } //switch
+            }
         }
 
         av_packet_unref(&pkt);

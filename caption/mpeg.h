@@ -120,7 +120,7 @@ void sei_cat(sei_t* to, sei_t* from, int itu_t_t35);
 /*! \brief
     \param
 */
-libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size, double timestamp);
+libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size);
 /*! \brief
     \param
 */
