@@ -1,4 +1,13 @@
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake-modules/")
+# To find and use ffmpeg avcodec library
+find_package( FFMPEG  )
+
+add_executable(dumpcea608 dumpcea608.c)
+include_directories(${FFMPEG_INCLUDE_DIRS})
+target_link_libraries(dumpcea608 caption ${FFMPEG_LIBRARIES})
+install(TARGETS dumpcea608 DESTINATION bin)
+
 
 add_executable(flv2srt flv2srt.c flv.c)
 target_link_libraries(flv2srt caption)
