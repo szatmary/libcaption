@@ -117,16 +117,16 @@ utf8_size_t utf8_char_count(const char* data, size_t size)
     return count;
 }
 
-// returnes the length of the line in bytes triming not printable charcters at the end
+// returns the length of the line in bytes triming not printable charcters at the end
 size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters)
 {
     size_t l, t = 0, split_at = 0;
     for (size_t c = 0; (*data) && c < charcters; ++c) {
         l = utf8_char_length(data);
-        t += l, data += l;
         if (!utf8_char_whitespace(data)) {
-            split_at = t;
+            split_at = t + l;
         }
+         t += l, data += l;
     }
 
     return split_at;
@@ -152,6 +152,8 @@ size_t utf8_line_length(const utf8_char_t* data)
         if (0 < (n = _utf8_newline(data))) {
             return len + n;
         }
+
+        data += utf8_char_length(data);
     }
 
     return len;
