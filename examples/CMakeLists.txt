@@ -8,6 +8,10 @@ add_executable(ts2srt ts2srt.c ts.c)
 target_link_libraries(ts2srt caption)
 install(TARGETS ts2srt DESTINATION bin)
 
+add_executable(scc2vtt scc2vtt.c)
+target_link_libraries(scc2vtt caption)
+install(TARGETS scc2vtt DESTINATION bin)
+
 add_executable(srt2vtt srt2vtt.c)
 target_link_libraries(srt2vtt caption)
 install(TARGETS srt2vtt DESTINATION bin)
