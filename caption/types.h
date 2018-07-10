@@ -91,6 +91,10 @@ size_t _vector_reserve(_vector_t** v, size_t c);
 */
 size_t _vector_resize(_vector_t** v, size_t c);
 
+/*! \brief 
+*/
+void _vector_clear(_vector_t** v);
+
 /*! \brief
 */
 size_t _vector_insert(_vector_t** v, size_t p, size_t c, char* d);
@@ -143,7 +147,8 @@ static inline void _vector_sort_descending(_vector_t** v) { _vector_sort(v, -1);
     static inline TYPE* NAME##_vector_back(NAME##_vector_t** v) { return (TYPE*)_vector_back((_vector_t**)v); }                                                        \
     static inline size_t NAME##_vector_reserve(NAME##_vector_t** v, size_t c) { return _vector_reserve((_vector_t**)v, c); }                                           \
     static inline size_t NAME##_vector_resize(NAME##_vector_t** v, size_t c) { return _vector_resize((_vector_t**)v, c); }                                             \
-    static inline size_t NAME##_vector_insert(NAME##_vector_t** v, size_t p, size_t c, TYPE* d) { return _vector_insert((_vector_t**)v, p, c, (char*)d); } \
+   static inline  void NAME##_vector_clear(NAME##_vector_t** v) { return _vector_clear((_vector_t**)v); } \
+   static inline size_t NAME##_vector_insert(NAME##_vector_t** v, size_t p, size_t c, TYPE* d) { return _vector_insert((_vector_t**)v, p, c, (char*)d); } \
     static inline size_t NAME##_vector_append(NAME##_vector_t** v, size_t c, TYPE* d) { return _vector_append((_vector_t**)v, c, (char*)d); }              \
     static inline size_t NAME##_vector_erase(NAME##_vector_t** v, size_t p, size_t c) { return _vector_erase((_vector_t**)v, p, c); }                                  \
     static inline TYPE* NAME##_vector_push_back(_vector_t** v) { return (TYPE*)_vector_push_back((_vector_t**)v); }                                                    \

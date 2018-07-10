@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
     {
         "name": "ts2srt (lldb) Launch",
         "type": "cppdbg",
@@ -21,7 +22,7 @@
         "name": "vttdump (lldb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/examples/vttdump",
+        "program": "${workspaceFolder}/unit_tests/vttdump",
         "preLaunchTask": "build",
         "args": ["${workspaceFolder}/unit_tests/sample_files/example1.vtt"],
         "stopAtEntry": true,

@@ -117,6 +117,13 @@ size_t _vector_resize(_vector_t** v, size_t c)
     return (*v)->count;
 }
 
+/*! \brief 
+*/
+void _vector_clear(_vector_t** v)
+{
+    _vector_resize(v,0);
+}
+
 /*! \brief
 */
 size_t _vector_insert(_vector_t** v, size_t p, size_t c, char* d)

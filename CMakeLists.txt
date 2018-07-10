@@ -87,6 +87,8 @@ if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
+add_subdirectory(unit_tests)
+
 # unit-tests
 #add_executable(eia608_test unit_tests/eia608_test.c )
 #target_link_libraries(eia608_test caption)

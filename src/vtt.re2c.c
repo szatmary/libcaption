@@ -34,7 +34,7 @@
         eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
         blank_line = sp* eol;
         line_of_text = eol? [^\r\n\x00]+;
-        identifier = [^\r\n];
+        identifier = [^\r\n] eol;
         timestamp_a = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
         timestamp_b = [0-9]+ ":" [0-9][0-9] [,\.] [0-9]+;
         timestamp  = timestamp_a | timestamp_b;
@@ -136,6 +136,13 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
     vtt_vector_t* vtt_vec = vtt_vector_new();
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
+    /*!re2c
+        * { goto error; }
+        "WEBVTT" [ \t\r\n]+ {
+            // noop
+        }
+    */
+
     for (;;) {
         /*!re2c
         * { return vtt_vec; }
@@ -165,7 +172,7 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
             continue;
         }
 
-        @a identifier? @b eol 
+        @a identifier? @b 
         @c timestamp sp+  "-->" sp+ @d timestamp
         @e cue_attribute* @f eol @g line_of_text* @h eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
