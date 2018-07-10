@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     avformat_find_stream_info(formatCtx, 0);
     int videoStreamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
     int stream_type = 0;
-    switch (formatCtx->streams[videoStreamIdx]->codec->codec_id) {
+    switch (formatCtx->streams[videoStreamIdx]->codecpar->codec_id) {
     case AV_CODEC_ID_MPEG2VIDEO:
         printf("AV_CODEC_ID_MPEG2VIDEO\n");
         stream_type = STREAM_TYPE_H262;
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         stream_type = STREAM_TYPE_H265;
         break;
     default:
-        fprintf(stderr, "Unsupported codec (libavformat code_id %d\n", formatCtx->streams[videoStreamIdx]->codec->codec_id);
+        fprintf(stderr, "Unsupported codec (libavformat code_id %d\n", formatCtx->streams[videoStreamIdx]->codecpar->codec_id);
         // TODO clean exit
         exit(EXIT_FAILURE);
         break;

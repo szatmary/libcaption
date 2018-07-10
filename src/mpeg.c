@@ -484,7 +484,7 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     return LIBCAPTION_OK;
 }
 
-libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
+libcaption_stauts_t sei_from_scc(sei_t* sei, scc_t* scc)
 {
     unsigned int i;
     cea708_t cea708;
@@ -495,7 +495,7 @@ libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
             sei_append_708(sei, &cea708);
         }
 
-        cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, uint16_vector_at(&scc->cc_data, i));
+        cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, *uint16_vector_at(&scc->cc_data, i));
     }
 
     if (0 != cea708.user_data.cc_count) {

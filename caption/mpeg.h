@@ -141,7 +141,7 @@ void sei_dump(sei_t* sei);
 /*! \brief
     \param
 */
-libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc);
+libcaption_stauts_t sei_from_scc(sei_t* sei, scc_t* scc);
 /*! \brief
     \param
 */

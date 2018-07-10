@@ -34,7 +34,7 @@ extern "C" {
 //
 // utf8_size_t is the length of a string in chars
 // size_t is bytes
-typedef uint8_t utf8_codepoint_t;
+typedef char utf8_codepoint_t;
 #define MAX_UTF8_STRING_BYTES (50 * 1024 * 1024)
 
 /*! \brief Returns a pointer to the next codepoint in a utf8 string

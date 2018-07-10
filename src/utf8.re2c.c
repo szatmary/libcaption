@@ -28,9 +28,10 @@
 #include <string.h>
 
 /*!re2c
-    re2c:define:YYCTYPE = utf8_codepoint_t;
-    re2c:yyfill:enable = 0;
+    re2c:indent:string = "    ";
     re2c:flags:tags = 1;
+    re2c:yyfill:enable = 0;
+    re2c:define:YYCTYPE = "unsigned char";
 */
 
 size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint)
@@ -39,7 +40,7 @@ size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint)
         return 0;
     }
 
-    const utf8_codepoint_t* YYCURSOR = codepoint;
+    const unsigned char* YYCURSOR = (unsigned char*)codepoint;
     /*!re2c
         [\x00\xff] { return 0; }
         [\x01-\x7f] { return 1; }
@@ -71,7 +72,7 @@ size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src)
 
 size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* codepoint)
 {
-    const utf8_codepoint_t* YYCURSOR = codepoint;
+    const unsigned char* YYCURSOR = (unsigned char*)codepoint;
     /*!re2c
     * { return 0; }
     [ \t\r\n] { return 1; }
@@ -82,7 +83,7 @@ size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes)
 {
     size_t cc = 0;
     size_t cb = 0;
-    const utf8_codepoint_t* YYCURSOR = str;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
     for (;;) {
         /*!re2c
         [\x00\xff] { break; }
@@ -105,7 +106,7 @@ size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t line_length, 
 {
     size_t wb = 0, wc = 0; // wrap bytes,  wrap count
     size_t cb = 0, cc = 0; // codepoint bytes, codepoint count
-    const utf8_codepoint_t* YYCURSOR = str;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
     while (cc < line_length) {
         /*!re2c
         [\x00\xff] { break; }
@@ -133,7 +134,7 @@ size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
 {
     size_t cb = 0;
     size_t cc = 0;
-    const utf8_codepoint_t* YYCURSOR = str;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
     for (;;) {
         /*!re2c
         [\x00\xff\r\n] { break; }
@@ -154,7 +155,7 @@ size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
 
 const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
 {
-    const utf8_codepoint_t* YYCURSOR = str;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
     for (;;) {
         /*!re2c
         [ \s\r\n]  { str += utf8_codepoint_length(str); continue; }
@@ -169,7 +170,7 @@ size_t utf8_string_line_count(const utf8_codepoint_t* str)
         return 0;
     }
 
-    const utf8_codepoint_t* YYCURSOR = str;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
     for (size_t lines = 0;; ++lines) {
         /*!re2c
         * { return 1 + lines; }

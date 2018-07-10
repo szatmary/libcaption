@@ -119,7 +119,7 @@ size_t _vector_resize(_vector_t** v, size_t c)
 
 /*! \brief
 */
-size_t _vector_insert(_vector_t** v, size_t p, size_t c, const char* d)
+size_t _vector_insert(_vector_t** v, size_t p, size_t c, char* d)
 {
     if ((*v)->count < p) {
         return 0;
@@ -142,7 +142,7 @@ size_t _vector_insert(_vector_t** v, size_t p, size_t c, const char* d)
 
 /*! \brief
 */
-size_t _vector_append(_vector_t** v, size_t c, const char* d)
+size_t _vector_append(_vector_t** v, size_t c, char* d)
 {
     return _vector_insert(v, (*v)->count, c, d);
 }
