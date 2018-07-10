@@ -36,6 +36,7 @@
     ccdata = [0-9a-fA_F] {4};
     sp_ccdata = sp+ ccdata;
 */
+
 /*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
 
 uint16_vector_t* scc_parse_ccdata(const utf8_codepoint_t* str)
@@ -44,17 +45,17 @@ uint16_vector_t* scc_parse_ccdata(const utf8_codepoint_t* str)
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     uint16_vector_t* cc_vec = uint16_vector_new();
     for (;;) {
-        /*!re2c
+    /*!re2c
     * { return cc_vec; }
     @a ccdata sp* {
         unsigned int cc_data = 0;
-        if( 1 != sscanf((const char*)a, "%04x", &cc_data)) {
+        if( 1 == sscanf((const char*)a, "%04x", &cc_data)) {
+            *uint16_vector_push_back(&cc_vec) = cc_data;
+            continue;
+        } else {
             uint16_vector_del(&cc_vec);
             return 0;
         }
-
-        *uint16_vector_push_back(&cc_vec) = cc_data;
-        continue;
     }
     */
     }
@@ -70,9 +71,17 @@ scc_vector_t* scc_parse(const utf8_codepoint_t* str)
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     scc_vector_t* scc_vec = scc_vector_new();
     for (;;) {
-        /*!re2c
-    * { return 0; }
-    "Scenarist_SCC V1.0" eol2x { continue; }
+    /*!re2c
+    * { goto error;; }
+    "Scenarist_SCC V1.0" eol2x { break; }
+    */
+    }
+
+    for (;;) {
+    /*!re2c
+    * { goto error;; }
+    [\x00] { return scc_vec; }
+    sp* eol { continue; }
     @a timestamp @b ccdata sp_ccdata* eol2x {
         int v1 = 0, v2 = 0, hh = 0, mm = 0, ss = 0, ff = 0;
         if (4 != sscanf((const char*)a, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) { goto error; }

@@ -35,7 +35,9 @@
         blank_line = sp* eol;
         line_of_text = eol? [^\r\n\x00]+;
         identifier = [^\r\n];
-        timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
+        timestamp_a = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
+        timestamp_b = [0-9]+ ":" [0-9][0-9] [,\.] [0-9]+;
+        timestamp  = timestamp_a | timestamp_b;
         // attributes
         attribute = [^ :]+ ":" [^ ];
         cue_attribute = sp+ attribute;
@@ -83,7 +85,7 @@ void vtt_dtor(vtt_t* vtt)
     }
 
     if (vtt->attributes) {
-        vtt_attribute_dtor(vtt->attributes);
+        vtt_attribute_vector_del(&vtt->attributes);
     }
 }
 
@@ -150,7 +152,6 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
         "REGON" eol @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_REGION;
-            // TODO parse atribues
             vtt->attributes = vtt_parse_attributes(a, b);
             vtt->payload = utf8_string_copy(a, b);
             continue;
@@ -226,8 +227,8 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
         case VTT_REGION:
             if (!srt_mode) {
                 printf("REGION\r\n");
-                for (size_t i = 0; i < vtt_attribute_count(&block->attributes); ++i) {
-                    vtt_attribute_t* attr = vtt_attribute_at(&block->attributes, i);
+                for (size_t i = 0; i < vtt_attribute_vector_count(&block->attributes); ++i) {
+                    vtt_attribute_t* attr = vtt_attribute_vector_at(&block->attributes, i);
                     printf("%s:%s\r\n", attr->key, attr->val);
                 }
                 printf("\r\n");
@@ -260,8 +261,8 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
                 hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
 
             if (!srt_mode && block->attributes) {
-                for (size_t i = 0; i = vtt_attribute_count(&block->attributes); ++i) {
-                    vtt_attribute_t* attr = vtt_attribute_at(&block->attributes, i);
+                for (size_t i = 0; i < vtt_attribute_vector_count(&block->attributes); ++i) {
+                    vtt_attribute_t* attr = vtt_attribute_vector_at(&block->attributes, i);
                     printf(" %s:%s", attr->key, attr->val);
                 }
                 printf("\r\n");
