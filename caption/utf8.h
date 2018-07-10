@@ -34,8 +34,9 @@ extern "C" {
 //
 // utf8_size_t is the length of a string in chars
 // size_t is bytes
-typedef char utf8_codepoint_t;
+typedef uint8_t utf8_codepoint_t;
 #define MAX_UTF8_STRING_BYTES (50 * 1024 * 1024)
+MAKE_VECTOR(utf8_codepoint_t*, utf8_string, _str_ctor, _str_dtor, strcmp);
 
 /*! \brief Returns a pointer to the next codepoint in a utf8 string
     \param
@@ -99,15 +100,7 @@ size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoint
     \param
 
 */
-utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str);
-
-/*! \brief
-    \param
-
-
-    // returns the number of codepoint triming not printable charcters at the end
-*/
-size_t utf8_string_trimmed_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes);
+const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str);
 
 /*! \brief
     \param
@@ -120,18 +113,13 @@ size_t utf8_string_line_count(const utf8_codepoint_t* str);
 /*! \brief
     \param
 */
-utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
+utf8_codepoint_t* utf8_string_copy(const utf8_codepoint_t* begin, const utf8_codepoint_t* end);
 
 /*! \brief
     \param
-
-    Compares 2 strings up to max len
 */
-#ifndef strnstr
-char* strnstr(const char* string1, const char* string2, size_t len);
-#endif
+utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
 
-MAKE_VECTOR(utf8_codepoint_t*, utf8_string, _str_ctor, _str_dtor, strcmp);
 
 #ifdef __cplusplus
 }

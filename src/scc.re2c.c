@@ -22,39 +22,9 @@
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
 
-#include "srt.h"
-#include <stdio.h>
+#include "scc.h"
 
-srt_t* srt_new()
-{
-    return vtt_new();
-}
-
-void srt_del(srt_t* srt)
-{
-    vtt_del(srt);
-}
-
-void srt_dump(srt_t* srt)
-{
-    for (size_t i = 0; i < vtt_block_vector_count(&srt->cue); ++i) {
-        vtt_block_t** block = vtt_block_vector_at(&srt->cue, i);
-        int hh1, hh2, mm1, mm2, ss1, ss2, ms1, ms2;
-        vtt_crack_time((*block)->timestamp, &hh1, &mm1, &ss1, &ms1);
-        vtt_crack_time((*block)->timestamp + (*block)->duration, &hh2, &mm2, &ss2, &ms2);
-
-        printf("%02d\r\n%d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\r\n%s\r\n", (int)i,
-            hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2, vtt_block_data(*block));
-    }
-}
-
-double _srt_parse_timestamp(utf8_codepoint_t* str)
-{
-    return 0.0;
-}
-
-// TODO this will eventually parse vtt as well. But im keeping in srt for now
-srt_t* srt_parse(const utf8_codepoint_t* str, size_t size)
+scc_vector_t* scc_parse(const utf8_codepoint_t* str)
 {
     /*!re2c
         re2c:define:YYCTYPE = utf8_codepoint_t;
@@ -70,32 +40,14 @@ srt_t* srt_parse(const utf8_codepoint_t* str, size_t size)
         timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
     */
 
+    // Scenarist_SCC V1.0
+
+    // 00:00:22:10	9420 94f2 97a2 d9ef 75a7 f2e5 2061 20ea e5f2 6b2c 2054 68ef 6dae 942c 8080 8080 942f
+
     /*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
-    srt_t* srt = srt_new();
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
-    for (;;) {
-        /*!re2c
-        * { return srt; }
-        '\x00' { return srt; }
-        blank_line* @a identifier @b eol @c timestamp @d ws+  "-->" ws+ @e timestamp @f ws* eol @g line_of_text* @h eolx2 {
-
-            vtt_block_t **cue = 0;
-            cue = vtt_block_vector_push_back(&srt->cue);
-            (*cue) = vtt_block_new(g, h - g, VTT_CUE);
-            double end_time = vtt_parse_timestamp(e);
-            (*cue)->timestamp = vtt_parse_timestamp(c);
-            (*cue)->duration = end_time - (*cue)->timestamp;
-
-            fprintf(stderr,"identifier: '%.*s'\n", (int)(b - a), a);
-            fprintf(stderr,"timestamp:  %f\n", (*cue)->timestamp);
-            fprintf(stderr,"duration:   %f\n", (*cue)->duration);
-            fprintf(stderr,"text:       '%.*s'\n", (int)(h - g), g);
-
-            continue;
-         }
+    /*!re2c
+    * {return 0;}
     */
-    }
-
-    return _vtt_parse(str, size, 1);
 }

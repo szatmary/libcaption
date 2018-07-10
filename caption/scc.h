@@ -27,19 +27,18 @@
 extern "C" {
 #endif
 
-#include "eia608.h"
+#include "utf8.h"
 
-typedef struct _scc_t {
+typedef struct {
     double timestamp;
-    unsigned int cc_aloc;
-    unsigned int cc_size;
-    uint16_t cc_data[];
+    uint16_vector_t *cc_data;
 } scc_t;
 
-scc_t* scc_new(int cc_count);
-scc_t* scc_free(scc_t* scc);
+void scc_ctor(scc_t* scc);
+void scc_dtor(scc_t* scc);
+MAKE_VECTOR(scc_t,scc,scc_ctor,scc_dtor,0);
 
-size_t scc_to_608(scc_t** scc, const utf8_codepoint_t* data);
+scc_vector_t * scc_parse(const utf8_codepoint_t *str);
 
 #ifdef __cplusplus
 }

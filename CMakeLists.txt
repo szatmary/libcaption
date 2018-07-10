@@ -16,23 +16,35 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/caption)
 
 
+set(utf8_c ${PROJECT_SOURCE_DIR}/src/utf8.c)
+set(utf8_re2c_c ${PROJECT_SOURCE_DIR}/src/utf8.re2c.c)
 set(eia608_from_utf8_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.c)
 set(eia608_from_utf8_re2c_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.re2c.c)
-set(eia608_from_utf8_cached_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.cached.c)
-set(srt_c ${PROJECT_SOURCE_DIR}/src/srt.c)
-set(srt_re2c_c ${PROJECT_SOURCE_DIR}/src/srt.re2c.c)
-set(srt_cached_c ${PROJECT_SOURCE_DIR}/src/srt.cached.c)
+set(vtt_c ${PROJECT_SOURCE_DIR}/src/vtt.c)
+set(vtt_re2c_c ${PROJECT_SOURCE_DIR}/src/vtt.re2c.c)
+set(scc_c ${PROJECT_SOURCE_DIR}/src/scc.c)
+set(scc_re2c_c ${PROJECT_SOURCE_DIR}/src/scc.re2c.c)
+# set(eia608_from_utf8_cached_c ${PROJECT_SOURCE_DIR}/src/eia608_from_utf8.cached.c)
 
 find_program(RE2C re2c)
 if(NOT RE2C)
   message(STATUS "re2c not found. Using cached version of generated files.")
-  configure_file(${srt_cached_c} ${srt_c} COPYONLY)
-  configure_file(${eia608_from_utf8_c_cached} ${eia608_from_utf8_c} COPYONLY)
+  # configure_file(${eia608_from_utf8_c_cached} ${eia608_from_utf8_c} COPYONLY)
 else()
-  add_custom_command(OUTPUT ${srt_c}
-    COMMAND ${RE2C} -bis -o ${srt_c} ${srt_re2c_c}
-    DEPENDS ${srt_re2c_c}
-    COMMENT "Generating ${srt_c}")
+    add_custom_command(OUTPUT ${utf8_c}
+    COMMAND ${RE2C} -bis -o ${utf8_c} ${utf8_re2c_c}
+    DEPENDS ${utf8_re2c_c}
+    COMMENT "Generating ${utf8_c}")
+
+    add_custom_command(OUTPUT ${vtt_c}
+    COMMAND ${RE2C} -bis -o ${vtt_c} ${vtt_re2c_c}
+    DEPENDS ${vtt_re2c_c}
+    COMMENT "Generating ${vtt_c}")
+
+    add_custom_command(OUTPUT ${scc_c}
+    COMMAND ${RE2C} -bis -o ${scc_c} ${scc_re2c_c}
+    DEPENDS ${scc_re2c_c}
+    COMMENT "Generating ${scc_c}")
 
     add_custom_command(OUTPUT ${eia608_from_utf8_c}
     COMMAND ${RE2C} -bis -o ${eia608_from_utf8_c} ${eia608_from_utf8_re2c_c}
@@ -40,9 +52,10 @@ else()
     COMMENT "Generating ${eia608_from_utf8_c}")
 endif()
 
-
 set(CAPTION_SOURCES
-  ${srt_c}
+  ${vtt_c}
+  ${scc_c}
+  ${utf8_c}
   ${eia608_from_utf8_c}
   src/caption.c
   src/cea708.c
@@ -50,9 +63,6 @@ set(CAPTION_SOURCES
   src/eia608_charmap.c
   src/types.c
   src/mpeg.c
-  src/scc.c
-  src/utf8.c
-  src/vtt.c
 )
 
 set(CAPTION_HEADERS
@@ -62,10 +72,8 @@ set(CAPTION_HEADERS
   caption/eia608.h
   caption/eia608_charmap.h
   caption/mpeg.h
-  caption/scc.h
-  caption/srt.h
   caption/utf8.h
-  caption/vtt.h
+  caption/scc.h
 )
 
 add_library(caption ${CAPTION_SOURCES})
