@@ -79,89 +79,88 @@ size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* codepoint)
     */
 }
 
-size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes)
-{
-    size_t cc = 0;
-    size_t cb = 0;
-    const unsigned char* YYCURSOR = (unsigned char*)str;
-    for (;;) {
-        /*!re2c
-        [\x00\xff] { break; }
-        [\x01-\x7f] { ++cc, ++cb; }
-        [\x80-\xbf] { ++cb; continue; }
-        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc, cb += 2; }
-        [\xe0-\xef] [\x80-\xbf] {3} { ++cc, cb += 3; }
-        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc, cb += 4; }
-    */
-    }
-
-    if (bytes) {
-        *bytes = cb;
-    }
-
-    return cc;
-}
-
-size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t line_length, size_t* bytes)
-{
-    size_t wb = 0, wc = 0; // wrap bytes,  wrap count
-    size_t cb = 0, cc = 0; // codepoint bytes, codepoint count
-    const unsigned char* YYCURSOR = (unsigned char*)str;
-    while (cc < line_length) {
-        /*!re2c
-        [\x00\xff] { break; }
-        [ \s\r\n] { ++cc; ++cb; continue; }
-        [\x01-\x7f] { ++cc; ++cb; wc = cc; wb = cb; continue; }
-        [\x80-\xbf] { ++cb; continue; }
-        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc; cb += 2; wc = cc; wb = cb; continue; }
-        [\xe0-\xef] [\x80-\xbf] {3} { ++cc; cb += 3; wc = cc; wb = cb; continue; }
-        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc; cb += 4; wc = cc; wb = cb; continue; }
-    */
-    }
-
-    if (!wc) {
-        wc = cc, wb = cb;
-    }
-
-    if (bytes) {
-        *bytes = wb;
-    }
-
-    return wc;
-}
-
-size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
-{
-    size_t cb = 0;
-    size_t cc = 0;
-    const unsigned char* YYCURSOR = (unsigned char*)str;
-    for (;;) {
-        /*!re2c
-        [\x00\xff\r\n] { break; }
-        [\x01-\x7f] { ++cc; ++cb; continue; }
-        [\x80-\xbf] { ++cb; continue; }
-        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc; cb += 2; continue; }
-        [\xe0-\xef] [\x80-\xbf] {3} { ++cc; cb += 3; continue; }
-        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc; cb += 4; continue; }
-    */
-    }
-
-    if (bytes) {
-        *bytes = cb;
-    }
-
-    return cc;
-}
-
 const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
 {
     const unsigned char* YYCURSOR = (unsigned char*)str;
     for (;;) {
         /*!re2c
-        [ \s\r\n]  { str += utf8_codepoint_length(str); continue; }
         * { return str; }
+        "\xC2\xA0" { str += 2; continue; } // Dont wrap &nbsp, but do skip it
+        [ \s\r\n]  { str += 1; continue; }
     */
     }
+}
+
+const utf8_codepoint_t* utf8_string_length(const utf8_codepoint_t* str, size_t* codepoints)
+{
+    size_t cp = 0;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
+    for (;;) {
+        /*!re2c
+        [\x00\xff] { break; }
+        [\x01-\x7f] { ++cp; str += 1; }
+        [\x80-\xbf] { str += 1; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cp; str += 2; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cp; str += 3; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cp; str += 4; }
+    */
+    }
+
+    if (codepoints) {
+        (*codepoints) = cp;
+    }
+
+    return str;
+}
+
+const utf8_codepoint_t* utf8_string_wrap(const utf8_codepoint_t* str, size_t max_codepoints, size_t* codepoints)
+{
+    size_t cp = 0;
+    const utf8_codepoint_t* wrap = 0;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
+    while (cp < max_codepoints) {
+        /*!re2c
+        [\x00\xff] { break; }
+        [ \s\r\n] { ++cp; str += 1; continue; }
+        [\x01-\x7f] { ++cp; str += 1; wrap = str; continue; }
+        [\x80-\xbf] { str += 1; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cp; str += 2; wrap = str; continue; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cp; str += 3; wrap = str; continue; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cp; str += 4; wrap = str; continue; }
+    */
+    }
+
+    if (0 == wrap) {
+       wrap = str;
+    }
+
+    if (codepoints) {
+        *codepoints = cp;
+    }
+
+    return wrap;
+}
+
+const utf8_codepoint_t* utf8_string_line(const utf8_codepoint_t* str, size_t* codepoints)
+{
+    size_t cp = 0;
+    const unsigned char* YYCURSOR = (unsigned char*)str;
+    for (;;) {
+        /*!re2c
+        [\x00\xff\r\n] { break; }
+        [\x01-\x7f] { ++cp; str += 1; continue; }
+        [\x80-\xbf] { str += 1; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cp; str += 2; continue; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cp; str += 3; continue; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cp; str += 4; continue; }
+    */
+    }
+
+    if (codepoints) {
+        *codepoints = cp;
+    }
+
+    return str;
 }
 
 size_t utf8_string_line_count(const utf8_codepoint_t* str)

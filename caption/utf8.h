@@ -39,68 +39,38 @@ typedef char utf8_codepoint_t;
 
 /*! \brief Returns a pointer to the next codepoint in a utf8 string
     \param
-
 */
 const utf8_codepoint_t* utf8_codepoint_next(const utf8_codepoint_t* codepoint);
 /*! \brief returns the length of the codepoint in bytes
     \param
-
-    if codepoint points to a continuation byte, The number of bytes before the next found codepoint is returned
 */
-//
 size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint);
 
 /*! \brief copyies on codepoind fron src to dst
     \param
-    returns number of bytes copied dst should have at least 5 bytes to be safe
 */
 size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src);
 
 /*! \brief
     \param
-
-    returns the length of the codepoint in bytes if it is a whitepace charcter, Otherwise returns 0
 */
 size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* c);
-/*! \brief returns the length of the codepoint in bytes if it is a newline charcter, Otherwise returns 0
-    \param
-
-    
-    // returns 0 if codepoint is not a new line charcter
-    // Returns 1 for single byte new lines (i.e. windows/riscos)
-    // Returns 2 for multi-byte new lines (i.e. unix/macos)
-    // Assumes exastance of a null terminator
-*/
-size_t utf8_codepoint_is_newline(const utf8_codepoint_t* codepoint);
-
 /*! \brief
     \param
-
-    returns the number of codepoints in the string, up to a null terminator
-    bytes (if supplied) will be set to the number of byts the string consumes
-*/
-size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes);
-
-/*! \brief
-    \param
-
-    // returns the number of codepoints of up to and including the first new line charcter(s)
-    // auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
-*/
-size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes);
-
-/*! \brief
-    \param
-
-    // returns number of codepoints to include before wraping the line
-*/
-size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes);
-/*! \brief
-    \param
-
 */
 const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str);
-
+/*! \brief
+    \param
+*/
+const utf8_codepoint_t* utf8_string_length(const utf8_codepoint_t* str, size_t* codepoints);
+/*! \brief
+    \param
+*/
+const utf8_codepoint_t* utf8_string_wrap(const utf8_codepoint_t* str, size_t max_codepoints, size_t* codepoints);
+/*! \brief
+    \param
+*/
+const utf8_codepoint_t* utf8_string_line(const utf8_codepoint_t* str, size_t* codepoints);
 /*! \brief
     \param
 

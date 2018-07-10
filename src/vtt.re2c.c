@@ -25,7 +25,7 @@
 #include "vtt.h"
 #include <stdio.h>
 /*!re2c
-        re2c:define:YYCTYPE = utf8_codepoint_t;
+        re2c:define:YYCTYPE = uint8_t;
         re2c:yyfill:enable = 0;
         re2c:flags:tags = 1;
 
@@ -105,14 +105,14 @@ double vtt_parse_timestamp(const utf8_codepoint_t* line)
 vtt_attribute_vector_t* vtt_parse_attributes(const utf8_codepoint_t* begin, const utf8_codepoint_t* end)
 {
     vtt_attribute_vector_t* attr_vec = vtt_attribute_vector_new();
-    const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = begin;
-    const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)begin;
+    const uint8_t *a, *b, *c, *d, *e, *f, *g, *h;
     while (YYCURSOR < end) {
         /*!re2c
         @a [^ :]+ @b ":" @c [^ ] @d [ \t\r\n] {
         vtt_attribute_t* attr = vtt_attribute_vector_push_back(&attr_vec);
-        attr->key = utf8_string_copy(a,b);
-        attr->val = utf8_string_copy(c,d);
+        attr->key = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
+        attr->val = utf8_string_copy((const utf8_codepoint_t*)c, (const utf8_codepoint_t*)d);
     }
     */
     }
@@ -134,8 +134,8 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const ut
 vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
 {
     vtt_vector_t* vtt_vec = vtt_vector_new();
-    const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
-    const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)str;
+    const uint8_t *a, *b, *c, *d, *e, *f, *g, *h;
     /*!re2c
         * { goto error; }
         "WEBVTT" [ \t\r\n]+ {
@@ -152,7 +152,7 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
         "STYLE" eol @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_STYLE;
-            vtt->payload = utf8_string_copy(a,b);
+            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
             continue;
         }
 
@@ -160,7 +160,7 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_REGION;
             vtt->attributes = vtt_parse_attributes(a, b);
-            vtt->payload = utf8_string_copy(a, b);
+            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
             continue;
         }
 
@@ -168,7 +168,7 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
         "NOTE" @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_NOTE;
-            vtt->payload = utf8_string_copy(a,b);
+            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
             continue;
         }
 
