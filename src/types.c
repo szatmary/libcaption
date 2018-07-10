@@ -235,7 +235,7 @@ void _vector_dup(_vector_t** t, _vector_t** f)
     size_t count = _vector_count(f);
     _vector_resize(t, 0); // run dtors
     _vector_reserve(t, count);
-    memcpy((*t), (*f), count * (*f)->size);
+    memcpy((*t), (*f), (1 + count) * (*f)->size);
 }
 
 /*! \brief Removes all element from the vector and free memory

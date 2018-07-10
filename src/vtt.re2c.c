@@ -24,6 +24,27 @@
 #include "utf8.h"
 #include "vtt.h"
 #include <stdio.h>
+/*!re2c
+        re2c:define:YYCTYPE = utf8_codepoint_t;
+        re2c:yyfill:enable = 0;
+        re2c:flags:tags = 1;
+
+        sp = [ \t];
+        eol = "\r\n" | "\r" | "\n\r" | "\n";
+        eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
+        blank_line = sp* eol;
+        line_of_text = eol? [^\r\n\x00]+;
+        identifier = [^\r\n];
+        timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
+        // attributes
+        attribute = [^ :]+ ":" [^ ];
+        cue_attribute = sp+ attribute;
+        regin_attribute =  attribute eol;
+        cue_attr_list = attribute+;
+        regin_attr_list = regin_attribute eol;
+    */
+
+/*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
 
 void vtt_attribute_ctor(vtt_attribute_t* attribute)
 {
@@ -43,15 +64,26 @@ void vtt_attribute_dtor(vtt_attribute_t* attribute)
 
 void vtt_ctor(vtt_t* vtt)
 {
-    memset(vtt, 0, sizeof(vtt_t));
+    vtt->type = VTT_NOTE;
     vtt->timestamp = 0.0;
+    vtt->duration = -1.0;
+    vtt->attributes = 0;
+    vtt->identifier = 0;
+    vtt->payload = 0;
 }
 
 void vtt_dtor(vtt_t* vtt)
 {
-    fprintf(stderr, "%s MEMLEAK?\n", __FILE__);
     if (vtt->payload) {
         free(vtt->payload);
+    }
+
+    if (vtt->identifier) {
+        free(vtt->identifier);
+    }
+
+    if (vtt->attributes) {
+        vtt_attribute_dtor(vtt->attributes);
     }
 }
 
@@ -70,12 +102,24 @@ double vtt_parse_timestamp(const utf8_codepoint_t* line)
 
 vtt_attribute_vector_t* vtt_parse_attributes(const utf8_codepoint_t* begin, const utf8_codepoint_t* end)
 {
-    return 0;
+    vtt_attribute_vector_t* attr_vec = vtt_attribute_vector_new();
+    const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = begin;
+    const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
+    while (YYCURSOR < end) {
+        /*!re2c
+        @a [^ :]+ @b ":" @c [^ ] @d [ \t\r\n] {
+        vtt_attribute_t* attr = vtt_attribute_vector_push_back(&attr_vec);
+        attr->key = utf8_string_copy(a,b);
+        attr->val = utf8_string_copy(c,d);
+    }
+    */
+    }
+    return attr_vec;
 }
 
 const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const utf8_codepoint_t* key)
 {
-    for (size_t i = 0 ; i < vtt_attribute_vector_count(&vtt); ++i) {
+    for (size_t i = 0; i < vtt_attribute_vector_count(&vtt); ++i) {
         vtt_attribute_t* attr = vtt_attribute_vector_at(&vtt, i);
         if (0 == strcmp((const char*)key, (const char*)attr->key)) {
             return attr->val;
@@ -87,27 +131,6 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const ut
 
 vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
 {
-    /*!re2c
-        re2c:define:YYCTYPE = utf8_codepoint_t;
-        re2c:yyfill:enable = 0;
-        re2c:flags:tags = 1;
-
-        ws = [ \t];
-        eol = "\r\n" | "\r" | "\n\r" | "\n";
-        eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
-        blank_line = ws* eol;
-        line_of_text = eol? [^\r\n\x00]+;
-        identifier = [^\r\n];
-        timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
-        // attributes
-        attribute = [^ :]+ ":" [^ ];
-        cue_attribute = ws+ attribute;
-        regin_attribute =  attribute eol;
-        cue_attr_list = attribute+;
-        regin_attr_list = regin_attribute eol;
-    */
-
-    /*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
     vtt_vector_t* vtt_vec = vtt_vector_new();
     const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
     const utf8_codepoint_t *a, *b, *c, *d, *e, *f, *g, *h;
@@ -141,15 +164,17 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
             continue;
         }
 
-        @a identifier? @b eol @c timestamp @d ws+  "-->" ws+ @e timestamp @f ws* eol @g line_of_text* @h eolx2 {
+        @a identifier? @b eol 
+        @c timestamp sp+  "-->" sp+ @d timestamp
+        @e cue_attribute* @f eol @g line_of_text* @h eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_CUE;
             vtt->identifier =  utf8_string_copy(a,b);
-            vtt->attributes = vtt_parse_attributes(a, b);
-            vtt->payload = utf8_string_copy(g,h);
-            double end_time = vtt_parse_timestamp(e);
             vtt->timestamp = vtt_parse_timestamp(c);
+            double end_time = vtt_parse_timestamp(d);
             vtt->duration = end_time - vtt->timestamp;
+            vtt->attributes = vtt_parse_attributes(e, f);
+            vtt->payload = utf8_string_copy(g,h);
             continue;
         }
     */
@@ -200,8 +225,12 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
         switch (block->type) {
         case VTT_REGION:
             if (!srt_mode) {
-                // TODO render attributes, not payload
-                printf("REGION\r\n%s\r\n\r\n", block->payload);
+                printf("REGION\r\n");
+                for (size_t i = 0; i < vtt_attribute_count(&block->attributes); ++i) {
+                    vtt_attribute_t* attr = vtt_attribute_at(&block->attributes, i);
+                    printf("%s:%s\r\n", attr->key, attr->val);
+                }
+                printf("\r\n");
             }
             break;
         case VTT_STYLE:
@@ -223,19 +252,21 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
 
             if (srt_mode) {
                 printf("%u\r\n", (unsigned)cue_count);
-            } else
-
-                if (block->identifier) {
+            } else if (block->identifier) {
                 printf("%s\r\n", block->identifier);
             }
 
             printf("%02d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
                 hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
 
-            // TODO print atributes
-            // if (!srt_mode && block->attributes != NULL) {
-            //     printf(" %s", (*block)->cue_settings);
-            // }
+            if (!srt_mode && block->attributes) {
+                for (size_t i = 0; i = vtt_attribute_count(&block->attributes); ++i) {
+                    vtt_attribute_t* attr = vtt_attribute_at(&block->attributes, i);
+                    printf(" %s:%s", attr->key, attr->val);
+                }
+                printf("\r\n");
+            }
+
             if (srt_mode) {
                 // TODO print payload without html like stuff
                 printf("\r\n%s\r\n\r\n", block->payload);

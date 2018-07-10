@@ -36,7 +36,6 @@ extern "C" {
 // size_t is bytes
 typedef uint8_t utf8_codepoint_t;
 #define MAX_UTF8_STRING_BYTES (50 * 1024 * 1024)
-MAKE_VECTOR(utf8_codepoint_t*, utf8_string, _str_ctor, _str_dtor, strcmp);
 
 /*! \brief Returns a pointer to the next codepoint in a utf8 string
     \param

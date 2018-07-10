@@ -56,7 +56,7 @@ const utf8_codepoint_t* utf8_codepoint_next(const utf8_codepoint_t* codepoint)
     return codepoint_length ? codepoint + codepoint_length : 0;
 }
 
-// returns number of bytes copied dst must have at leadt 5 bytes to be safe
+// returns number of bytes copied dst should have at least 5 bytes to be safe
 size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src)
 {
     size_t codepoint_length = utf8_codepoint_length(src);
@@ -80,78 +80,76 @@ size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* codepoint)
 
 size_t utf8_string_length(const utf8_codepoint_t* str, size_t* bytes)
 {
-    size_t codepoint_size = 0, codepoint_bytes = 0, codepoint_count = 0;
-    do {
-        codepoint_size = utf8_codepoint_length(str);
-        ++codepoint_count, str += codepoint_size, codepoint_bytes += codepoint_size;
-    } while (codepoint_size);
-
-    if (bytes) {
-        *bytes = codepoint_bytes;
-    }
-
-    return codepoint_count;
-}
-
-size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t max_codepoints, size_t* bytes)
-{
-    size_t wrap_bytes = 0;
-    size_t wrap_count = 0;
-    size_t codepoint_bytes = 0;
-    size_t codepoint_count = 0;
+    size_t cc = 0;
+    size_t cb = 0;
     const utf8_codepoint_t* YYCURSOR = str;
-    while (codepoint_count < max_codepoints) {
+    for (;;) {
         /*!re2c
-        "\x00" { break; }
-        [ \s\r\n] { 
-            wrap_bytes = codepoint_bytes;
-            wrap_count = codepoint_count;
-            ++codepoint_bytes, ++codepoint_count;
-            continue;
-        }
-        [\x00-\x7f] { ++codepoint_count; ++codepoint_bytes; continue; }
-        [\x80-\xbf] { ++codepoint_bytes; continue; }
-        [\xc0-\xdf] [\x80-\xbf] {2} { ++codepoint_count; codepoint_bytes += 2; continue; }
-        [\xe0-\xef] [\x80-\xbf] {3} { ++codepoint_count; codepoint_bytes += 3; continue; }
-        [\xf0-\xff] [\x80-\xbf] {4} { ++codepoint_count; codepoint_bytes += 4; continue; }
+        [\x00\xff] { break; }
+        [\x01-\x7f] { ++cc, ++cb; }
+        [\x80-\xbf] { ++cb; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc, cb += 2; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cc, cb += 3; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc, cb += 4; }
     */
     }
 
-    if (!wrap_count) {
-        wrap_bytes = codepoint_bytes;
-        wrap_count = codepoint_count;
+    if (bytes) {
+        *bytes = cb;
+    }
+
+    return cc;
+}
+
+size_t utf8_string_wrap_length(const utf8_codepoint_t* str, size_t line_length, size_t* bytes)
+{
+    size_t wb = 0, wc = 0; // wrap bytes,  wrap count
+    size_t cb = 0, cc = 0; // codepoint bytes, codepoint count
+    const utf8_codepoint_t* YYCURSOR = str;
+    while (cc < line_length) {
+        /*!re2c
+        [\x00\xff] { break; }
+        [ \s\r\n] { ++cc; ++cb; continue; }
+        [\x01-\x7f] { ++cc; ++cb; wc = cc; wb = cb; continue; }
+        [\x80-\xbf] { ++cb; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc; cb += 2; wc = cc; wb = cb; continue; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cc; cb += 3; wc = cc; wb = cb; continue; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc; cb += 4; wc = cc; wb = cb; continue; }
+    */
+    }
+
+    if (!wc) {
+        wc = cc, wb = cb;
     }
 
     if (bytes) {
-        *bytes = wrap_bytes;
+        *bytes = wb;
     }
 
-    return wrap_count;
+    return wc;
 }
 
 size_t utf8_string_line_length(const utf8_codepoint_t* str, size_t* bytes)
 {
-    size_t codepoint_bytes = 0;
-    size_t codepoint_count = 0;
+    size_t cb = 0;
+    size_t cc = 0;
     const utf8_codepoint_t* YYCURSOR = str;
     for (;;) {
         /*!re2c
-        "\x00\xff" { break; }
-        "\r" | "\n" { codepoint_bytes += 1, codepoint_count += 1; break; }
-        "\r\n" | "\n\r" { codepoint_bytes += 2, codepoint_count += 2; break; }
-        [\x00-\x7f] { ++codepoint_count; ++codepoint_bytes; continue; }
-        [\x80-\xbf] { ++codepoint_bytes; continue; }
-        [\xc0-\xdf] { ++codepoint_count; ++codepoint_bytes; continue; }
-        [\xe0-\xef] { ++codepoint_count; ++codepoint_bytes; continue; }
-        [\xf0-\xef7] { ++codepoint_count; ++codepoint_bytes; continue; }
+        [\x00\xff\r\n] { break; }
+        [\x01-\x7f] { ++cc; ++cb; continue; }
+        [\x80-\xbf] { ++cb; continue; }
+        [\xc0-\xdf] [\x80-\xbf] {2} { ++cc; cb += 2; continue; }
+        [\xe0-\xef] [\x80-\xbf] {3} { ++cc; cb += 3; continue; }
+        [\xf0-\xfe] [\x80-\xbf] {4} { ++cc; cb += 4; continue; }
     */
     }
 
     if (bytes) {
-        *bytes = codepoint_bytes;
+        *bytes = cb;
     }
 
-    return codepoint_count;
+    return cc;
 }
 
 const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
@@ -167,7 +165,7 @@ const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
 
 size_t utf8_string_line_count(const utf8_codepoint_t* str)
 {
-    if (!str[0]) {
+    if (!str || !str[0]) {
         return 0;
     }
 
@@ -196,7 +194,7 @@ utf8_codepoint_t* utf8_string_copy(const utf8_codepoint_t* begin, const utf8_cod
 
 utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size)
 {
-    utf8_codepoint_t* data = NULL;
+    utf8_codepoint_t* data = 0;
     FILE* file = fopen(path, "r");
 
     if (file) {
