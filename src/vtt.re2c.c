@@ -34,7 +34,7 @@
         eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
         blank_line = sp* eol;
         line_of_text = eol? [^\r\n\x00]+;
-        identifier = [^\r\n] eol;
+        identifier = [^\r\n];
         timestamp_a = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
         timestamp_b = [0-9]+ ":" [0-9][0-9] [,\.] [0-9]+;
         timestamp  = timestamp_a | timestamp_b;
@@ -172,9 +172,10 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
             continue;
         }
 
-        @a identifier? @b 
+        @a identifier? @b eol?
         @c timestamp sp+  "-->" sp+ @d timestamp
-        @e cue_attribute* @f eol @g line_of_text* @h eolx2 {
+        @e cue_attribute* @f eol 
+        @g line_of_text* @h eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_CUE;
             vtt->identifier =  utf8_string_copy(a,b);
