@@ -32,17 +32,16 @@ int main(int argc, const char** argv)
     size_t size = 0;
     caption_frame_t frame;
     utf8_codepoint_t* text = utf8_load_text_file(argv[1], &size);
-    scc_vector_t* scc_vec = scc_parse(text);
+    scc_vector_t scc_vec = scc_parse(text);
     free(text);
 
     caption_frame_ctor(&frame);
     for (size_t i = 0; i < scc_vector_count(&scc_vec); ++i) {
-        scc_t* scc = scc_vector_at(&scc_vec, i);
-        fprintf(stderr, "Timestamp: %f\n", scc->timestamp);
-        for (size_t j = 0; j < uint16_vector_count(&scc->cc_data); ++j) {
-            uint16_t* cc_data = uint16_vector_at(&scc->cc_data, j);
-            eia608_dump(*cc_data);
-            if (LIBCAPTION_READY == caption_frame_decode(&frame, *cc_data, scc->timestamp)) {
+        fprintf(stderr, "Timestamp: %f\n", scc_vec[i].timestamp);
+        for (size_t j = 0; j < uint16_vector_count(&scc_vec[i].cc_data); ++j) {
+            uint16_t cc_data = scc_vec[i].cc_data[j];
+            eia608_dump(cc_data);
+            if (LIBCAPTION_READY == caption_frame_decode(&frame, cc_data, scc_vec[i].timestamp)) {
                 caption_frame_dump(&frame);
             }
         }

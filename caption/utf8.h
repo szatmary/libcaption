@@ -89,7 +89,6 @@ utf8_codepoint_t* utf8_string_copy(const utf8_codepoint_t* begin, const utf8_cod
 */
 utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
 
-
 #ifdef __cplusplus
 }
 #endif

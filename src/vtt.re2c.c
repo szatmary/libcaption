@@ -51,11 +51,11 @@ void vtt_attribute_ctor(vtt_attribute_t* attribute)
 void vtt_attribute_dtor(vtt_attribute_t* attribute)
 {
     if (attribute->key) {
-        free(attribute->key);
+        free((void*)attribute->key);
     }
 
     if (attribute->val) {
-        free(attribute->val);
+        free((void*)attribute->val);
     }
 }
 
@@ -82,10 +82,10 @@ void vtt_dtor(vtt_t* vtt)
     vtt_attribute_vector_del(&vtt->attributes);
 }
 
-static inline utf8_codepoint_t *vtt_string_copy(const uint8_t* begin, const uint8_t* end) {
+static inline utf8_codepoint_t* vtt_string_copy(const uint8_t* begin, const uint8_t* end)
+{
     return utf8_string_copy((const utf8_codepoint_t*)begin, (const utf8_codepoint_t*)end);
 }
-
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
 double vtt_parse_timestamp(const uint8_t* line)
@@ -100,16 +100,16 @@ double vtt_parse_timestamp(const uint8_t* line)
     return -1.0;
 }
 
-vtt_attribute_vector_t* vtt_parse_attributes(const uint8_t* begin, const uint8_t* end)
+vtt_attribute_vector_t vtt_parse_attributes(const uint8_t* begin, const uint8_t* end)
 {
-    if(begin == end) {
+    if (begin == end) {
         return 0;
     }
 
-    vtt_attribute_vector_t* attr_vec = vtt_attribute_vector_new();
+    vtt_attribute_vector_t attr_vec = vtt_attribute_vector_new();
     const uint8_t *YYMARKER = 0, *YYCURSOR = begin;
     const uint8_t *a, *b, *c, *d;
-    while (YYCURSOR < (const uint8_t *)end) {
+    while (YYCURSOR < (const uint8_t*)end) {
         /*!re2c
         * { break; }
         eol { break; }
@@ -125,7 +125,7 @@ vtt_attribute_vector_t* vtt_parse_attributes(const uint8_t* begin, const uint8_t
     return attr_vec;
 }
 
-const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const utf8_codepoint_t* key)
+const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t vtt, const utf8_codepoint_t* key)
 {
     for (size_t i = 0; i < vtt_attribute_vector_count(&vtt); ++i) {
         vtt_attribute_t* attr = vtt_attribute_vector_at(&vtt, i);
@@ -137,23 +137,23 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const ut
     return 0;
 }
 
-vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
+vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
 {
-    if(!str) {
+    if (!str) {
         return 0;
     }
 
-    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)str;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
     const uint8_t *a, *b, *c, *d, *e, *f;
     const uint8_t *identifier_begin = 0, *identifier_end = 0;
-    for(;;) {
-    /*!re2c
+    for (;;) {
+        /*!re2c
         * { goto error; }
         "WEBVTT" [ \t\r\n]+ { break; }
     */
     }
 
-    vtt_vector_t* vtt_vec = vtt_vector_new();
+    vtt_vector_t vtt_vec = vtt_vector_new();
     for (;;) {
         /*!re2c
         * { return vtt_vec; }
@@ -211,7 +211,7 @@ int vtt_cue_to_caption_frame(vtt_t* cue, caption_frame_t* frame)
     return caption_frame_from_text(frame, cue->payload);
 }
 
-libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_vector_t* vtt)
+libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_vector_t vtt)
 {
     vtt_t* cue = vtt_vector_back(&vtt);
     if (cue && 0 >= cue->duration) {
@@ -235,7 +235,7 @@ static inline void vtt_crack_time(double tt, int* hh, int* mm, int* ss, int* ms)
     (*hh) = (int)((int64_t)(tt / (60 * 60)));
 }
 
-static void _dump(vtt_vector_t* vtt, int srt_mode)
+static void _dump(vtt_vector_t vtt, int srt_mode)
 {
     if (!srt_mode) {
         printf("WEBVTT\r\n\r\n");
@@ -299,5 +299,5 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
     }
 }
 
-void vtt_dump(vtt_vector_t* vtt) { _dump(vtt, 0); }
-void srt_dump(vtt_vector_t* vtt) { _dump(vtt, 1); }
+void vtt_dump(vtt_vector_t vtt) { _dump(vtt, 0); }
+void srt_dump(vtt_vector_t vtt) { _dump(vtt, 1); }

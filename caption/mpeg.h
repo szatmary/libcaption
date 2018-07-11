@@ -46,8 +46,8 @@ extern "C" {
 typedef struct {
     double dts, cts;
     libcaption_stauts_t status;
-    uint8_vector_t* buffer;
-    cea708_vector_t* cea708;
+    uint8_vector_t buffer;
+    cea708_vector_t cea708;
 } mpeg_bitstream_t;
 
 mpeg_bitstream_t* mpeg_bitstream_new();
@@ -96,7 +96,7 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct _sei_message_t {
     sei_msgtype_t type;
-    uint8_vector_t* payload;
+    uint8_vector_t payload;
 } sei_message_t;
 
 void sei_message_ctor(sei_message_t* msg);
@@ -105,7 +105,7 @@ MAKE_VECTOR(sei_message_t, sei_message, sei_message_ctor, sei_message_dtor, 0);
 
 typedef struct {
     double timestamp;
-    sei_message_vector_t* messages;
+    sei_message_vector_t messages;
 } sei_t;
 
 /*! \brief
