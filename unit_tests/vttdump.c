@@ -30,6 +30,6 @@ int main(int argc, const char **argv) {
     utf8_codepoint_t *text = utf8_load_text_file(argv[1], &size);
     vtt_vector_t *vtt = vtt_parse(text);
     vtt_dump(vtt);
+    srt_dump(vtt);
     vtt_vector_clear(&vtt);
-
 }

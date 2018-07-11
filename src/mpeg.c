@@ -628,7 +628,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
 
     ssize_t scpos;
     packet->status = LIBCAPTION_OK;
-    uint8_vector_append(&packet->buffer, size, data);
+    uint8_vector_append(&packet->buffer, size, (uint8_t*)data);
 
     for (; packet->status == LIBCAPTION_OK && 0 <= (scpos = find_start_code(uint8_vector_begin(&packet->buffer), uint8_vector_count(&packet->buffer), prev_size)); prev_size = 0) {
         int packet_type = mpeg_bitstream_packet_type(packet, stream_type, scpos);

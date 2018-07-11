@@ -24,7 +24,7 @@
         "request": "launch",
         "program": "${workspaceFolder}/unit_tests/vttdump",
         "preLaunchTask": "build",
-        "args": ["${workspaceFolder}/unit_tests/sample_files/example1.vtt"],
+        "args": ["${workspaceFolder}/unit_tests/sample_files/example5.vtt"],
         "stopAtEntry": true,
         "cwd": "${workspaceFolder}",
         "environment": [],

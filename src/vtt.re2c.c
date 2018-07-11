@@ -34,19 +34,14 @@
         eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
         blank_line = sp* eol;
         line_of_text = eol? [^\r\n\x00]+;
-        identifier = [^\r\n];
         timestamp_a = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
         timestamp_b = [0-9]+ ":" [0-9][0-9] [,\.] [0-9]+;
-        timestamp  = timestamp_a | timestamp_b;
-        // attributes
-        attribute = [^ :]+ ":" [^ ];
-        cue_attribute = sp+ attribute;
-        regin_attribute =  attribute eol;
-        cue_attr_list = attribute+;
-        regin_attr_list = regin_attribute eol;
+        timestamp  = (timestamp_a) | (timestamp_b);
+        identifier = [^\r\n\x00]+;
+        attribute = ([^ \r\n\t\x00:]+ ":" [^ \r\n\t\x00]+);
     */
 
-/*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
+/*!stags:re2c format = 'const uint8_t *@@;';*/
 
 void vtt_attribute_ctor(vtt_attribute_t* attribute)
 {
@@ -89,8 +84,13 @@ void vtt_dtor(vtt_t* vtt)
     }
 }
 
+static inline utf8_codepoint_t *vtt_string_copy(const uint8_t* begin, const uint8_t* end) {
+    return utf8_string_copy((const utf8_codepoint_t*)begin, (const utf8_codepoint_t*)end);
+}
+
+
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
-double vtt_parse_timestamp(const utf8_codepoint_t* line)
+double vtt_parse_timestamp(const uint8_t* line)
 {
     int hh, mm, ss, ms;
     if (sscanf((const char*)line, "%d:%2d:%2d%*1[,.]%d", &hh, &mm, &ss, &ms) == 4) {
@@ -102,17 +102,25 @@ double vtt_parse_timestamp(const utf8_codepoint_t* line)
     return -1.0;
 }
 
-vtt_attribute_vector_t* vtt_parse_attributes(const utf8_codepoint_t* begin, const utf8_codepoint_t* end)
+vtt_attribute_vector_t* vtt_parse_attributes(const uint8_t* begin, const uint8_t* end)
 {
+    if(begin == end) {
+        return 0;
+    }
+
     vtt_attribute_vector_t* attr_vec = vtt_attribute_vector_new();
-    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)begin;
-    const uint8_t *a, *b, *c, *d, *e, *f, *g, *h;
-    while (YYCURSOR < end) {
+    const uint8_t *YYMARKER = 0, *YYCURSOR = begin;
+    const uint8_t *a, *b, *c, *d;
+    while (YYCURSOR < (const uint8_t *)end) {
         /*!re2c
-        @a [^ :]+ @b ":" @c [^ ] @d [ \t\r\n] {
+        * { break; }
+        eol { break; }
+        // TODO there are a lot more white space charcters in unicode
+        sp* @a [^ \t\n\r\x00:]+ @b ":" @c [^ \t\n\r\x00]+ @d sp* eol? {
         vtt_attribute_t* attr = vtt_attribute_vector_push_back(&attr_vec);
-        attr->key = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
-        attr->val = utf8_string_copy((const utf8_codepoint_t*)c, (const utf8_codepoint_t*)d);
+        attr->key = vtt_string_copy(a, b);
+        attr->val = vtt_string_copy(c, d);
+        continue;
     }
     */
     }
@@ -133,57 +141,62 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t* vtt, const ut
 
 vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
 {
-    vtt_vector_t* vtt_vec = vtt_vector_new();
+    if(!str) {
+        return 0;
+    }
+
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)str;
-    const uint8_t *a, *b, *c, *d, *e, *f, *g, *h;
+    const uint8_t *a, *b, *c, *d, *e, *f;
+    const uint8_t *identifier_begin = 0, *identifier_end = 0;
     /*!re2c
         * { goto error; }
-        "WEBVTT" [ \t\r\n]+ {
-            // noop
-        }
+        "WEBVTT" [ \t\r\n]+ {}
     */
 
+    vtt_vector_t* vtt_vec = vtt_vector_new();
     for (;;) {
         /*!re2c
         * { return vtt_vec; }
-        '\x00' { return vtt_vec; }
         blank_line+ { continue; }
 
-        "STYLE" eol @a line_of_text* @b eolx2 {
+        "STYLE" sp* eol @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_STYLE;
-            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
+            vtt->payload = vtt_string_copy(a, b);
             continue;
         }
 
-        "REGON" eol @a line_of_text* @b eolx2 {
+        "REGION" sp* eol @a (attribute eol)* @b eol {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_REGION;
             vtt->attributes = vtt_parse_attributes(a, b);
-            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
             continue;
         }
 
         // we want to keep a leading newline if present to accurately reproduce later
-        "NOTE" @a line_of_text* @b eolx2 {
+        "NOTE" (sp+|eol) @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_NOTE;
-            vtt->payload = utf8_string_copy((const utf8_codepoint_t*)a, (const utf8_codepoint_t*)b);
+            vtt->payload = vtt_string_copy(a, b);
             continue;
         }
 
-        @a identifier? @b eol?
-        @c timestamp sp+  "-->" sp+ @d timestamp
-        @e cue_attribute* @f eol 
-        @g line_of_text* @h eolx2 {
+        (@a identifier @b eol) / (timestamp sp+ "-->") {
+            identifier_begin = a, identifier_end = b;
+            continue;
+        }
+
+        @a timestamp sp+ "-->" @b sp+ timestamp
+        @c (sp+ attribute)* @d sp* eol 
+        @e line_of_text* @f eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
-            vtt->type = VTT_CUE;
-            vtt->identifier =  utf8_string_copy(a,b);
-            vtt->timestamp = vtt_parse_timestamp(c);
-            double end_time = vtt_parse_timestamp(d);
-            vtt->duration = end_time - vtt->timestamp;
-            vtt->attributes = vtt_parse_attributes(e, f);
-            vtt->payload = utf8_string_copy(g,h);
+            vtt->type = VTT_CUE;            
+            vtt->timestamp = vtt_parse_timestamp(a);
+            vtt->duration = vtt_parse_timestamp(b) - vtt->timestamp;
+            vtt->attributes = vtt_parse_attributes(c, d);
+            vtt->payload = vtt_string_copy(e, f);
+            vtt->identifier = vtt_string_copy(identifier_begin, identifier_end);
+            identifier_begin = 0, identifier_end = 0;
             continue;
         }
     */
@@ -249,7 +262,7 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
             break;
         case VTT_NOTE:
             if (!srt_mode) {
-                printf("NOTE\r\n%s\r\n\r\n", block->payload);
+                printf("NOTE %s\r\n\r\n", block->payload);
             }
             break;
 
@@ -268,12 +281,11 @@ static void _dump(vtt_vector_t* vtt, int srt_mode)
             printf("%02d:%02d:%02d.%03d --> %02d:%02d:%02d.%03d",
                 hh1, mm1, ss1, ms1, hh2, mm2, ss2, ms2);
 
-            if (!srt_mode && block->attributes) {
+            if (!srt_mode) {
                 for (size_t i = 0; i < vtt_attribute_vector_count(&block->attributes); ++i) {
                     vtt_attribute_t* attr = vtt_attribute_vector_at(&block->attributes, i);
                     printf(" %s:%s", attr->key, attr->val);
                 }
-                printf("\r\n");
             }
 
             if (srt_mode) {

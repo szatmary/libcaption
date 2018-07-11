@@ -218,9 +218,9 @@ utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size)
             }
 
             fclose(file);
+            data[*size] = 0;
         }
     }
 
-    data[*size] = 0;
     return data;
 }
