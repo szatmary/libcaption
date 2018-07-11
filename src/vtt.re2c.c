@@ -34,9 +34,7 @@
         eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
         blank_line = sp* eol;
         line_of_text = eol? [^\r\n\x00]+;
-        timestamp_a = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
-        timestamp_b = [0-9]+ ":" [0-9][0-9] [,\.] [0-9]+;
-        timestamp  = (timestamp_a) | (timestamp_b);
+        timestamp = [0-9]+ ":" ([0-9][0-9] ":")? [0-9][0-9] [,\.] [0-9]+;
         identifier = [^\r\n\x00]+;
         attribute = ([^ \r\n\t\x00:]+ ":" [^ \r\n\t\x00]+);
     */
@@ -174,19 +172,20 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
         }
 
         // we want to keep a leading newline if present to accurately reproduce later
-        "NOTE" (sp+|eol) @a line_of_text* @b eolx2 {
+        "NOTE" sp* @a line_of_text* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_NOTE;
             vtt->payload = vtt_string_copy(a, b);
             continue;
         }
 
+        // identifier must have "-->"" on the very next line
         (@a identifier @b eol) / (timestamp sp+ "-->") {
             identifier_begin = a, identifier_end = b;
             continue;
         }
 
-        @a timestamp sp+ "-->" @b sp+ timestamp
+        @a timestamp sp+ "-->" sp+ @b timestamp
         @c (sp+ attribute)* @d sp* eol 
         @e line_of_text* @f eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);

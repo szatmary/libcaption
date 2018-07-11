@@ -6,19 +6,19 @@
     "configurations": [
 
         {
-            "name": "scc_test (lldb) Launch",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/unit_tests/scc_test",
-            "preLaunchTask": "build",
-            "args": ["${workspaceFolder}/unit_tests/sample_files/tos.scc"],
-            "stopAtEntry": true,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb"
-            },
-    {
+        "name": "scc_test (lldb) Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/unit_tests/scc_test",
+        "preLaunchTask": "build",
+        "args": ["${workspaceFolder}/unit_tests/sample_files/tos.scc"],
+        "stopAtEntry": true,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb"
+        },
+        {
         "name": "vttdump (lldb) Launch",
         "type": "cppdbg",
         "request": "launch",
