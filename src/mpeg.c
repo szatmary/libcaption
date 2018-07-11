@@ -162,7 +162,7 @@ void sei_dtor(sei_t* sei)
 void sei_message_dup(sei_message_t* to, sei_message_t* from)
 {
     to->type = from->type;
-    sei_message_vector_dup(&to->payload, &from->payload);
+    uint8_vector_dup(&to->payload, &from->payload);
 }
 
 void sei_cat(sei_t* to, sei_t* from, int itu_t_t35_only)
@@ -311,7 +311,7 @@ libcaption_stauts_t sei_parse(sei_t* sei, const uint8_t* data, size_t size)
             uint8_vector_resize(&msg->payload, payloadSize);
             uint8_t* payloadData = uint8_vector_begin(&msg->payload);
             size_t bytes = _copy_to_rbsp(payloadData, payloadSize, data, size);
-            
+
             if (bytes < payloadSize) {
                 sei_message_vector_pop_back(&sei->messages);
                 return LIBCAPTION_ERROR;
@@ -598,8 +598,8 @@ void _mpeg_bitstream_sei_parse(mpeg_bitstream_t* packet, caption_frame_t* frame,
     sei.timestamp = dts + cts;
     packet->status = libcaption_status_update(packet->status, sei_parse(&sei, data, size));
     // This is a stack, we push in reverse order, so it pops in the correct otder
-    for (size_t i = sei_message_vector_count(&sei.messages); 0 != i ; --i) {
-        sei_message_t* msg = sei_message_vector_at(&sei.messages, i-1);
+    for (size_t i = sei_message_vector_count(&sei.messages); 0 != i; --i) {
+        sei_message_t* msg = sei_message_vector_at(&sei.messages, i - 1);
         if (sei_type_user_data_registered_itu_t_t35 == msg->type) {
             cea708_t* cea708 = cea708_vector_push_back(&packet->cea708);
             cea708->timestamp = sei.timestamp;
