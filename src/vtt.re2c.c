@@ -79,9 +79,7 @@ void vtt_dtor(vtt_t* vtt)
         free(vtt->identifier);
     }
 
-    if (vtt->attributes) {
-        vtt_attribute_vector_del(&vtt->attributes);
-    }
+    vtt_attribute_vector_del(&vtt->attributes);
 }
 
 static inline utf8_codepoint_t *vtt_string_copy(const uint8_t* begin, const uint8_t* end) {
@@ -148,10 +146,12 @@ vtt_vector_t* vtt_parse(const utf8_codepoint_t* str)
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)str;
     const uint8_t *a, *b, *c, *d, *e, *f;
     const uint8_t *identifier_begin = 0, *identifier_end = 0;
+    for(;;) {
     /*!re2c
         * { goto error; }
-        "WEBVTT" [ \t\r\n]+ {}
+        "WEBVTT" [ \t\r\n]+ { break; }
     */
+    }
 
     vtt_vector_t* vtt_vec = vtt_vector_new();
     for (;;) {

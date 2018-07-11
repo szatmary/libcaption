@@ -2,9 +2,11 @@
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -fno-omit-frame-pointer -fsanitize=address")
 set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} -g -fno-omit-frame-pointer -fsanitize=address")
 
-
 add_executable(vttdump vttdump.c)
 target_link_libraries(vttdump caption)
+
+add_executable(scc_test scc_test.c)
+target_link_libraries(scc_test caption)
 
 # install(TARGETS dumpcea608 DESTINATION bin)
 

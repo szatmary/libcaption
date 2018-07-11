@@ -25,30 +25,41 @@
 #include "scc.h"
 #include <stdio.h>
 /*!re2c
-    re2c:define:YYCTYPE = utf8_codepoint_t;
+    re2c:define:YYCTYPE = uint8_t;
     re2c:yyfill:enable = 0;
     re2c:flags:tags = 1;
 
     sp = [ \t];
-    eol = "\x00" | "\r" | "\r\n" | "\n" | "\n\r";
-    eol2x = "\r\r" | "\r\n\r\n" | "\n\n" | "\n\r\n\r";
+    eol = ("\r" | "\r\n" | "\n" | "\n\r");
+    eol2x = ("\r\r" | "\r\n\r\n" | "\n\n" | "\n\r\n\r");
     timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9]  ":" [0-9]+;
-    ccdata = [0-9a-fA_F] {4};
-    sp_ccdata = sp+ ccdata;
+    ccdata = ([0-9a-fA_F] {4});
 */
 
-/*!stags:re2c format = 'const utf8_codepoint_t *@@;';*/
+/*!stags:re2c format = 'const uint8_t *@@;';*/
 
-uint16_vector_t* scc_parse_ccdata(const utf8_codepoint_t* str)
+void scc_ctor(scc_t* scc)
 {
-    const utf8_codepoint_t* a;
-    const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
+    scc->timestamp = 0.0;
+    scc->cc_data = 0;
+}
+
+void scc_dtor(scc_t* scc)
+{
+    uint16_vector_del(&scc->cc_data);
+}
+
+
+uint16_vector_t* scc_parse_ccdata(const uint8_t* str)
+{
+    const uint8_t* a;
+    unsigned int cc_data = 0;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
     uint16_vector_t* cc_vec = uint16_vector_new();
     for (;;) {
     /*!re2c
     * { return cc_vec; }
-    @a ccdata sp* {
-        unsigned int cc_data = 0;
+    sp+ @a ccdata {
         if( 1 == sscanf((const char*)a, "%04x", &cc_data)) {
             *uint16_vector_push_back(&cc_vec) = cc_data;
             continue;
@@ -63,26 +74,28 @@ uint16_vector_t* scc_parse_ccdata(const utf8_codepoint_t* str)
 
 scc_vector_t* scc_parse(const utf8_codepoint_t* str)
 {
+    if(!str) {
+        return 0;
+    }
     // Scenarist_SCC V1.0
     //
     // 00:00:22:10	9420 94f2 97a2 d9ef 75a7 f2e5 2061 20ea e5f2 6b2c 2054 68ef 6dae 942c 8080 8080 942f
 
-    const utf8_codepoint_t *a, *b;
-    const utf8_codepoint_t *YYMARKER = 0, *YYCURSOR = str;
-    scc_vector_t* scc_vec = scc_vector_new();
-    for (;;) {
+    const uint8_t *a, *b;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
+    for(;;) {
     /*!re2c
     * { goto error;; }
-    "Scenarist_SCC V1.0" eol2x { break; }
+    "Scenarist_SCC V1.0" sp* eol2x { break; }
     */
     }
 
+    scc_vector_t* scc_vec = scc_vector_new();
     for (;;) {
     /*!re2c
-    * { goto error;; }
-    [\x00] { return scc_vec; }
+    * { return scc_vec; }
     sp* eol { continue; }
-    @a timestamp @b ccdata sp_ccdata* eol2x {
+    @a timestamp @b (sp+ ccdata)+ eol2x {
         int v1 = 0, v2 = 0, hh = 0, mm = 0, ss = 0, ff = 0;
         if (4 != sscanf((const char*)a, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) { goto error; }
         scc_t *scc = scc_vector_push_back(&scc_vec);

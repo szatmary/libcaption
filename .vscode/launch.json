@@ -5,19 +5,19 @@
     "version": "0.2.0",
     "configurations": [
 
-    {
-        "name": "ts2srt (lldb) Launch",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/examples/ts2srt",
-        "preLaunchTask": "build",
-        "args": ["${workspaceFolder}/tw1.ts"],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "lldb"
-    },
+        {
+            "name": "scc_test (lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/unit_tests/scc_test",
+            "preLaunchTask": "build",
+            "args": ["${workspaceFolder}/unit_tests/sample_files/tos.scc"],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+            },
     {
         "name": "vttdump (lldb) Launch",
         "type": "cppdbg",
@@ -25,32 +25,6 @@
         "program": "${workspaceFolder}/unit_tests/vttdump",
         "preLaunchTask": "build",
         "args": ["${workspaceFolder}/unit_tests/sample_files/example5.vtt"],
-        "stopAtEntry": true,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "lldb"
-    },
-    {
-        "name": "srtdump (lldb) Launch",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/examples/srtdump",
-        "preLaunchTask": "build",
-        "args": ["${workspaceFolder}/unit_tests/sample_files/TOS-en.srt"],
-        "stopAtEntry": true,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "lldb"
-    },
-    {
-        "name": "dumpcea608 (lldb) Launch",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/examples/dumpcea608",
-        "preLaunchTask": "build",
-        "args": ["${workspaceFolder}/tw.ts"],
         "stopAtEntry": true,
         "cwd": "${workspaceFolder}",
         "environment": [],
