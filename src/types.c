@@ -35,6 +35,9 @@ _vector_t* _vector_new(size_t s, _ctor_t ctor, _dtor_t dtor, _cmp_t cmp)
 */
 char* _vector_begin(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     return ((char*)(*v)) + sizeof(_vector_t);
 }
 
@@ -42,6 +45,9 @@ char* _vector_begin(_vector_t** v)
 */
 char* _vector_end(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     return ((char*)(*v)) + sizeof(_vector_t) + ((*v)->count * (*v)->size);
 }
 
@@ -49,6 +55,9 @@ char* _vector_end(_vector_t** v)
 */
 size_t _vector_count(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     return (*v)->count;
 }
 
@@ -56,6 +65,9 @@ size_t _vector_count(_vector_t** v)
 */
 char* _vector_at(_vector_t** v, size_t c)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     if ((*v)->count <= c) {
         return 0;
     }
@@ -67,6 +79,9 @@ char* _vector_at(_vector_t** v, size_t c)
 */
 char* _vector_front(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     return _vector_at(v, 0);
 }
 
@@ -74,6 +89,9 @@ char* _vector_front(_vector_t** v)
 */
 char* _vector_back(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
     return _vector_at(v, _vector_count(v) - 1);
 }
 
@@ -82,9 +100,13 @@ char* _vector_back(_vector_t** v)
 #define PAGE_SIZE ((size_t)1024)
 size_t _vector_reserve(_vector_t** v, size_t c)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     if (c > (*v)->alloc) {
         size_t bytes = sizeof(_vector_t) + ((1 + c) * (*v)->size);
-        bytes = (bytes + PAGE_SIZE) &~ (PAGE_SIZE-1); // Round to page size
+        bytes = (bytes + PAGE_SIZE) & ~(PAGE_SIZE - 1); // Round to page size
         size_t new_alloc = (bytes - ((*v)->size + sizeof(_vector_t))) / (*v)->size;
         char* new_ptr = (char*)realloc((*v), bytes);
 
@@ -100,6 +122,10 @@ size_t _vector_reserve(_vector_t** v, size_t c)
 */
 size_t _vector_resize(_vector_t** v, size_t c)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     if (c > _vector_reserve(v, c)) {
         return 0; // could not alocate storage
     }
@@ -117,10 +143,21 @@ size_t _vector_resize(_vector_t** v, size_t c)
     return (*v)->count;
 }
 
+/*! \brief 
+*/
+void _vector_clear(_vector_t** v)
+{
+    _vector_resize(v, 0);
+}
+
 /*! \brief
 */
-size_t _vector_insert(_vector_t** v, size_t p, size_t c, const char* d)
+size_t _vector_insert(_vector_t** v, size_t p, size_t c, char* d)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     if ((*v)->count < p) {
         return 0;
     }
@@ -142,7 +179,7 @@ size_t _vector_insert(_vector_t** v, size_t p, size_t c, const char* d)
 
 /*! \brief
 */
-size_t _vector_append(_vector_t** v, size_t c, const char* d)
+size_t _vector_append(_vector_t** v, size_t c, char* d)
 {
     return _vector_insert(v, (*v)->count, c, d);
 }
@@ -151,6 +188,10 @@ size_t _vector_append(_vector_t** v, size_t c, const char* d)
 */
 size_t _vector_erase(_vector_t** v, size_t p, size_t c)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     if ((*v)->count < p + c) {
         return 0;
     }
@@ -174,6 +215,10 @@ size_t _vector_erase(_vector_t** v, size_t p, size_t c)
 */
 char* _vector_push_back(_vector_t** v)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     size_t new_count = _vector_count(v) + 1;
     if (new_count != _vector_resize(v, new_count)) {
         return 0;
@@ -186,6 +231,10 @@ char* _vector_push_back(_vector_t** v)
 */
 char* _vector_emplace_back(_vector_t** v, char* d)
 {
+    if (!v || !*v) {
+        return 0;
+    }
+
     char* n = _vector_push_back(v);
     if (n) {
         memcpy(n, d, (*v)->size);
@@ -197,6 +246,10 @@ char* _vector_emplace_back(_vector_t** v, char* d)
 */
 void _vector_pop_back(_vector_t** v)
 {
+    if (!v || !*v) {
+        return;
+    }
+
     size_t count;
     if (0 < (count = _vector_count(v))) {
         _vector_resize(v, count - 1);
@@ -207,6 +260,9 @@ void _vector_pop_back(_vector_t** v)
 */
 void _vector_sort(_vector_t** v, int o)
 {
+    if (!v || !*v) {
+        return;
+    }
 
     if (!(*v)->cmp || o == 0 || 2 > (*v)->count) {
         return;
@@ -232,16 +288,24 @@ again:
 */
 void _vector_dup(_vector_t** t, _vector_t** f)
 {
+    if (!t || !*t | !f || !*f) {
+        return;
+    }
+
     size_t count = _vector_count(f);
     _vector_resize(t, 0); // run dtors
     _vector_reserve(t, count);
-    memcpy((*t), (*f), count * (*f)->size);
+    memcpy((*t), (*f), (1 + count) * (*f)->size);
 }
 
 /*! \brief Removes all element from the vector and free memory
 */
 void _vector_del(_vector_t** v)
 {
+    if (!v || !*v) {
+        return;
+    }
+
     _vector_resize(v, 0);
     free(*v), *v = 0;
 }

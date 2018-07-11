@@ -21,61 +21,91 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_SRT_H
-#define LIBCAPTION_SRT_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-#include "caption.h"
-#include "eia608.h"
-#include "vtt.h"
+#include "scc.h"
+#include <stdio.h>
+/*!re2c
+    re2c:define:YYCTYPE = uint8_t;
+    re2c:yyfill:enable = 0;
+    re2c:flags:tags = 1;
 
-// timestamp and duration are in seconds
-typedef vtt_t srt_t;
-typedef vtt_block_t srt_cue_t;
-
-/*! \brief
-    \param
+    sp = [ \t];
+    eol = ("\r" | "\r\n" | "\n" | "\n\r");
+    eol2x = ("\r\r" | "\r\n\r\n" | "\n\n" | "\n\r\n\r");
+    timestamp = [0-9]+ ":" [0-9][0-9] ":" [0-9][0-9]  ":" [0-9]+;
+    ccdata = ([0-9a-fA_F] {4});
 */
-srt_t* srt_new();
-// returns the head of the link list. must bee freed when done
-/*! \brief
-    \param
-*/
-srt_t* srt_parse(const utf8_codepoint_t* data, size_t size);
-/*! \brief
-    \param
-*/
-void srt_del(srt_t* srt);
 
-/*! \brief
-    \param
-*/
-static inline utf8_codepoint_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_data(cue); }
+/*!stags:re2c format = 'const uint8_t *@@;';*/
 
-/*! \brief
-    \param
-*/
-static inline libcaption_stauts_t srt_cue_from_caption_frame(caption_frame_t* frame, srt_t* srt) { return vtt_cue_from_caption_frame(frame, srt); };
-
-/*! \brief
-    \param
-*/
-// static inline srt_cue_t* srt_cue_new(srt_t* srt, const utf8_codepoint_t* data, size_t size) { return vtt_block_new(srt, data, size, VTT_CUE); };
-
-/*! \brief
-    \param
-*/
-static inline int srt_cue_to_caption_frame(srt_cue_t* cue, caption_frame_t* frame) { return vtt_cue_to_caption_frame(cue, frame); };
-
-void srt_dump(srt_t* srt);
-/*! \brief
-    \param
-*/
-void vtt_dump(srt_t* srt);
-
-#ifdef __cplusplus
+void scc_ctor(scc_t* scc)
+{
+    scc->timestamp = 0.0;
+    scc->cc_data = 0;
 }
-#endif
-#endif
+
+void scc_dtor(scc_t* scc)
+{
+    uint16_vector_del(&scc->cc_data);
+}
+
+
+uint16_vector_t* scc_parse_ccdata(const uint8_t* str)
+{
+    const uint8_t* a;
+    unsigned int cc_data = 0;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
+    uint16_vector_t* cc_vec = uint16_vector_new();
+    for (;;) {
+    /*!re2c
+    * { return cc_vec; }
+    sp+ @a ccdata {
+        if( 1 == sscanf((const char*)a, "%04x", &cc_data)) {
+            *uint16_vector_push_back(&cc_vec) = cc_data;
+            continue;
+        } else {
+            uint16_vector_del(&cc_vec);
+            return 0;
+        }
+    }
+    */
+    }
+}
+
+scc_vector_t* scc_parse(const utf8_codepoint_t* str)
+{
+    if(!str) {
+        return 0;
+    }
+    // Scenarist_SCC V1.0
+    //
+    // 00:00:22:10	9420 94f2 97a2 d9ef 75a7 f2e5 2061 20ea e5f2 6b2c 2054 68ef 6dae 942c 8080 8080 942f
+
+    const uint8_t *a, *b;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
+    for(;;) {
+    /*!re2c
+    * { goto error;; }
+    "Scenarist_SCC V1.0" sp* eol2x { break; }
+    */
+    }
+
+    scc_vector_t* scc_vec = scc_vector_new();
+    for (;;) {
+    /*!re2c
+    * { return scc_vec; }
+    sp* eol { continue; }
+    @a timestamp @b (sp+ ccdata)+ eol2x {
+        int v1 = 0, v2 = 0, hh = 0, mm = 0, ss = 0, ff = 0;
+        if (4 != sscanf((const char*)a, "%2d:%2d:%2d%*1[:;]%2d", &hh, &mm, &ss, &ff)) { goto error; }
+        scc_t *scc = scc_vector_push_back(&scc_vec);
+        scc->timestamp = (hh * 3600.0) + (mm * 60.0) + ss + (ff / 29.97);
+        scc->cc_data = scc_parse_ccdata(b);
+        continue;
+    }
+    */
+    }
+error:
+    scc_vector_del(&scc_vec);
+    return 0;
+}

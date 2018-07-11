@@ -21,32 +21,16 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN                  */
 /* THE SOFTWARE.                                                                              */
 /**********************************************************************************************/
-#ifndef LIBCAPTION_TS_H
-#define LIBCAPTION_TS_H
-#include "caption.h"
-#include "mpeg.h"
 
-typedef struct {
-    int16_t pmtpid;
-    int16_t ccpid;
-    uint32_t flags;
-    int16_t stream_type;
-    int64_t pts, dts;
-    size_t size;
-    const uint8_t* data;
-} ts_t;
+#include "utf8.h"
+#include "vtt.h"
 
-/*! \brief
-    \param
-
-    Expects 188 byte TS packet
-*/
-#define TS_PACKET_SIZE 188
-void ts_init(ts_t* ts);
-int ts_parse_packet(ts_t* ts, const uint8_t* data);
-// return timestamp in seconds
-static inline double ts_dts_seconds(ts_t* ts) { return ts->dts / 90000.0; }
-static inline double ts_pts_seconds(ts_t* ts) { return ts->pts / 90000.0; }
-static inline double ts_cts_seconds(ts_t* ts) { return (ts->pts - ts->dts) / 90000.0; }
-
-#endif
+int main(int argc, const char **argv) {
+    size_t size = 0;
+    utf8_codepoint_t *text = utf8_load_text_file(argv[1], &size);
+    vtt_vector_t *vtt = vtt_parse(text);
+    free(text);
+    vtt_dump(vtt);
+    srt_dump(vtt);
+    vtt_vector_clear(&vtt);
+}

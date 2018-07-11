@@ -150,7 +150,7 @@ static int eia608_to_index(uint16_t cc_data, int* chan, int* c1, int* c2)
     return 0;
 }
 
-int eia608_to_utf8(uint16_t c, int* chan, char* str1, char* str2)
+int eia608_to_utf8(uint16_t c, int* chan, utf8_codepoint_t* str1, utf8_codepoint_t* str2)
 {
     int c1, c2;
     int size = (int)eia608_to_index(c, chan, &c1, &c2);

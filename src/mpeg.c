@@ -484,18 +484,18 @@ libcaption_stauts_t sei_from_caption_frame(sei_t* sei, caption_frame_t* frame)
     return LIBCAPTION_OK;
 }
 
-libcaption_stauts_t sei_from_scc(sei_t* sei, const scc_t* scc)
+libcaption_stauts_t sei_from_scc(sei_t* sei, scc_t* scc)
 {
     unsigned int i;
     cea708_t cea708;
     cea708_ctor(&cea708);
     cea708.timestamp = sei->timestamp;
-    for (i = 0; i < scc->cc_size; ++i) {
+    for (i = 0; i < uint16_vector_count(&scc->cc_data); ++i) {
         if (31 == cea708.user_data.cc_count) {
             sei_append_708(sei, &cea708);
         }
 
-        cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, scc->cc_data[i]);
+        cea708_add_cc_data(&cea708, 1, cc_type_ntsc_cc_field_1, *uint16_vector_at(&scc->cc_data, i));
     }
 
     if (0 != cea708.user_data.cc_count) {
@@ -628,7 +628,7 @@ size_t mpeg_bitstream_parse(mpeg_bitstream_t* packet, caption_frame_t* frame, co
 
     ssize_t scpos;
     packet->status = LIBCAPTION_OK;
-    uint8_vector_append(&packet->buffer, size, data);
+    uint8_vector_append(&packet->buffer, size, (uint8_t*)data);
 
     for (; packet->status == LIBCAPTION_OK && 0 <= (scpos = find_start_code(uint8_vector_begin(&packet->buffer), uint8_vector_count(&packet->buffer), prev_size)); prev_size = 0) {
         int packet_type = mpeg_bitstream_packet_type(packet, stream_type, scpos);

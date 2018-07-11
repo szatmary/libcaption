@@ -353,7 +353,8 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
         str = utf8_string_skip_whitespace(str);
 
         // get charcter count for wrap
-        codepoint_count = utf8_string_wrap_length(str, SCREEN_COLS, 0);
+        size_t codepoint_count;
+        utf8_string_wrap(str, SCREEN_COLS, &codepoint_count);
         // write to caption frame
         for (size_t c = 0; c < codepoint_count; ++c) {
             codepoint_length = utf8_codepoint_length(str);
