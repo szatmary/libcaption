@@ -28,7 +28,7 @@
 int main(int argc, const char **argv) {
     size_t size = 0;
     utf8_codepoint_t *text = utf8_load_text_file(argv[1], &size);
-    vtt_vector_t *vtt = vtt_parse(text);
+    vtt_vector_t vtt = vtt_parse(text);
     free(text);
     vtt_dump(vtt);
     srt_dump(vtt);

@@ -125,31 +125,31 @@ static inline void _vector_sort_descending(char** v) { _vector_sort(v, -1); }
 */
 
 #define MAKE_VECTOR(TYPE, NAME, CTOR, DTOR, CMP)                                                                                                      \
-    typedef TYPE NAME##_vector_t;                                                                                                                     \
+    typedef TYPE *NAME##_vector_t;                                                                                                                     \
     typedef void (*NAME##_ctor_t)(TYPE*);                                                                                                             \
     typedef void (*NAME##_dtor_t)(TYPE*);                                                                                                             \
     typedef int (*NAME##_cmp_t)(TYPE*, TYPE*);                                                                                                        \
-    static inline NAME##_vector_t* NAME##_vector_new() { return (NAME##_vector_t*)_vector_new(sizeof(TYPE), (ctor_t)CTOR, (dtor_t)DTOR, (cmp_t)CMP); }     \
-    static inline TYPE* NAME##_vector_begin(NAME##_vector_t** v) { return (TYPE*)_vector_begin((char**)v); }                                          \
-    static inline TYPE* NAME##_vector_end(NAME##_vector_t** v) { return (TYPE*)_vector_end((char**)v); }                                              \
-    static inline size_t NAME##_vector_count(NAME##_vector_t** v) { return _vector_count((char**)v); }                                                \
-    static inline TYPE* NAME##_vector_at(NAME##_vector_t** v, size_t c) { return (TYPE*)_vector_at((char**)v, c); }                                   \
-    static inline TYPE* NAME##_vector_front(NAME##_vector_t** v) { return (TYPE*)_vector_front((char**)v); }                                          \
-    static inline TYPE* NAME##_vector_back(NAME##_vector_t** v) { return (TYPE*)_vector_back((char**)v); }                                            \
-    static inline size_t NAME##_vector_reserve(NAME##_vector_t** v, size_t c) { return _vector_reserve((char**)v, c); }                               \
-    static inline size_t NAME##_vector_resize(NAME##_vector_t** v, size_t c) { return _vector_resize((char**)v, c); }                                 \
-    static inline void NAME##_vector_clear(NAME##_vector_t** v) { return _vector_clear((char**)v); }                                                  \
-    static inline size_t NAME##_vector_insert(NAME##_vector_t** v, size_t p, size_t c, TYPE* d) { return _vector_insert((char**)v, p, c, (char*)d); } \
-    static inline size_t NAME##_vector_append(NAME##_vector_t** v, size_t c, TYPE* d) { return _vector_append((char**)v, c, (char*)d); }              \
-    static inline size_t NAME##_vector_erase(NAME##_vector_t** v, size_t p, size_t c) { return _vector_erase((char**)v, p, c); }                      \
-    static inline TYPE* NAME##_vector_push_back(NAME##_vector_t** v) { return (TYPE*)_vector_push_back((char**)v); }                                  \
-    static inline TYPE* NAME##_vector_emplace_back(NAME##_vector_t** v, TYPE* d) { return (TYPE*)_vector_emplace_back((char**)v, (char*)d); }         \
-    static inline void NAME##_vector_pop_back(NAME##_vector_t** v) { return _vector_pop_back((char**)v); }                                            \
-    static inline void NAME##_vector_sort(NAME##_vector_t** v, int o) { return _vector_sort((char**)v, o); }                                          \
-    static inline void NAME##_vector_sort_ascending(NAME##_vector_t** v) { return _vector_sort_ascending((char**)v); }                                \
-    static inline void NAME##_vector_sort_descending(NAME##_vector_t** v) { return _vector_sort_descending((char**)v); }                              \
-    static inline void NAME##_vector_dup(NAME##_vector_t** t, NAME##_vector_t** f) { return _vector_dup((char**)t, (char**)f); }                      \
-    static inline void NAME##_vector_del(NAME##_vector_t** v) { return _vector_del((char**)v); }
+    static inline NAME##_vector_t NAME##_vector_new() { return (NAME##_vector_t)_vector_new(sizeof(TYPE), (ctor_t)CTOR, (dtor_t)DTOR, (cmp_t)CMP); }     \
+    static inline TYPE* NAME##_vector_begin(NAME##_vector_t* v) { return (TYPE*)_vector_begin((char**)v); }                                          \
+    static inline TYPE* NAME##_vector_end(NAME##_vector_t* v) { return (TYPE*)_vector_end((char**)v); }                                              \
+    static inline size_t NAME##_vector_count(NAME##_vector_t* v) { return _vector_count((char**)v); }                                                \
+    static inline TYPE* NAME##_vector_at(NAME##_vector_t* v, size_t c) { return (TYPE*)_vector_at((char**)v, c); }                                   \
+    static inline TYPE* NAME##_vector_front(NAME##_vector_t* v) { return (TYPE*)_vector_front((char**)v); }                                          \
+    static inline TYPE* NAME##_vector_back(NAME##_vector_t* v) { return (TYPE*)_vector_back((char**)v); }                                            \
+    static inline size_t NAME##_vector_reserve(NAME##_vector_t* v, size_t c) { return _vector_reserve((char**)v, c); }                               \
+    static inline size_t NAME##_vector_resize(NAME##_vector_t* v, size_t c) { return _vector_resize((char**)v, c); }                                 \
+    static inline void NAME##_vector_clear(NAME##_vector_t* v) { return _vector_clear((char**)v); }                                                  \
+    static inline size_t NAME##_vector_insert(NAME##_vector_t* v, size_t p, size_t c, TYPE* d) { return _vector_insert((char**)v, p, c, (char*)d); } \
+    static inline size_t NAME##_vector_append(NAME##_vector_t* v, size_t c, TYPE* d) { return _vector_append((char**)v, c, (char*)d); }              \
+    static inline size_t NAME##_vector_erase(NAME##_vector_t* v, size_t p, size_t c) { return _vector_erase((char**)v, p, c); }                      \
+    static inline TYPE* NAME##_vector_push_back(NAME##_vector_t* v) { return (TYPE*)_vector_push_back((char**)v); }                                  \
+    static inline TYPE* NAME##_vector_emplace_back(NAME##_vector_t* v, TYPE* d) { return (TYPE*)_vector_emplace_back((char**)v, (char*)d); }         \
+    static inline void NAME##_vector_pop_back(NAME##_vector_t* v) { return _vector_pop_back((char**)v); }                                            \
+    static inline void NAME##_vector_sort(NAME##_vector_t* v, int o) { return _vector_sort((char**)v, o); }                                          \
+    static inline void NAME##_vector_sort_ascending(NAME##_vector_t* v) { return _vector_sort_ascending((char**)v); }                                \
+    static inline void NAME##_vector_sort_descending(NAME##_vector_t* v) { return _vector_sort_descending((char**)v); }                              \
+    static inline void NAME##_vector_dup(NAME##_vector_t* t, NAME##_vector_t* f) { return _vector_dup((char**)t, (char**)f); }                      \
+    static inline void NAME##_vector_del(NAME##_vector_t* v) { return _vector_del((char**)v); }
 
 // Common types
 #define MAKE_VECTOR_INTTYPE(TYPE, NAME)                                                                \

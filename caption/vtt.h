@@ -50,7 +50,7 @@ typedef struct {
     enum VTT_BLOCK_TYPE type;
     double timestamp;
     double duration; // -1.0 for no duration
-    vtt_attribute_vector_t *attributes;
+    vtt_attribute_vector_t attributes;
     utf8_codepoint_t *identifier;
     utf8_codepoint_t *payload;
 } vtt_t;
@@ -59,7 +59,7 @@ void vtt_ctor(vtt_t* vtt);
 void vtt_dtor(vtt_t* vtt);
 MAKE_VECTOR(vtt_t, vtt, vtt_ctor, vtt_dtor, 0);
 
-vtt_vector_t* vtt_parse(const utf8_codepoint_t* data);
+vtt_vector_t vtt_parse(const utf8_codepoint_t* data);
 
 // This only converts the current CUE, it does not walk the list
 /*! \brief
@@ -70,12 +70,12 @@ int vtt_cue_to_caption_frame(vtt_t* cue, caption_frame_t* frame);
 /*! \brief
     \param
 */
-libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_vector_t* vtt);
+libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_vector_t vtt);
 /*! \brief
     \param
 */
-void vtt_dump(vtt_vector_t* vtt);
-void srt_dump(vtt_vector_t* vtt);
+void vtt_dump(vtt_vector_t vtt);
+void srt_dump(vtt_vector_t vtt);
 
 #ifdef __cplusplus
 }

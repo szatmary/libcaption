@@ -50,12 +50,12 @@ void scc_dtor(scc_t* scc)
 }
 
 
-uint16_vector_t* scc_parse_ccdata(const uint8_t* str)
+uint16_vector_t scc_parse_ccdata(const uint8_t* str)
 {
     const uint8_t* a;
     unsigned int cc_data = 0;
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
-    uint16_vector_t* cc_vec = uint16_vector_new();
+    uint16_vector_t cc_vec = uint16_vector_new();
     for (;;) {
     /*!re2c
     * { return cc_vec; }
@@ -72,7 +72,7 @@ uint16_vector_t* scc_parse_ccdata(const uint8_t* str)
     }
 }
 
-scc_vector_t* scc_parse(const utf8_codepoint_t* str)
+scc_vector_t scc_parse(const utf8_codepoint_t* str)
 {
     if(!str) {
         return 0;
@@ -90,7 +90,7 @@ scc_vector_t* scc_parse(const utf8_codepoint_t* str)
     */
     }
 
-    scc_vector_t* scc_vec = scc_vector_new();
+    scc_vector_t scc_vec = scc_vector_new();
     for (;;) {
     /*!re2c
     * { return scc_vec; }
