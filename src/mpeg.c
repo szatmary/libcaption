@@ -162,7 +162,7 @@ void sei_dtor(sei_t* sei)
 void sei_message_dup(sei_message_t* to, sei_message_t* from)
 {
     to->type = from->type;
-    sei_message_vector_dup(&to->payload, &from->payload);
+    uint8_vector_dup(&to->payload, &from->payload);
 }
 
 void sei_cat(sei_t* to, sei_t* from, int itu_t_t35_only)
