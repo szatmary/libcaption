@@ -82,10 +82,10 @@ void vtt_dtor(vtt_t* vtt)
     vtt_attribute_vector_del(&vtt->attributes);
 }
 
-static inline utf8_codepoint_t *vtt_string_copy(const uint8_t* begin, const uint8_t* end) {
+static inline utf8_codepoint_t* vtt_string_copy(const uint8_t* begin, const uint8_t* end)
+{
     return utf8_string_copy((const utf8_codepoint_t*)begin, (const utf8_codepoint_t*)end);
 }
-
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
 double vtt_parse_timestamp(const uint8_t* line)
@@ -102,14 +102,14 @@ double vtt_parse_timestamp(const uint8_t* line)
 
 vtt_attribute_vector_t vtt_parse_attributes(const uint8_t* begin, const uint8_t* end)
 {
-    if(begin == end) {
+    if (begin == end) {
         return 0;
     }
 
     vtt_attribute_vector_t attr_vec = vtt_attribute_vector_new();
     const uint8_t *YYMARKER = 0, *YYCURSOR = begin;
     const uint8_t *a, *b, *c, *d;
-    while (YYCURSOR < (const uint8_t *)end) {
+    while (YYCURSOR < (const uint8_t*)end) {
         /*!re2c
         * { break; }
         eol { break; }
@@ -139,15 +139,15 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t vtt, const utf
 
 vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
 {
-    if(!str) {
+    if (!str) {
         return 0;
     }
 
-    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t *)str;
+    const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
     const uint8_t *a, *b, *c, *d, *e, *f;
     const uint8_t *identifier_begin = 0, *identifier_end = 0;
-    for(;;) {
-    /*!re2c
+    for (;;) {
+        /*!re2c
         * { goto error; }
         "WEBVTT" [ \t\r\n]+ { break; }
     */

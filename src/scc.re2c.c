@@ -49,7 +49,6 @@ void scc_dtor(scc_t* scc)
     uint16_vector_del(&scc->cc_data);
 }
 
-
 uint16_vector_t scc_parse_ccdata(const uint8_t* str)
 {
     const uint8_t* a;
@@ -57,7 +56,7 @@ uint16_vector_t scc_parse_ccdata(const uint8_t* str)
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
     uint16_vector_t cc_vec = uint16_vector_new();
     for (;;) {
-    /*!re2c
+        /*!re2c
     * { return cc_vec; }
     sp+ @a ccdata {
         if( 1 == sscanf((const char*)a, "%04x", &cc_data)) {
@@ -74,7 +73,7 @@ uint16_vector_t scc_parse_ccdata(const uint8_t* str)
 
 scc_vector_t scc_parse(const utf8_codepoint_t* str)
 {
-    if(!str) {
+    if (!str) {
         return 0;
     }
     // Scenarist_SCC V1.0
@@ -83,8 +82,8 @@ scc_vector_t scc_parse(const utf8_codepoint_t* str)
 
     const uint8_t *a, *b;
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
-    for(;;) {
-    /*!re2c
+    for (;;) {
+        /*!re2c
     * { goto error;; }
     "Scenarist_SCC V1.0" sp* eol2x { break; }
     */
@@ -92,7 +91,7 @@ scc_vector_t scc_parse(const utf8_codepoint_t* str)
 
     scc_vector_t scc_vec = scc_vector_new();
     for (;;) {
-    /*!re2c
+        /*!re2c
     * { return scc_vec; }
     sp* eol { continue; }
     @a timestamp @b (sp+ ccdata)+ eol2x {

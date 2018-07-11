@@ -36,9 +36,9 @@ typedef struct {
 
 void scc_ctor(scc_t* scc);
 void scc_dtor(scc_t* scc);
-MAKE_VECTOR(scc_t,scc,scc_ctor,scc_dtor,0);
+MAKE_VECTOR(scc_t, scc, scc_ctor, scc_dtor, 0);
 
-scc_vector_t scc_parse(const utf8_codepoint_t *str);
+scc_vector_t scc_parse(const utf8_codepoint_t* str);
 
 #ifdef __cplusplus
 }

@@ -95,7 +95,7 @@ const static uint32_t DTG1 = (('D' << 24) | ('T' << 16) | ('G' << 8) | '1');
     \param
     // will confgure using HLS compatiable defaults
 */
-int cea708_ctor(cea708_t* cea708); 
+int cea708_ctor(cea708_t* cea708);
 /*! \brief
     \param
 */

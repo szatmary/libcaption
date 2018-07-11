@@ -37,9 +37,9 @@ enum VTT_BLOCK_TYPE {
     VTT_CUE = 3
 };
 
-typedef struct  {
-    utf8_codepoint_t *key;
-    utf8_codepoint_t *val;
+typedef struct {
+    utf8_codepoint_t* key;
+    utf8_codepoint_t* val;
 } vtt_attribute_t;
 void vtt_attribute_ctor(vtt_attribute_t* attribute);
 void vtt_attribute_dtor(vtt_attribute_t* attribute);
@@ -51,8 +51,8 @@ typedef struct {
     double timestamp;
     double duration; // -1.0 for no duration
     vtt_attribute_vector_t attributes;
-    utf8_codepoint_t *identifier;
-    utf8_codepoint_t *payload;
+    utf8_codepoint_t* identifier;
+    utf8_codepoint_t* payload;
 } vtt_t;
 
 void vtt_ctor(vtt_t* vtt);
