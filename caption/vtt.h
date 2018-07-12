@@ -38,9 +38,40 @@ enum VTT_BLOCK_TYPE {
 };
 
 typedef struct {
-    utf8_codepoint_t* key;
-    utf8_codepoint_t* val;
-} vtt_attribute_t;
+    int lines;
+    int scroll;
+    double width;
+    double regionanchor;
+    double vireportanchor;
+    utf8_codepoint_t* id;
+} vtt_region_t;
+
+typedef struct {
+    enum vertical; //lr/rl
+    int line;
+    double position;
+    enum position_alignment; //  "line-left", "center", "line-right"
+    double size;
+    enum align; // "start", "center", "end", "left", "right"
+    utf8_codepoint_t* region;
+} vtt_cue_settings_t;
+
+typedef struct {
+    double timestamp;
+    double duration; // -1.0 for no duration
+    utf8_codepoint_t* identifier;
+    vtt_cue_settings_t settings;
+    utf8_codepoint_t* payload;
+} vtt_cue_t;
+
+typedef struct {
+    utf8_codepoint_t* payload;
+} vtt_note_t;
+
+typedef struct {
+    utf8_codepoint_t* payload;
+} vtt_style_t;
+
 void vtt_attribute_ctor(vtt_attribute_t* attribute);
 void vtt_attribute_dtor(vtt_attribute_t* attribute);
 MAKE_VECTOR(vtt_attribute_t, vtt_attribute, vtt_attribute_ctor, vtt_attribute_dtor, 0);
@@ -48,12 +79,15 @@ MAKE_VECTOR(vtt_attribute_t, vtt_attribute, vtt_attribute_ctor, vtt_attribute_dt
 // CUE represents a block of caption text
 typedef struct {
     enum VTT_BLOCK_TYPE type;
-    double timestamp;
-    double duration; // -1.0 for no duration
-    vtt_attribute_vector_t attributes;
-    utf8_codepoint_t* identifier;
-    utf8_codepoint_t* payload;
+    union {
+        vtt_cue_t cue;
+        vtt_style_t cue;
+        vtt_note_t cue;
+        vtt_region_t region;
+    } block;
 } vtt_t;
+
+
 
 void vtt_ctor(vtt_t* vtt);
 void vtt_dtor(vtt_t* vtt);

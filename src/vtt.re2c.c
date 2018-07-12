@@ -30,13 +30,14 @@
         re2c:flags:tags = 1;
 
         sp = [ \t];
-        eol = "\r\n" | "\r" | "\n\r" | "\n";
-        eolx2 = "\r\r" | "\n\n" | "\r\n\r\n" | "\n\r\n\r";
+        eol = "\r\n" | "\n\r" | "\r" | "\n";
+        eolx2 = "\r\n\r\n" | "\n\r\n\r" | "\r\r" | "\n\n";
         blank_line = sp* eol;
-        line_of_text = eol? [^\r\n\x00]+;
-        timestamp = [0-9]+ ":" ([0-9][0-9] ":")? [0-9][0-9] [,\.] [0-9]+;
+        text = [^\r\n\x00]+;
+        timestamp = ([0-9]+ ":")? [0-9][0-9] ":" [0-9][0-9] [,\.] [0-9]+;
         identifier = [^\r\n\x00]+;
         attribute = ([^ \r\n\t\x00:]+ ":" [^ \r\n\t\x00]+);
+        percent = [0-9]+(\.[0-9]+)? "%";
     */
 
 /*!stags:re2c format = 'const uint8_t *@@;';*/
@@ -142,8 +143,7 @@ vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
     }
 
     const uint8_t *YYMARKER = 0, *YYCURSOR = (const uint8_t*)str;
-    const uint8_t *a, *b, *c, *d, *e, *f;
-    const uint8_t *identifier_begin = 0, *identifier_end = 0;
+    const uint8_t *a, *b, *c, *d, *e, *f, *g, *h;
     for (;;) {
         /*!re2c
         * { goto error; }
@@ -157,14 +157,14 @@ vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
         * { return vtt_vec; }
         blank_line+ { continue; }
 
-        "STYLE" sp* eol @a line_of_text* @b eolx2 {
+        "STYLE" sp* @a (eol text)* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_STYLE;
             vtt->payload = vtt_string_copy(a, b);
             continue;
         }
 
-        "REGION" sp* eol @a (attribute eol)* @b eol {
+        "REGION" sp* @a (eol attribute)* @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_REGION;
             vtt->attributes = vtt_parse_attributes(a, b);
@@ -172,30 +172,24 @@ vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
         }
 
         // we want to keep a leading newline if present to accurately reproduce later
-        "NOTE" sp* @a line_of_text* @b eolx2 {
+        "NOTE" sp* @a text? (eol text*) @b eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_NOTE;
             vtt->payload = vtt_string_copy(a, b);
             continue;
         }
 
-        // identifier must have "-->"" on the very next line
-        (@a identifier @b eol) / (timestamp sp+ "-->") {
-            identifier_begin = a, identifier_end = b;
-            continue;
-        }
-
-        @a timestamp sp+ "-->" sp+ @b timestamp
-        @c (sp+ attribute)* @d sp* eol 
-        @e line_of_text* @f eolx2 {
+        (@a identifier @b eol)?
+        @c timestamp sp+ "-->" sp+ @d timestamp
+        @e (sp+ attribute)* @f sp* 
+        @g (eol text)* @h eolx2 {
             vtt_t *vtt = vtt_vector_push_back(&vtt_vec);
             vtt->type = VTT_CUE;            
-            vtt->timestamp = vtt_parse_timestamp(a);
-            vtt->duration = vtt_parse_timestamp(b) - vtt->timestamp;
-            vtt->attributes = vtt_parse_attributes(c, d);
-            vtt->payload = vtt_string_copy(e, f);
-            vtt->identifier = vtt_string_copy(identifier_begin, identifier_end);
-            identifier_begin = 0, identifier_end = 0;
+            vtt->identifier = vtt_string_copy(a, b);
+            vtt->timestamp = vtt_parse_timestamp(c);
+            vtt->duration = vtt_parse_timestamp(d) - vtt->timestamp;
+            vtt->attributes = vtt_parse_attributes(e, f);
+            vtt->payload = vtt_string_copy(g, h);
             continue;
         }
     */
