@@ -183,11 +183,11 @@ eia608_control_t eia608_parse_control(uint16_t cc_data, int* cc);
 /*! \brief
     \param c
 */
-uint16_t eia608_from_utf8_1(const utf8_codepoint_t* c, int chan);
+uint16_t eia608_from_utf8_1(const char* c, int chan);
 /*! \brief
     \param
 */
-uint16_t eia608_from_utf8_2(const utf8_codepoint_t* c1, const utf8_codepoint_t* c2);
+uint16_t eia608_from_utf8_2(const char* c1, const char* c2);
 /*! \brief
     \param
 */
@@ -195,7 +195,7 @@ uint16_t eia608_from_basicna(uint16_t bna1, uint16_t bna2);
 /*! \brief
     \param
 */
-int eia608_to_utf8(uint16_t c, int* chan, utf8_codepoint_t* char1, utf8_codepoint_t* char2);
+int eia608_to_utf8(uint16_t c, int* chan, char* char1, char* char2);
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
     \param

@@ -80,9 +80,9 @@ void vtt_dtor(vtt_t* vtt)
     vtt_attribute_vector_del(&vtt->attributes);
 }
 
-static inline utf8_codepoint_t* vtt_string_copy(const uint8_t* begin, const uint8_t* end)
+static inline char* vtt_string_copy(const uint8_t* begin, const uint8_t* end)
 {
-    return utf8_string_copy((const utf8_codepoint_t*)begin, (const utf8_codepoint_t*)end);
+    return utf8_string_copy((const char*)begin, (const char*)end);
 }
 
 #define VTTTIME2SECONDS(HH, MM, SS, MS) ((HH * 3600.0) + (MM * 60.0) + SS + (MS / 1000.0))
@@ -123,7 +123,7 @@ vtt_attribute_vector_t vtt_parse_attributes(const uint8_t* begin, const uint8_t*
     return attr_vec;
 }
 
-const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t vtt, const utf8_codepoint_t* key)
+const char* vtt_find_attribute(vtt_attribute_vector_t vtt, const char* key)
 {
     for (size_t i = 0; i < vtt_attribute_vector_count(&vtt); ++i) {
         vtt_attribute_t* attr = vtt_attribute_vector_at(&vtt, i);
@@ -135,7 +135,7 @@ const utf8_codepoint_t* vtt_find_attribute(vtt_attribute_vector_t vtt, const utf
     return 0;
 }
 
-vtt_vector_t vtt_parse(const utf8_codepoint_t* str)
+vtt_vector_t vtt_parse(const char* str)
 {
     if (!str) {
         return 0;

@@ -56,8 +56,8 @@ static caption_frame_cell_t* frame_buffer_cell(caption_frame_buffer_t* buff, int
     return &buff->cell[row][col];
 }
 
-uint16_t _eia608_from_utf8(const utf8_codepoint_t* s); // function is in eia608.c.re2c
-int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const utf8_codepoint_t* c)
+uint16_t _eia608_from_utf8(const char* s); // function is in eia608.c.re2c
+int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c)
 {
     if (!frame->write || !_eia608_from_utf8(c)) {
         return 0;
@@ -74,7 +74,7 @@ int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_st
     return 0;
 }
 
-const utf8_codepoint_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
+const char* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline)
 {
     // always read from front
     caption_frame_cell_t* cell = frame_buffer_cell(&frame->front, row, col);
@@ -128,7 +128,7 @@ libcaption_stauts_t caption_frame_carriage_return(caption_frame_t* frame)
     return LIBCAPTION_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////
-libcaption_stauts_t eia608_write_char(caption_frame_t* frame, const utf8_codepoint_t* c)
+libcaption_stauts_t eia608_write_char(caption_frame_t* frame, const char* c)
 {
     if (0 == c || 0 == c[0] || SCREEN_ROWS <= frame->state.row || 0 > frame->state.row || SCREEN_COLS <= frame->state.col || 0 > frame->state.col) {
         // NO-OP
@@ -273,7 +273,7 @@ libcaption_stauts_t caption_frame_decode_control(caption_frame_t* frame, uint16_
 libcaption_stauts_t caption_frame_decode_text(caption_frame_t* frame, uint16_t cc_data)
 {
     int chan;
-    utf8_codepoint_t char1[5], char2[5];
+    char char1[5], char2[5];
     size_t chars = eia608_to_utf8(cc_data, &chan, &char1[0], &char2[0]);
 
     if (eia608_is_westeu(cc_data)) {
@@ -343,7 +343,7 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
+int caption_frame_from_text(caption_frame_t* frame, const char* str)
 {
     size_t codepoint_count, codepoint_length, len = strlen(str);
     caption_frame_ctor(frame);
@@ -369,7 +369,7 @@ int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str)
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
-size_t caption_frame_to_text(caption_frame_t* frame, utf8_codepoint_t* data)
+size_t caption_frame_to_text(caption_frame_t* frame, char* data)
 {
     int r, c, uln, crlf = 0, count = 0;
     size_t s, size = 0;
@@ -379,7 +379,7 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_codepoint_t* data)
     for (r = 0; r < SCREEN_ROWS; ++r) {
         crlf += count, count = 0;
         for (c = 0; c < SCREEN_COLS; ++c) {
-            const utf8_codepoint_t* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
+            const char* chr = caption_frame_read_char(frame, r, c, &sty, &uln);
             // dont start a new line until we encounter at least one printable character
             // TODO double check this!
             if (0 < utf8_codepoint_length(chr) && (0 < count || !utf8_codepoint_is_whitespace(chr))) {
@@ -397,7 +397,7 @@ size_t caption_frame_to_text(caption_frame_t* frame, utf8_codepoint_t* data)
     return size;
 }
 ////////////////////////////////////////////////////////////////////////////////
-size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_codepoint_t* buf)
+size_t caption_frame_dump_buffer(caption_frame_t* frame, char* buf)
 {
     int r, c;
     size_t bytes, total = 0;
@@ -446,7 +446,7 @@ size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_codepoint_t* buf)
 
 void caption_frame_dump(caption_frame_t* frame)
 {
-    utf8_codepoint_t buff[CAPTION_FRAME_DUMP_BUF_SIZE];
+    char buff[CAPTION_FRAME_DUMP_BUF_SIZE];
     caption_frame_dump_buffer(frame, buff);
     fprintf(stderr, "%s\n", buff);
 }

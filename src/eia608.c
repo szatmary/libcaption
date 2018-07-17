@@ -150,7 +150,7 @@ static int eia608_to_index(uint16_t cc_data, int* chan, int* c1, int* c2)
     return 0;
 }
 
-int eia608_to_utf8(uint16_t c, int* chan, utf8_codepoint_t* str1, utf8_codepoint_t* str2)
+int eia608_to_utf8(uint16_t c, int* chan, char* str1, char* str2)
 {
     int c1, c2;
     int size = (int)eia608_to_index(c, chan, &c1, &c2);
@@ -169,8 +169,8 @@ uint16_t eia608_from_basicna(uint16_t bna1, uint16_t bna2)
 }
 
 // prototype for re2c generated function
-uint16_t _eia608_from_utf8(const utf8_codepoint_t* s);
-uint16_t eia608_from_utf8_1(const utf8_codepoint_t* c, int chan)
+uint16_t _eia608_from_utf8(const char* s);
+uint16_t eia608_from_utf8_1(const char* c, int chan)
 {
     uint16_t cc_data = _eia608_from_utf8(c);
 
@@ -185,7 +185,7 @@ uint16_t eia608_from_utf8_1(const utf8_codepoint_t* c, int chan)
     return eia608_parity(cc_data);
 }
 
-uint16_t eia608_from_utf8_2(const utf8_codepoint_t* c1, const utf8_codepoint_t* c2)
+uint16_t eia608_from_utf8_2(const char* c1, const char* c2)
 {
     uint16_t cc1 = _eia608_from_utf8(c1);
     uint16_t cc2 = _eia608_from_utf8(c2);

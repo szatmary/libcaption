@@ -71,7 +71,7 @@ uint16_vector_t scc_parse_ccdata(const uint8_t* str)
     }
 }
 
-scc_vector_t scc_parse(const utf8_codepoint_t* str)
+scc_vector_t scc_parse(const char* str)
 {
     if (!str) {
         return 0;

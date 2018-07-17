@@ -34,7 +34,7 @@
     re2c:define:YYCTYPE = "uint8_t";
 */
 
-size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint)
+size_t utf8_codepoint_length(const char* codepoint)
 {
     if (!codepoint) {
         return 0;
@@ -54,14 +54,14 @@ size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint)
     }
 }
 
-const utf8_codepoint_t* utf8_codepoint_next(const utf8_codepoint_t* codepoint)
+const char* utf8_codepoint_next(const char* codepoint)
 {
     size_t codepoint_length = utf8_codepoint_length(codepoint);
     return codepoint_length ? codepoint + codepoint_length : 0;
 }
 
 // returns number of bytes copied dst should have at least 5 bytes to be safe
-size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src)
+size_t utf8_codepoint_copy(char* dst, const char* src)
 {
     size_t codepoint_length = utf8_codepoint_length(src);
 
@@ -73,7 +73,7 @@ size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src)
     return codepoint_length;
 }
 
-size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* codepoint)
+size_t utf8_codepoint_is_whitespace(const char* codepoint)
 {
     const uint8_t *YYMARKER, *YYCURSOR = (const uint8_t*)codepoint;
     /*!re2c
@@ -83,7 +83,7 @@ size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* codepoint)
     */
 }
 
-const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
+const char* utf8_string_skip_whitespace(const char* str)
 {
     const uint8_t *YYMARKER, *YYCURSOR = (const uint8_t*)str;
     for (;;) {
@@ -95,7 +95,7 @@ const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str)
     }
 }
 
-const utf8_codepoint_t* utf8_string_length(const utf8_codepoint_t* str, size_t* codepoints)
+const char* utf8_string_length(const char* str, size_t* codepoints)
 {
     size_t cp = 0;
     const uint8_t *YYMARKER, *YYCURSOR = (const uint8_t*)str;
@@ -117,10 +117,10 @@ const utf8_codepoint_t* utf8_string_length(const utf8_codepoint_t* str, size_t* 
     return str;
 }
 
-const utf8_codepoint_t* utf8_string_wrap(const utf8_codepoint_t* str, size_t max_codepoints, size_t* codepoints)
+const char* utf8_string_wrap(const char* str, size_t max_codepoints, size_t* codepoints)
 {
     size_t cp = 0;
-    const utf8_codepoint_t* wrap = 0;
+    const char* wrap = 0;
     const uint8_t *YYMARKER, *YYCURSOR = (const uint8_t*)str;
     while (cp < max_codepoints) {
         /*!re2c
@@ -145,7 +145,7 @@ const utf8_codepoint_t* utf8_string_wrap(const utf8_codepoint_t* str, size_t max
     return wrap;
 }
 
-const utf8_codepoint_t* utf8_string_line(const utf8_codepoint_t* str, size_t* codepoints)
+const char* utf8_string_line(const char* str, size_t* codepoints)
 {
     size_t cp = 0;
     const uint8_t *YYMARKER, *YYCURSOR = (const uint8_t*)str;
@@ -168,7 +168,7 @@ const utf8_codepoint_t* utf8_string_line(const utf8_codepoint_t* str, size_t* co
     return str;
 }
 
-size_t utf8_string_line_count(const utf8_codepoint_t* str)
+size_t utf8_string_line_count(const char* str)
 {
     if (!str || !str[0]) {
         return 0;
@@ -185,21 +185,21 @@ size_t utf8_string_line_count(const utf8_codepoint_t* str)
     return 0;
 }
 
-utf8_codepoint_t* utf8_string_copy(const utf8_codepoint_t* begin, const utf8_codepoint_t* end)
+char* utf8_string_copy(const char* begin, const char* end)
 {
     if (begin == end) {
         return 0;
     }
 
     size_t size = (end - begin);
-    utf8_codepoint_t* new_string = (utf8_codepoint_t*)malloc(1 + size);
+    char* new_string = (char*)malloc(1 + size);
     memcpy(new_string, begin, size), new_string[size] = 0;
     return new_string;
 }
 
-utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size)
+char* utf8_load_text_file(const char* path, size_t* size)
 {
-    utf8_codepoint_t* data = 0;
+    char* data = 0;
     FILE* file = fopen(path, "r");
 
     if (file) {
@@ -209,11 +209,11 @@ utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size)
 
         if (0 == (*size) || file_size <= (*size)) {
             (*size) = 0;
-            data = (utf8_codepoint_t*)malloc(1 + file_size);
+            data = (char*)malloc(1 + file_size);
             memset(data, '\0', file_size);
 
             if (data) {
-                utf8_codepoint_t* pos = data;
+                char* pos = data;
                 size_t bytes_read = 0;
 
                 while (0 < (bytes_read = fread(pos, 1, file_size - (*size), file))) {

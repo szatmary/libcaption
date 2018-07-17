@@ -31,7 +31,7 @@ int main(int argc, const char** argv)
 {
     size_t size = 0;
     caption_frame_t frame;
-    utf8_codepoint_t* text = utf8_load_text_file(argv[1], &size);
+    char* text = utf8_load_text_file(argv[1], &size);
     scc_vector_t scc_vec = scc_parse(text);
     free(text);
 

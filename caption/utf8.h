@@ -34,60 +34,59 @@ extern "C" {
 //
 // utf8_size_t is the length of a string in chars
 // size_t is bytes
-typedef char utf8_codepoint_t;
 #define MAX_UTF8_STRING_BYTES (50 * 1024 * 1024)
 
 /*! \brief Returns a pointer to the next codepoint in a utf8 string
     \param
 */
-const utf8_codepoint_t* utf8_codepoint_next(const utf8_codepoint_t* codepoint);
+const char* utf8_codepoint_next(const char* codepoint);
 /*! \brief returns the length of the codepoint in bytes
     \param
 */
-size_t utf8_codepoint_length(const utf8_codepoint_t* codepoint);
+size_t utf8_codepoint_length(const char* codepoint);
 
 /*! \brief copyies on codepoind fron src to dst
     \param
 */
-size_t utf8_codepoint_copy(utf8_codepoint_t* dst, const utf8_codepoint_t* src);
+size_t utf8_codepoint_copy(char* dst, const char* src);
 
 /*! \brief
     \param
 */
-size_t utf8_codepoint_is_whitespace(const utf8_codepoint_t* c);
+size_t utf8_codepoint_is_whitespace(const char* c);
 /*! \brief
     \param
 */
-const utf8_codepoint_t* utf8_string_skip_whitespace(const utf8_codepoint_t* str);
+const char* utf8_string_skip_whitespace(const char* str);
 /*! \brief
     \param
 */
-const utf8_codepoint_t* utf8_string_length(const utf8_codepoint_t* str, size_t* codepoints);
+const char* utf8_string_length(const char* str, size_t* codepoints);
 /*! \brief
     \param
 */
-const utf8_codepoint_t* utf8_string_wrap(const utf8_codepoint_t* str, size_t max_codepoints, size_t* codepoints);
+const char* utf8_string_wrap(const char* str, size_t max_codepoints, size_t* codepoints);
 /*! \brief
     \param
 */
-const utf8_codepoint_t* utf8_string_line(const utf8_codepoint_t* str, size_t* codepoints);
+const char* utf8_string_line(const char* str, size_t* codepoints);
 /*! \brief
     \param
 
     returns the number of lines in the the string
     auto detects between windows(CRLF), unix(LF), mac(CR) and riscos (LFCR) line endings
 */
-size_t utf8_string_line_count(const utf8_codepoint_t* str);
+size_t utf8_string_line_count(const char* str);
 
 /*! \brief
     \param
 */
-utf8_codepoint_t* utf8_string_copy(const utf8_codepoint_t* begin, const utf8_codepoint_t* end);
+char* utf8_string_copy(const char* begin, const char* end);
 
 /*! \brief
     \param
 */
-utf8_codepoint_t* utf8_load_text_file(const char* path, size_t* size);
+char* utf8_load_text_file(const char* path, size_t* size);
 
 #ifdef __cplusplus
 }

@@ -38,8 +38,8 @@ enum VTT_BLOCK_TYPE {
 };
 
 typedef struct {
-    utf8_codepoint_t* key;
-    utf8_codepoint_t* val;
+    char* key;
+    char* val;
 } vtt_attribute_t;
 void vtt_attribute_ctor(vtt_attribute_t* attribute);
 void vtt_attribute_dtor(vtt_attribute_t* attribute);
@@ -51,15 +51,15 @@ typedef struct {
     double timestamp;
     double duration; // -1.0 for no duration
     vtt_attribute_vector_t attributes;
-    utf8_codepoint_t* identifier;
-    utf8_codepoint_t* payload;
+    char* identifier;
+    char* payload;
 } vtt_t;
 
 void vtt_ctor(vtt_t* vtt);
 void vtt_dtor(vtt_t* vtt);
 MAKE_VECTOR(vtt_t, vtt, vtt_ctor, vtt_dtor, 0);
 
-vtt_vector_t vtt_parse(const utf8_codepoint_t* data);
+vtt_vector_t vtt_parse(const char* data);
 
 // This only converts the current CUE, it does not walk the list
 /*! \brief

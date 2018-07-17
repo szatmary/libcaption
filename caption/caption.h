@@ -57,7 +57,7 @@ static inline libcaption_stauts_t libcaption_status_update(libcaption_stauts_t o
 typedef struct {
     unsigned int uln : 1; //< underline
     unsigned int sty : 3; //< style
-    utf8_codepoint_t data[5]; //< 4 byte utf8 values plus null term
+    char data[5]; //< 4 byte utf8 values plus null term
 } caption_frame_cell_t;
 
 typedef struct {
@@ -112,11 +112,11 @@ static inline double caption_frame_timestamp(caption_frame_t* frame) { return fr
     \param underline Set underline attribute, 0 = off any other value = on
     \param c pointer to a single valid utf8 charcter. Bytes are automatically determined, and a NULL terminator is not required
 */
-int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const utf8_codepoint_t* c);
+int caption_frame_write_char(caption_frame_t* frame, int row, int col, eia608_style_t style, int underline, const char* c);
 /*! \brief
     \param
 */
-const utf8_codepoint_t* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline);
+const char* caption_frame_read_char(caption_frame_t* frame, int row, int col, eia608_style_t* style, int* underline);
 /*! \brief
     \param
 */
@@ -125,17 +125,17 @@ libcaption_stauts_t caption_frame_decode(caption_frame_t* frame, uint16_t cc_dat
     \param
 */
 // TODO rename this to caption_frame_from_utf8_string
-int caption_frame_from_text(caption_frame_t* frame, const utf8_codepoint_t* str);
+int caption_frame_from_text(caption_frame_t* frame, const char* str);
 /*! \brief
     \param
 */
 #define CAPTION_FRAME_TEXT_BYTES (4 * ((SCREEN_COLS + 2) * SCREEN_ROWS) + 1)
-size_t caption_frame_to_text(caption_frame_t* frame, utf8_codepoint_t* data);
+size_t caption_frame_to_text(caption_frame_t* frame, char* data);
 /*! \brief
     \param
 */
 #define CAPTION_FRAME_DUMP_BUF_SIZE 8192
-size_t caption_frame_dump_buffer(caption_frame_t* frame, utf8_codepoint_t* buf);
+size_t caption_frame_dump_buffer(caption_frame_t* frame, char* buf);
 void caption_frame_dump(caption_frame_t* frame);
 
 #ifdef __cplusplus
