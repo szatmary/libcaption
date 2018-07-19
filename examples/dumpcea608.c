@@ -31,11 +31,28 @@ extern
 }
 #endif
 
+#include "vtt.h"
 #include "mpeg.h"
 
 double av_time_to_seconds(int64_t a, AVRational *r) {
     return (a * r->num) / (double)r->den;
 }
+
+int isAnnexB(const char *container) {
+    if( 0 == strcmp("mpegts",container) )
+    {
+        return 1;
+    }
+    if( 0 == strcmp("flv",container) )
+    {
+        return 0;
+    }
+
+
+
+    return -1;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -50,6 +67,13 @@ int main(int argc, char** argv)
     avformat_find_stream_info(formatCtx, 0);
     int videoStreamIdx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
     int stream_type = 0;
+
+    mpegbs->annexB = isAnnexB( formatCtx->iformat->name);
+    if( 01 == mpegbs->annexB) {
+        fprintf(sterr, "Unsupported format '%s'\n", formatCtx->iformat->name);
+        return EXIT_FAILURE;
+    }
+
     switch (formatCtx->streams[videoStreamIdx]->codecpar->codec_id) {
     case AV_CODEC_ID_MPEG2VIDEO:
         printf("AV_CODEC_ID_MPEG2VIDEO\n");
@@ -104,11 +128,11 @@ int main(int argc, char** argv)
     }
 
     // Flush anything left
-    // while (mpeg_bitstream_flush(mpegbs, &frame)) {
-    //     if (mpeg_bitstream_status(mpegbs)) {
-    //         srt_cue_from_caption_frame(&frame, srt);
-    //     }
-    // }
+    while (mpeg_bitstream_flush(mpegbs, &frame)) {
+        if (mpeg_bitstream_status(mpegbs)) {
+            // srt_cue_from_caption_frame(&frame, srt);
+        }
+    }
 
     mpeg_bitstream_del(mpegbs);
 }

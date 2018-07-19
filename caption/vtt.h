@@ -61,6 +61,14 @@ MAKE_VECTOR(vtt_t, vtt, vtt_ctor, vtt_dtor, 0);
 
 vtt_vector_t vtt_parse(const char* data);
 
+
+/*! \brief
+    \param
+*/
+int vtt_cue_append(vtt_vector_t **vtt, const char* payload);
+
+
+
 // This only converts the current CUE, it does not walk the list
 /*! \brief
     \param
@@ -71,6 +79,7 @@ int vtt_cue_to_caption_frame(vtt_t* cue, caption_frame_t* frame);
     \param
 */
 libcaption_stauts_t vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_vector_t vtt);
+
 /*! \brief
     \param
 */

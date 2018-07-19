@@ -155,6 +155,7 @@ size_t _vector_resize(char** v, size_t c)
         dref(v)->dtor(_vector_back(v)), --dref(v)->count;
     }
 
+    dref(v)->count = c;
     // _vector_reserve always alocates an extra element, so this is safe
     memset(_vector_begin(v) + (dref(v)->size * dref(v)->count), 0, dref(v)->size);
     return dref(v)->count;

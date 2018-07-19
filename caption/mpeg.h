@@ -44,6 +44,7 @@ extern "C" {
 #define MAX_REFRENCE_FRAMES 64
 
 typedef struct {
+    int annexB;
     double dts, cts;
     libcaption_stauts_t status;
     uint8_vector_t buffer;
