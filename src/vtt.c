@@ -351,6 +351,7 @@ static void _dump(vtt_t* vtt)
         }
 
         printf("\r\n%s\r\n", vtt_block_data(block));
+        block = block->next;
     }
 }
 
