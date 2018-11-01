@@ -23,7 +23,7 @@ int main(int argc, const char** argv)
         utf8_size_t char_count = utf8_wrap_length(data, SCREEN_COLS);
 
         // write to caption frame
-        fprintf(stderr, "'%.*s'\n", char_count, data);
+        fprintf(stderr, "'%.*s'\n", (int)char_count, data);
         size_t l = utf8_string_length(data, char_count);
         data += l, size -= l;
 
