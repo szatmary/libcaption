@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(libcaption)
+if (CMAKE_VERSION VERSION_EQUAL "3.1" OR CMAKE_VERSION VERSION_GREATER "3.1")
+  set(CMAKE_C_STANDARD 11)
+endif()
 set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
 add_definitions(-D__STDC_CONSTANT_MACROS)
 if (WIN32)
