@@ -188,7 +188,7 @@ vtt_t* _vtt_parse(const utf8_char_t* data, size_t size, int srt_mode)
     vtt_t* vtt = NULL;
     double str_pts = 0, end_pts = 0;
     size_t line_length = 0, trimmed_length = 0;
-    char* cue_settings;
+    char* cue_settings = NULL;
     enum VTT_BLOCK_TYPE block_type;
     size_t cue_id_length = 0;
     const utf8_char_t* cue_id = NULL;
