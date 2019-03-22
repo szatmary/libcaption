@@ -166,6 +166,40 @@ typedef enum {
     eia608_control_end_of_caption = 0x142F,
 } eia608_control_t;
 
+
+
+typedef enum {
+ eia608_status_unhandled,
+ eia608_status_unknown_control,
+ eia608_status_control,
+ eia608_status_preamble,
+ eia608_status_pad,
+ eia608_status_parity_failed,
+ eia608_status_basicna,
+ eia608_status_specialna,
+ eia608_status_westeu,
+ eia608_status_norpak,
+ eia608_status_xds,
+ eia608_status_midrowchange
+
+} eia608_status_t;
+
+
+typedef struct eia608_parsed{
+	eia608_status_t status;
+	eia608_control_t control;
+    eia608_style_t style;
+    int row;
+    int col;
+    int chan;
+    int underline;
+    char char1[5];
+    char char2[5];
+    uint8_t has_text;
+
+} eia608_parsed_t;
+
+
 /*! \brief
     \param
 */
@@ -201,6 +235,9 @@ int eia608_to_utf8(uint16_t c, int* chan, utf8_char_t* char1, utf8_char_t* char2
     \param
 */
 void eia608_dump(uint16_t cc_data);
+
+void eia608_parse_data(uint16_t cc_data, eia608_parsed_t *parsed);
+
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 }

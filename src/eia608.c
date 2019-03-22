@@ -313,3 +313,150 @@ void eia608_dump(uint16_t cc_data)
 
     fprintf(stderr, "cc %04X (%04X) '%s' '%s' (%s)\n", cc_data, eia608_parity_strip(cc_data), char1, char2, text);
 }
+
+
+void eia608_parse_data(uint16_t cc_data, eia608_parsed_t *parsed) {
+	const char* text = 0;
+
+	parsed->status = eia608_status_unhandled;
+	parsed->control = 0;
+	parsed->chan = -1;
+	parsed->col = 0;
+	parsed->row = 0;
+	parsed->style = eia608_style_white;
+	parsed->underline = 0;
+	parsed->char1[0] = parsed->char2[0] = 0;
+	parsed->has_text = 0;
+
+	if (!eia608_parity_varify(cc_data)) {
+		parsed->status = eia608_status_parity_failed;
+		text = "parity failed";
+	} else if (0 == eia608_parity_strip(cc_data)) {
+		parsed->status = eia608_status_pad;
+		text = "pad";
+	} else if (eia608_is_basicna(cc_data)) {
+		parsed->status = eia608_status_basicna;
+		text = "basicna";
+		parsed->has_text = 1;
+		eia608_to_utf8(cc_data, &parsed->chan, &parsed->char1[0], &parsed->char2[0]);
+	} else if (eia608_is_specialna(cc_data)) {
+		parsed->status = eia608_status_specialna;
+		text = "specialna";
+		parsed->has_text = 1;
+		eia608_to_utf8(cc_data, &parsed->chan, &parsed->char1[0], &parsed->char2[0]);
+	} else if (eia608_is_westeu(cc_data)) {
+		parsed->status = eia608_status_westeu;
+		text = "westeu";
+		parsed->has_text = 1;
+		eia608_to_utf8(cc_data, &parsed->chan, &parsed->char1[0], &parsed->char2[0]);
+	} else if (eia608_is_xds(cc_data)) {
+		parsed->status = eia608_status_xds;
+		text = "xds";
+	} else if (eia608_is_midrowchange(cc_data)) {
+		parsed->status = eia608_status_midrowchange;
+		text = "midrowchange";
+		eia608_parse_midrowchange(cc_data,	&parsed->chan, &parsed->style, &parsed->underline);
+	} else if (eia608_is_norpak(cc_data)) {
+		parsed->status = eia608_status_norpak;
+		text = "norpak";
+	} else if (eia608_is_preamble(cc_data)) {
+		parsed->status = eia608_status_preamble;
+		text = "preamble";
+		eia608_parse_preamble(cc_data, &parsed->row, &parsed->col,
+				&parsed->style, &parsed->chan, &parsed->underline);
+		fprintf(stderr, "preamble %d %d %d %d %d\n", parsed->row, parsed->col, parsed->style, parsed->chan, parsed->underline);
+
+	} else if (eia608_is_control(cc_data)) {
+		parsed->status = eia608_status_control;
+		parsed->control = eia608_parse_control(cc_data, &parsed->chan);
+		switch (parsed->control) {
+
+		default:
+			parsed->status = eia608_status_unknown_control;
+			text = "unknown_control";
+			break;
+
+		case eia608_tab_offset_0:
+			text = "eia608_tab_offset_0";
+			break;
+
+		case eia608_tab_offset_1:
+			text = "eia608_tab_offset_1";
+			break;
+
+		case eia608_tab_offset_2:
+			text = "eia608_tab_offset_2";
+			break;
+
+		case eia608_tab_offset_3:
+			text = "eia608_tab_offset_3";
+			break;
+
+		case eia608_control_resume_caption_loading:
+			text = "eia608_control_resume_caption_loading";
+			break;
+
+		case eia608_control_backspace:
+			text = "eia608_control_backspace";
+			break;
+
+		case eia608_control_alarm_off:
+			text = "eia608_control_alarm_off";
+			break;
+
+		case eia608_control_alarm_on:
+			text = "eia608_control_alarm_on";
+			break;
+
+		case eia608_control_delete_to_end_of_row:
+			text = "eia608_control_delete_to_end_of_row";
+			break;
+
+		case eia608_control_roll_up_2:
+			text = "eia608_control_roll_up_2";
+			break;
+
+		case eia608_control_roll_up_3:
+			text = "eia608_control_roll_up_3";
+			break;
+
+		case eia608_control_roll_up_4:
+			text = "eia608_control_roll_up_4";
+			break;
+
+		case eia608_control_resume_direct_captioning:
+			text = "eia608_control_resume_direct_captioning";
+			break;
+
+		case eia608_control_text_restart:
+			text = "eia608_control_text_restart";
+			break;
+
+		case eia608_control_text_resume_text_display:
+			text = "eia608_control_text_resume_text_display";
+			break;
+
+		case eia608_control_erase_display_memory:
+			text = "eia608_control_erase_display_memory";
+			break;
+
+		case eia608_control_carriage_return:
+			text = "eia608_control_carriage_return";
+			break;
+
+		case eia608_control_erase_non_displayed_memory:
+			text = "eia608_control_erase_non_displayed_memory";
+			break;
+
+		case eia608_control_end_of_caption:
+			text = "eia608_control_end_of_caption";
+			break;
+		}
+	} else {
+		text = "unhandled";
+	}
+
+	fprintf(stderr, "cc %04X (%04X) '%s' '%s' (%s)\n", cc_data,
+				eia608_parity_strip(cc_data), parsed->char1, parsed->char2, text);
+}
+
