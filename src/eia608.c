@@ -197,9 +197,9 @@ void eia608_dump(uint16_t cc_data)
     eia608_style_t style;
     const char* text = 0;
     char char1[5], char2[5];
-    char1[0] = char2[0] = 0;
     int row, col, chan, underline;
 
+    char1[0] = char2[0] = 0;
     if (!eia608_parity_varify(cc_data)) {
         text = "parity failed";
     } else if (0 == eia608_parity_strip(cc_data)) {
