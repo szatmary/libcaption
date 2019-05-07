@@ -36,14 +36,14 @@ const utf8_char_t* utf8_char_next(const utf8_char_t* c)
 // returnes the length of the char in bytes
 size_t utf8_char_length(const utf8_char_t* c)
 {
-    // count null term as zero size
-    if (!c || 0x00 == c[0]) {
-        return 0;
-    }
-
     static const size_t _utf8_char_length[] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
     };
+
+	// count null term as zero size
+    if (!c || 0x00 == c[0]) {
+        return 0;
+    }
 
     return _utf8_char_length[(c[0] >> 3) & 0x1F];
 }
@@ -120,8 +120,9 @@ utf8_size_t utf8_char_count(const char* data, size_t size)
 // returns the length of the line in bytes triming not printable charcters at the end
 size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters)
 {
-    size_t l, t = 0, split_at = 0;
-    for (size_t c = 0; (*data) && c < charcters; ++c) {
+    size_t l, t = 0, split_at = 0, c = 0;
+
+    for (c = 0; (*data) && c < charcters; ++c) {
         l = utf8_char_length(data);
         if (!utf8_char_whitespace(data)) {
             split_at = t + l;
@@ -132,7 +133,7 @@ size_t utf8_trimmed_length(const utf8_char_t* data, utf8_size_t charcters)
     return split_at;
 }
 
-size_t _utf8_newline(const utf8_char_t* data)
+static size_t _utf8_newline(const utf8_char_t* data)
 {
     if ('\r' == data[0]) {
         return '\n' == data[1] ? 2 : 1; // windows/unix
@@ -199,8 +200,10 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size)
     FILE* file = fopen(path, "r");
 
     if (file) {
+    	size_t file_size = 0;
+
         fseek(file, 0, SEEK_END);
-        size_t file_size = ftell(file);
+        file_size = ftell(file);
         fseek(file, 0, SEEK_SET);
 
         if (0 == (*size) || file_size <= (*size)) {
