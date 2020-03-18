@@ -134,6 +134,10 @@ int vtt_cue_to_caption_frame(vtt_block_t* cue, caption_frame_t* frame);
     \param
 */
 vtt_block_t* vtt_cue_from_caption_frame(caption_frame_t* frame, vtt_t* vtt);
+
+// finishes the last cue
+void vtt_cue_finish(caption_frame_t* frame, vtt_t* vtt);
+
 /*! \brief
     \param
 */

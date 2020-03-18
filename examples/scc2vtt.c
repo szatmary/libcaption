@@ -47,10 +47,22 @@ int main(int argc, char** argv)
     scc_data += scc_to_608(&scc, scc_data);
 
     while (scc->cc_size) {
+        double timestamp = scc->timestamp;
+
         for (i = 0; i < scc->cc_size; ++i) {
-            if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
+
+            switch (caption_frame_decode(&frame, scc->cc_data[i], timestamp)) {
+            case LIBCAPTION_READY:
                 vtt_cue_from_caption_frame(&frame, vtt);
+                break;
+            case LIBCAPTION_CLEAR:
+                vtt_cue_finish(&frame, vtt);
+                break;
+            default:
+                break;
             }
+
+            timestamp = -1;
         }
 
         scc_data += scc_to_608(&scc, scc_data);

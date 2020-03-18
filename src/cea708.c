@@ -268,13 +268,16 @@ libcaption_stauts_t cea708_to_caption_frame(caption_frame_t* frame, cea708_t* ce
     libcaption_stauts_t status = LIBCAPTION_OK;
 
     if (GA94 == cea708->user_identifier) {
+        float timestamp = cea708->timestamp;
+
         for (i = 0; i < count; ++i) {
             int valid;
             cea708_cc_type_t type;
             uint16_t cc_data = cea708_cc_data(&cea708->user_data, i, &valid, &type);
 
             if (valid && cc_type_ntsc_cc_field_1 == type) {
-                status = libcaption_status_update(status, caption_frame_decode(frame, cc_data, cea708->timestamp));
+                status = libcaption_status_update(status, caption_frame_decode(frame, cc_data, timestamp));
+                timestamp = -1;
             }
         }
     }

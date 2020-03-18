@@ -39,13 +39,21 @@ int main(int argc, char** argv)
     scc_data += scc_to_608(&scc, scc_data);
 
     while (scc->cc_size) {
-        fprintf(stderr, "Timestamp: %f\n", scc->timestamp);
+        double timestamp = scc->timestamp;
+
+        fprintf(stderr, "Timestamp: %f\n", timestamp);
 
         for (i = 0; i < scc->cc_size; ++i) {
             eia608_dump(scc->cc_data[i]);
-            if (LIBCAPTION_READY == caption_frame_decode(&frame, scc->cc_data[i], scc->timestamp)) {
+            switch (caption_frame_decode(&frame, scc->cc_data[i], timestamp)) {
+            case LIBCAPTION_READY:
                 caption_frame_dump(&frame);
+                break;
+            default:
+                break;
             }
+
+            timestamp = -1;
         }
 
         scc_data += scc_to_608(&scc, scc_data);
