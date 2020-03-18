@@ -68,6 +68,8 @@ static inline utf8_char_t* srt_cue_data(srt_cue_t* cue) { return vtt_block_data(
 */
 static inline srt_cue_t* srt_cue_from_caption_frame(caption_frame_t* frame, srt_t* srt) { return vtt_cue_from_caption_frame(frame, srt); };
 
+static inline void srt_cue_finish(caption_frame_t* frame, srt_t* srt) { return vtt_cue_finish(frame, srt); };
+
 /*! \brief
     \param
 */
