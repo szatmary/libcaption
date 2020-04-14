@@ -55,8 +55,8 @@ static inline libcaption_stauts_t libcaption_status_update(libcaption_stauts_t o
 #define SCREEN_COLS 32
 
 typedef struct {
-    unsigned int uln : 1; //< underline
-    unsigned int sty : 3; //< style
+    uint8_t uln;         //< underline
+    uint8_t sty;         //< style
     utf8_char_t data[5]; //< 4 byte utf8 values plus null term
 } caption_frame_cell_t;
 
@@ -65,9 +65,9 @@ typedef struct {
 } caption_frame_buffer_t;
 
 typedef struct {
-    unsigned int uln : 1; //< underline
-    unsigned int sty : 3; //< style
-    unsigned int rup : 2; //< roll-up line count minus 1
+    uint8_t uln; //< underline
+    uint8_t sty; //< style
+    uint8_t rup; //< roll-up line count minus 1
     int8_t row, col;
     uint16_t cc_data;
 } caption_frame_state_t;
