@@ -161,11 +161,11 @@ void parse_timestamps(const utf8_char_t* line, double* start_pts, double* end_pt
     *start_pts = -1;
     *cue_settings = NULL;
 
-    printf("Matches: %d\n", matches);
+    fprintf(stderr, "Matches: %d\n", matches);
 
     if (matches >= 1) {
         *start_pts = parse_timestamp(start_str);
-        printf("Start pts: %f\n", *start_pts);
+        fprintf(stderr, "Start pts: %f\n", *start_pts);
     }
     if (matches >= 2) {
         *end_pts = parse_timestamp(end_str);
