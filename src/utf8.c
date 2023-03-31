@@ -217,9 +217,9 @@ utf8_char_t* utf8_load_text_file(const char* path, size_t* size)
                     (*size) += bytes_read;
                 }
             }
-
-            fclose(file);
         }
+
+        fclose(file);
     }
 
     data[*size] = 0;
