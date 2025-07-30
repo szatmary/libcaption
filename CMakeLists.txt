@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 project(libcaption)
 set(CMAKE_C_FLAGS "-Wall -O3 ${CMAKE_C_FLAGS}")
 add_definitions(-D__STDC_CONSTANT_MACROS)
